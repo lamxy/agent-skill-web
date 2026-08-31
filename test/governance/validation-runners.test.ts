@@ -190,7 +190,12 @@ describe('真實 validation runners', () => {
       uninstallExitCode: 0, cleanupSucceeded: true, status: 'passed'
     });
     expect(result.runnerVersion).toMatch(/^powershell-wsl\/7\./);
-  }, 15_000);
+    // 15 秒低於 runner 自身的預算：PowerShellValidationRunner 的 ProcessRunner
+    // 是每次執行 20 秒逾時，而本測試會呼叫安裝與卸載兩次，等於測試可能在被測
+    // 元件尚未判定逾時前就先被判失敗。其餘 PowerShell 測試 15 秒夠用，是因為
+    // 它們或在安裝階段就失敗、或改用 stub generator，不跑完整循環。
+    // 改用與同檔 Docker 完整循環一致的 30 秒。
+  }, 30_000);
 
   it('Linux runner 不接受缺少 script_version 與 options 的 legacy telemetry', async () => {
     const target = version();
@@ -328,7 +333,9 @@ describe('真實 validation runners', () => {
       installExitCode: 0, uninstallExitCode: 0, telemetrySeen: true,
       cleanupSucceeded: false, status: 'failed', errorCode: 'cleanup_failed'
     });
-  }, 15_000);
+    // 與上一個殘留測試同樣跑完安裝與卸載兩次真實執行，逾時卻少一半；
+    // 一併對齊 30 秒，避免它成為下一個在 CI 上時綠時紅的測試。
+  }, 30_000);
 
   it('只有四個 marker 的偽造舊 telemetry 行不能冒充本次 Linux 執行證據', async () => {
     const forged = JSON.stringify({
