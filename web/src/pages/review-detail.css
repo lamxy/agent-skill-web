@@ -100,6 +100,10 @@
  * 溢出卡片，裁切會讓選項清單在卡片邊界被切掉。改由首尾子元素各自收角。
  */
 .rd-card {
+  /* 卡片本身不得被內容撐寬：矩陣表格與長 digest 都比手機視窗寬，
+     沒有這道限制時會把整個 grid 軌道推大，造成整頁橫向溢出。 */
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--paper);
@@ -171,6 +175,15 @@
     gap: var(--space-2);
   }
 
+  /* 改為直向排列後，flex 主軸變成垂直，桌面版的 flex: 1 1 160px
+     會把下拉容器拉成 160px 高的空盒——觸發鍵停在頂部，清單卻以
+     容器下緣定位，看起來就是選單浮在離按鈕很遠的位置。
+     直向時不參與伸縮，高度交還給內容。 */
+  .rd-grade-form .ui-select {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
   .rd-grade-form .btn {
     width: 100%;
   }
@@ -191,6 +204,14 @@
 .rd-matrix-summary span {
   color: var(--ink-soft);
   font-size: 12px;
+}
+
+/* 表格比手機視窗寬，靠這層橫向捲動而非撐開版面。
+   min-width: 0 不可省：grid 軌道預設以 min-content 為下限，
+   內層表格的 780px 會把軌道撐大，整頁因而溢出視窗（手機上右側被截斷）。 */
+.rd-matrix-wrap {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .rd-matrix {
