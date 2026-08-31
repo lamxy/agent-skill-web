@@ -111,6 +111,20 @@ export function reviewDecisionError(
   return undefined;
 }
 
+/**
+ * 切換決議時該顯示的錯誤訊息。
+ *
+ * 錯誤訊息屬於「上一次決議嘗試」，不是欄位的持久狀態：駁回未填理由後改按
+ * 核准，若沿用舊訊息，就會用「駁回必須填寫理由」擋住一個理由本就選填的操作。
+ * 因此改按另一個決議時一律以新決議重算，無誤時回傳空字串清除。
+ */
+export function nextReviewDecisionError(
+  decision: ReviewDecision,
+  reason: string
+): string {
+  return reviewDecisionError(decision, reason) ?? '';
+}
+
 export type ReviewMutationRecovery = 'reload' | 'sync-required' | 'show-error';
 
 export function reviewMutationRecovery(error: unknown): ReviewMutationRecovery {

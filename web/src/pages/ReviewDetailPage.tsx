@@ -28,6 +28,7 @@ import { Select } from '../components/Select.js';
 import { Button, Chip } from '../components/primitives.js';
 import {
   buildReviewMatrixRows,
+  nextReviewDecisionError,
   reviewDecisionError,
   reviewMutationRecovery,
   reviewStatusMeta,
@@ -359,9 +360,9 @@ function DecisionPanel({
           <div className="rd-actions">
             <Button variant="danger" disabled={submitting || needsSync} onClick={() => void submit('reject')}>駁回</Button>
             <button ref={approveButtonRef} type="button" className="btn btn-primary" disabled={submitting || needsSync} onClick={() => {
-              const validationError = reviewDecisionError('approve', reason);
-              if (validationError) setError(validationError);
-              else setConfirming(true);
+              const validationError = nextReviewDecisionError('approve', reason);
+              setError(validationError);
+              if (!validationError) setConfirming(true);
             }}>核准發布</button>
           </div>
           {needsSync ? <Button onClick={onSync}>重新同步狀態</Button> : null}

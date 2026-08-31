@@ -18,6 +18,7 @@ import {
   previousReviewCursor,
   readReviewFilters,
   replaceReviewCursor,
+  nextReviewDecisionError,
   reviewDecisionError,
   reviewMutationRecovery,
   reviewQueueCopy,
@@ -129,6 +130,18 @@ describe('審核工作台列表模型', () => {
     expect(reviewDecisionError('reject', '   ')).toBe('駁回必須填寫理由。');
     expect(reviewDecisionError('approve', '   ')).toBeUndefined();
     expect(reviewDecisionError('approve', 'x'.repeat(5001))).toBe(
+      '決議理由最多 5,000 字。'
+    );
+  });
+
+  it('改按另一個決議時重算錯誤，駁回的必填訊息不跟進核准流程', () => {
+    // 駁回未填理由 → 顯示訊息；接著改按核准 → 必須清掉，否則理由本就選填的
+    // 核准會被上一次的駁回訊息擋在確認對話框。
+    expect(reviewDecisionError('reject', '')).toBe('駁回必須填寫理由。');
+    expect(nextReviewDecisionError('approve', '')).toBe('');
+    expect(nextReviewDecisionError('reject', '')).toBe('駁回必須填寫理由。');
+    // 超長理由對兩種決議都仍要擋。
+    expect(nextReviewDecisionError('approve', 'x'.repeat(5001))).toBe(
       '決議理由最多 5,000 字。'
     );
   });
