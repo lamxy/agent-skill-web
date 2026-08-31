@@ -237,7 +237,7 @@ export interface ValidationMatrixResult {
 export interface ValidationAttempt {
   attempt: number;
   kind: 'initial' | 'retry';
-  status: 'running' | 'abandoned' | 'passed' | 'failed';
+  status: 'running' | 'abandoned' | 'passed' | 'failed' | 'skipped';
   requestedByUid: string;
   startedAt: string;
   endedAt?: string;
@@ -252,7 +252,7 @@ export interface ReviewWorkbench {
   version: PackageVersionSummary;
   validation: {
     id: string;
-    status: 'running' | 'passed' | 'failed';
+    status: 'running' | 'passed' | 'failed' | 'skipped';
     runnerVersion: string;
     scriptDigest: string;
     expectedMatrix: ValidationMatrixTarget[];

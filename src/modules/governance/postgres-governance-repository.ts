@@ -694,6 +694,10 @@ export class PostgresGovernanceRepository implements GovernanceRepository {
         });
       }
 
+      // skipped（VALIDATION_MODE=manual）沒有跑過矩陣，因此不套用矩陣比對，
+      // 直接推進到人工審核。狀態仍記為 skipped 而非 passed，讓審核工作台
+      // 能提示審核者此版本未經機器驗證。
+      const skipped = input.result.status === 'skipped';
       const passed = input.result.status === 'passed' &&
         Boolean(input.result.runnerVersion.trim()) &&
         hasExactPassedMatrix(
@@ -701,7 +705,8 @@ export class PostgresGovernanceRepository implements GovernanceRepository {
           input.result.matrixResults,
           runRow.scriptDigest
         );
-      const nextLifecycle = passed ? 'review_required' : 'draft';
+      const advancesToReview = passed || skipped;
+      const nextLifecycle = advancesToReview ? 'review_required' : 'draft';
       const versionRows = await transaction.update(schema.packageVersions).set({
         lifecycle: nextLifecycle,
         updatedAt: input.occurredAt
@@ -727,14 +732,14 @@ export class PostgresGovernanceRepository implements GovernanceRepository {
       if (!currentAttempt || currentAttempt.status !== 'running') {
         throw conflict('驗證嘗試不在執行中');
       }
-      const errorCode = passed
+      const errorCode = advancesToReview
         ? undefined
         : input.result.status === 'passed'
           ? 'validation_matrix_mismatch'
           : input.result.errorCode ?? 'validation_failed';
       attempts[attempts.length - 1] = {
         ...currentAttempt,
-        status: passed ? 'passed' : 'failed',
+        status: skipped ? 'skipped' : passed ? 'passed' : 'failed',
         endedAt: input.occurredAt,
         runnerVersion: input.result.runnerVersion,
         matrixResults: input.result.matrixResults.map(mapMatrixResult),
@@ -754,7 +759,7 @@ export class PostgresGovernanceRepository implements GovernanceRepository {
           : isNull(schema.validationRuns.retryClaimedAt)
       ];
       const completedRows = await transaction.update(schema.validationRuns).set({
-        status: passed ? 'passed' : 'failed',
+        status: skipped ? 'skipped' : passed ? 'passed' : 'failed',
         attempts,
         retryClaimToken: null,
         retryClaimedAt: null,
@@ -766,7 +771,7 @@ export class PostgresGovernanceRepository implements GovernanceRepository {
       if (!completedRows[0]) throw conflict('驗證執行已由另一個程序完成');
 
       let review: PublicationReview | undefined;
-      if (passed) {
+      if (advancesToReview) {
         const packageRows = await transaction.select().from(schema.packages)
           .where(eq(schema.packages.packageId, runRow.packageId)).limit(1);
         const packageRow = packageRows[0];

@@ -32,7 +32,10 @@ import { MemoryGovernanceRepository } from './modules/governance/memory-governan
 import { PostgresGovernanceRepository } from './modules/governance/postgres-governance-repository.js';
 import type { GovernanceRepository } from './modules/governance/repository.js';
 import { ValidationRunnerRegistry } from './modules/governance/validation-runner-registry.js';
-import type { ValidationRunner } from './modules/governance/validation-runner.js';
+import {
+  SkippedValidationRunner,
+  type ValidationRunner
+} from './modules/governance/validation-runner.js';
 import type { IdentityProvider } from './modules/identity/identity-provider.js';
 import { createIdentityModule } from './modules/identity/index.js';
 import { MemoryIdentityRepository } from './modules/identity/memory-identity-repository.js';
@@ -169,8 +172,14 @@ function createDefaultModules(options: CreateAppOptions): FastifyPluginAsync[] {
       repository: governanceRepository,
       catalogRepository,
       identityRepository,
+      // VALIDATION_MODE 決定送審時是否實跑機器驗證。預設 manual：
+      // 機器驗證需要應用能呼叫宿主機 docker，容器化部署不具備該能力，
+      // 走 automated 會讓送審一律以 runner_unavailable 失敗。
       validationRunner:
-        options.governance?.validationRunner ?? new ValidationRunnerRegistry(),
+        options.governance?.validationRunner ??
+        (options.config.validationMode === 'automated'
+          ? new ValidationRunnerRegistry()
+          : new SkippedValidationRunner()),
       ...(options.governance?.clock
         ? { clock: options.governance.clock }
         : {})

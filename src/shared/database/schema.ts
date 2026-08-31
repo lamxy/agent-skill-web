@@ -391,7 +391,7 @@ export const validationRuns = pgTable(
     errorCode: text('error_code')
   },
   (table) => [
-    check('validation_runs_status_check', sql`${table.status} in ('running', 'passed', 'failed')`),
+    check('validation_runs_status_check', sql`${table.status} in ('running', 'passed', 'failed', 'skipped')`),
     uniqueIndex('validation_runs_running_version_uidx')
       .on(table.packageId, table.version)
       .where(sql`${table.status} = 'running'`),

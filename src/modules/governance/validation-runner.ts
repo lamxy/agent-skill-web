@@ -62,7 +62,12 @@ export interface ValidationRunnerInput {
 }
 
 export interface ValidationRunResult {
-  status: 'passed' | 'failed';
+  /**
+   * skipped 代表機器驗證未執行（VALIDATION_MODE=manual），與 passed 語意不同：
+   * 前者沒有跑過任何驗證，後者是實跑並通過。兩者若混用，審核者會誤以為
+   * 腳本已通過自動檢查。
+   */
+  status: 'passed' | 'failed' | 'skipped';
   runnerVersion: string;
   matrixResults: ValidationMatrixResult[];
   errorCode?: string;
@@ -70,4 +75,23 @@ export interface ValidationRunResult {
 
 export interface ValidationRunner {
   run(input: ValidationRunnerInput): Promise<ValidationRunResult>;
+}
+
+/** VALIDATION_MODE=manual 時的 runnerVersion，供前端辨識「未經機器驗證」。 */
+export const SKIPPED_RUNNER_VERSION = 'manual-review/skipped';
+
+/**
+ * 人工審核模式的 runner：不執行任何驗證，直接回報 skipped。
+ *
+ * 機器驗證需要應用能呼叫宿主機 docker，容器化部署不具備該能力；
+ * 此時改由審核者自行下載腳本到真實環境確認。
+ */
+export class SkippedValidationRunner implements ValidationRunner {
+  async run(): Promise<ValidationRunResult> {
+    return {
+      status: 'skipped',
+      runnerVersion: SKIPPED_RUNNER_VERSION,
+      matrixResults: []
+    };
+  }
 }

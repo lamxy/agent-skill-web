@@ -17,7 +17,9 @@ describe('loadConfig', () => {
       host: '127.0.0.1',
       port: 3000,
       logLevel: 'debug',
-      databaseUrl: 'postgresql://postgres:postgres@127.0.0.1:5432/agent_skill_platform'
+      databaseUrl: 'postgresql://postgres:postgres@127.0.0.1:5432/agent_skill_platform',
+      // 預設人工審核：機器驗證需要應用能呼叫宿主機 docker，容器化部署無此能力。
+      validationMode: 'manual'
     });
   });
 
@@ -155,5 +157,30 @@ describe('loadConfig 的登入白名單', () => {
         LOGIN_ALLOWED_UIDS: '1001,1002'
       }).loginAllowedUids
     ).toEqual(['1001', '1002']);
+  });
+});
+
+describe('loadConfig 的驗證模式', () => {
+  it('未設定時預設 manual，避免容器化部署因無法呼叫 docker 而永遠送審失敗', () => {
+    expect(loadConfig({ NODE_ENV: 'development' }).validationMode).toBe('manual');
+  });
+
+  it('可顯式指定 automated', () => {
+    expect(
+      loadConfig({ NODE_ENV: 'development', VALIDATION_MODE: 'automated' })
+        .validationMode
+    ).toBe('automated');
+  });
+
+  it('空字串視為未設定，退回 manual', () => {
+    expect(
+      loadConfig({ NODE_ENV: 'development', VALIDATION_MODE: '  ' }).validationMode
+    ).toBe('manual');
+  });
+
+  it('無效值啟動即失敗，不靜默退回預設', () => {
+    expect(() =>
+      loadConfig({ NODE_ENV: 'development', VALIDATION_MODE: 'yes' })
+    ).toThrow();
   });
 });

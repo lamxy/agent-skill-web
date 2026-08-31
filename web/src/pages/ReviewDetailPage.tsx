@@ -66,6 +66,44 @@ function MatrixEvidence({ data }: { data: ReviewWorkbench }): ReactNode {
   );
   const summary = summarizeReviewValidation(data.validation);
 
+  // 機器審核關閉時沒有任何矩陣證據，照常渲染表格會是滿排「—」與
+  // 「0 / N 存在異常」，看起來像驗證失敗。改為明確說明未執行的狀態，
+  // 並告知審核者需要自行取得腳本驗證。
+  if (data.validation.status === 'skipped') {
+    return (
+      <section className="rd-card">
+        <header className="rd-card-head">
+          <div>
+            <h2>驗證矩陣</h2>
+            <p>本平台目前未啟用機器審核，此版本沒有自動驗證證據。</p>
+          </div>
+          <div className="rd-matrix-summary">
+            <strong>—</strong>
+            <span>未執行</span>
+          </div>
+        </header>
+        <div className="rd-skipped-note">
+          <p>
+            <strong>機器審核已預設關閉，此版本未經過機器審核。</strong>
+          </p>
+          <p>
+            平台未在隔離環境中實際執行安裝與解除安裝腳本，因此無法提供
+            退出碼、遙測與清理結果等證據。請自行下載腳本，在真實環境確認
+            行為符合預期後再做決定。
+          </p>
+          <p className="rd-skipped-targets">
+            待確認的目標組合：
+            {rows.map(({ target }) => (
+              <span key={`${target.os}:${target.client}`} className="mono">
+                {target.os} × {target.client}
+              </span>
+            ))}
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="rd-card">
       <header className="rd-card-head">
@@ -285,10 +323,18 @@ function DecisionPanel({
         <h2>發布決議</h2>
         <p>{status.canDecide ? '完成證據閱讀後，在同一位置作出單筆決議。' : '這筆審核已完成決議，以下內容為唯讀記錄。'}</p>
       </header>
+      {data.validation.status === 'skipped' ? (
+        <p className="rd-skipped-banner" role="status">
+          <b>機器審核已預設關閉，此版本未經過機器審核。</b><br />
+          下方沒有自動驗證證據可供參考，請自行下載腳本在真實環境確認後再決議。
+        </p>
+      ) : null}
       <div className="rd-readiness">
-        <div><span>驗證矩陣</span><strong>{summary.passed} / {summary.total} 通過</strong></div>
-        <div><span>遙測證據</span><strong>{readiness.telemetryComplete ? '完整' : '有缺失'}</strong></div>
-        <div><span>清理驗證</span><strong>{readiness.cleanupComplete ? '成功' : '有失敗'}</strong></div>
+        {/* 機器審核關閉時沒有證據可統計，顯示「未執行」而非 0 通過／有缺失，
+            後者會讀成驗證失敗，與實際情況不符。 */}
+        <div><span>驗證矩陣</span><strong>{data.validation.status === 'skipped' ? '未執行' : `${summary.passed} / ${summary.total} 通過`}</strong></div>
+        <div><span>遙測證據</span><strong>{data.validation.status === 'skipped' ? '未執行' : readiness.telemetryComplete ? '完整' : '有缺失'}</strong></div>
+        <div><span>清理驗證</span><strong>{data.validation.status === 'skipped' ? '未執行' : readiness.cleanupComplete ? '成功' : '有失敗'}</strong></div>
         <div><span>殘留聲明</span><strong data-warn={data.version.hasResidualEffects ? '' : undefined}>{data.version.hasResidualEffects ? '有殘留' : '無殘留'}</strong></div>
       </div>
       <p className="rd-policy"><b>審核迴避由伺服器強制執行。</b><br />作者、同團隊或未指派人員無法讀取或決議此審核。</p>

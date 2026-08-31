@@ -65,7 +65,8 @@ export interface ValidationRun {
 export interface ValidationAttempt {
   attempt: number;
   kind: 'initial' | 'retry';
-  status: 'running' | 'abandoned' | 'passed' | 'failed';
+  /** skipped：VALIDATION_MODE=manual 時未執行機器驗證，與 passed 語意不同。 */
+  status: 'running' | 'abandoned' | 'passed' | 'failed' | 'skipped';
   requestedByUid: string;
   startedAt: Date;
   endedAt?: Date;

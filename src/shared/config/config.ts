@@ -26,6 +26,8 @@ const logLevelSchema = z.enum([
   'trace'
 ]);
 
+const validationModeSchema = z.enum(['manual', 'automated']);
+
 const httpsUrlSchema = z
   .string()
   .url()
@@ -79,6 +81,22 @@ export interface AppConfig {
    * 白名單讓非預期對象在建立記錄前就被擋下。
    */
   loginAllowedUids?: readonly string[];
+  /**
+   * 送審時是否執行機器驗證。
+   *
+   * automated：在 Docker 容器內實跑安裝／卸載腳本，通過後才進入人工審核。
+   * manual（預設）：跳過機器驗證，直接進入人工審核，由審核者自行下載腳本
+   *   到真實環境確認。驗證記錄標記為 skipped 而非 passed，
+   *   審核工作台據此提示「未經機器驗證」，避免審核者誤以為已通過自動檢查。
+   *
+   * 預設 manual 的原因：機器驗證需要應用能呼叫宿主機的 docker，
+   * 容器化部署（compose.stack.yaml、Coolify）預設不具備該能力，
+   * 此時送審會因 runner_unavailable 失敗，版本永遠停在 draft。
+   *
+   * 型別上為選填以免既有測試 fixture 全數需要調整；未設定時一律視為 manual，
+   * 判定集中在 governance-service，不在各處各自預設。
+   */
+  validationMode?: 'manual' | 'automated';
 }
 
 const OIDC_REQUIRED_KEYS = [
@@ -203,6 +221,10 @@ export function loadConfig(
   const notification = loadNotificationConfig(environment);
   const bootstrapAdminUid = environment.BOOTSTRAP_ADMIN_UID?.trim();
 
+  const validationMode = validationModeSchema.parse(
+    environment.VALIDATION_MODE?.trim() || 'manual'
+  );
+
   // 逗號分隔；空白項目略過。全為空白視為未設定，維持不限制。
   const loginAllowedUids = environment.LOGIN_ALLOWED_UIDS?.split(',')
     .map((uid) => uid.trim())
@@ -238,6 +260,7 @@ export function loadConfig(
     ...(bootstrapAdminUid ? { bootstrapAdminUid } : {}),
     ...(loginAllowedUids && loginAllowedUids.length > 0
       ? { loginAllowedUids }
-      : {})
+      : {}),
+    validationMode
   };
 }

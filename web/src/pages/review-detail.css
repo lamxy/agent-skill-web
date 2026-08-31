@@ -582,3 +582,42 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* 機器審核關閉時的提示。用 warn 色而非 danger：這不是錯誤，
+   而是需要審核者額外投入人工驗證的狀態。 */
+.rd-skipped-banner {
+  margin: 14px 17px 0;
+  padding: 11px 12px;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius);
+  background: var(--warn-soft);
+  color: var(--ink);
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+.rd-skipped-note {
+  padding: 14px 17px 17px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.rd-skipped-note p { margin: 0 0 9px; }
+.rd-skipped-note p:last-child { margin-bottom: 0; }
+.rd-skipped-note strong { color: var(--warn); }
+
+.rd-skipped-targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.rd-skipped-targets .mono {
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  font-size: 11px;
+}
