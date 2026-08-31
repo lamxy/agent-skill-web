@@ -65,7 +65,6 @@ services:
       context: .
     restart: unless-stopped
     environment:
-      SERVICE_FQDN_MOCKIDP_4780: ${SERVICE_FQDN_MOCKIDP_4780}
       NODE_ENV: development
       MOCK_IDP_PORT: 4780
       MOCK_IDP_HOST: 0.0.0.0
@@ -93,24 +92,27 @@ services:
       mock-idp:
         condition: service_healthy
     environment:
-      SERVICE_FQDN_APP_3000: ${SERVICE_FQDN_APP_3000}
       NODE_ENV: development
       HOST: 0.0.0.0
       PORT: 3000
       LOG_LEVEL: info
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-demo-only-not-a-secret}@postgres:5432/agent_skill_platform
-      PLATFORM_BASE_URL: ${SERVICE_FQDN_APP_3000}
+      # 對外網址在 Coolify 的 Domains 介面設定，這裡用同樣的值。
+      # 不使用 SERVICE_FQDN_* magic 變數：那組變數要求「只寫變數名、不加 ${}」
+      # 由 Coolify 注入，寫成 ${...} 會解析成空字串，使 OIDC URL 變成 /authorize
+      # 這種非法值，config.ts 的 URL 校驗會讓 app 啟動即崩潰。
+      PLATFORM_BASE_URL: https://platform.gmtcloud.org
       # 試用者以 mock-admin 登入即獲得管理員權限，可操作全部功能。
       BOOTSTRAP_ADMIN_UID: mock-admin
       # 兩種位址不可互換：
       #   authorize 由試用者的瀏覽器開啟 → 必須是公網網址
       #   token／userinfo 由 app 在容器網路內呼叫 → 走服務名 mock-idp
-      OIDC_AUTHORIZE_URL: ${SERVICE_FQDN_MOCKIDP_4780}/authorize
+      OIDC_AUTHORIZE_URL: https://idp.gmtcloud.org/authorize
       OIDC_TOKEN_URL: http://mock-idp:4780/token
       OIDC_USERINFO_URL: http://mock-idp:4780/userinfo
       OIDC_CLIENT_ID: local-dev
       OIDC_CLIENT_SECRET: local-dev-secret
-      OIDC_REDIRECT_URI: ${SERVICE_FQDN_APP_3000}/api/auth/callback
+      OIDC_REDIRECT_URI: https://platform.gmtcloud.org/api/auth/callback
       OIDC_SCOPE: openid profile
       OIDC_CLAIM_UID: sub
       OIDC_CLAIM_DISPLAY_NAME: name
