@@ -1,0 +1,144 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.ui-select {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.ui-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease-out,
+    background 140ms ease-out;
+}
+
+.ui-select-trigger:hover:not(:disabled) {
+  border-color: var(--ink-faint);
+}
+
+.ui-select-trigger:focus-visible,
+.ui-select-trigger[aria-expanded='true'] {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.ui-select-trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* 值過長時省略，不把觸發鍵撐寬 */
+.ui-select-value,
+.ui-select-placeholder {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-select-placeholder {
+  color: var(--ink-faint);
+}
+
+.ui-select-arrow {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--ink-faint);
+  transition: transform 160ms ease-out;
+}
+
+.ui-select-trigger[aria-expanded='true'] .ui-select-arrow {
+  transform: rotate(180deg);
+}
+
+/*
+ * 展開清單。原生 select 的系統選單無法設圓角與間距，
+ * 改用自繪面板後這裡才能與其他浮層（身份選單、欄位說明）用同一套視覺。
+ */
+.ui-select-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  /* 翻轉時改由 bottom 定位，見下方 [data-drop-up] */
+  z-index: 40;
+  max-height: 264px;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-raised);
+}
+
+/*
+ * 靠近視窗底部時向上展開。方向由 Select.tsx 在開啟前量測決定，
+ * 這裡只負責把定位基準從上緣換到下緣。
+ */
+.ui-select-list[data-drop-up] {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.ui-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 9px 11px;
+  border-radius: var(--radius);
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+/* 高亮同時服務滑鼠 hover 與鍵盤移動，兩者共用同一個視覺狀態 */
+.ui-select-option[data-active] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.ui-select-option[data-selected] {
+  color: var(--accent);
+  font-weight: 570;
+}
+
+.ui-select-option[data-disabled] {
+  color: var(--ink-faint);
+  cursor: not-allowed;
+}
+
+.ui-select-option[data-disabled][data-active] {
+  background: transparent;
+  color: var(--ink-faint);
+}
+
+.ui-select-check {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: var(--accent);
+}

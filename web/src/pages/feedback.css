@@ -1,0 +1,40 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.fb-version { margin-left: auto; color: var(--ink-faint); font-size: 11.5px; font-weight: 400; }
+.fb-form { display: grid; gap: var(--space-4); }
+.fb-field { display: grid; gap: 5px; margin: 0; padding: 0; border: 0; }
+.fb-field > span, .fb-field > legend { padding: 0; color: var(--ink-faint); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; }
+/* 尺寸與聚焦樣式沿用 base.css；此處只把底色換成凹陷感的 --ground，與面板區隔 */
+.fb-field select, .fb-field textarea { background: var(--ground); }
+
+.fb-sat { display: flex; gap: 6px; margin-top: 5px; }
+.fb-sat button { flex: 1; display: grid; gap: 2px; place-items: center; min-height: 52px; padding: 6px 4px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--ground); color: var(--ink-soft); cursor: pointer; }
+.fb-sat button b { font-size: 17px; }
+.fb-sat button small { font-size: 10.5px; }
+.fb-sat button[data-active] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 650; }
+
+.fb-check { display: flex; gap: var(--space-2); padding: 12px 13px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--ground); font-size: 13px; }
+.fb-check input { margin: 2px 0 0; }
+.fb-check small { display: block; margin-top: 2px; color: var(--ink-faint); font-size: 12px; }
+
+.fb-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--line-soft); }
+.fb-bar small { color: var(--ink-faint); font-size: 11.5px; }
+
+.fb-error { margin: 0 0 var(--space-3); padding: 10px 12px; border: 1px solid var(--stop); border-radius: var(--radius); background: var(--stop-soft); color: var(--stop); font-size: 12.5px; }
+
+.fb-done { padding: var(--space-5) var(--space-3); text-align: center; }
+.fb-done strong { display: block; margin-bottom: 5px; font-size: 15px; }
+.fb-done p { margin: 0 0 var(--space-3); color: var(--ink-soft); }
+
+@media (max-width: 640px) {
+  .fb-sat { flex-wrap: wrap; }
+  .fb-sat button { min-width: 56px; }
+  .fb-bar { flex-direction: column; align-items: stretch; }
+  .fb-bar .btn { width: 100%; }
+}

@@ -1,0 +1,38 @@
+graph TD
+  S1["① 瀏覽器開啟<br/>https://platform.example.com"]
+  S2["② Caddy 終止 TLS<br/>反代到 app:3000"]
+  S3["③ 前端載入<br/>GET /api/auth/me"]
+  S4{"④ 有 session cookie?"}
+  S5["⑤ 回匿名身份<br/>顯示登入按鈕"]
+  S6["⑥ GET /api/auth/login"]
+  S7["⑦ 產生 state 亂數<br/>SHA-256 存 pendingStates<br/>TTL 10 分鐘"]
+  S8["⑧ 302 跳轉 GitHub<br/>帶 client_id / state"]
+  S9["⑨ 使用者在 GitHub 授權"]
+  S10["⑩ GitHub 302 回<br/>/api/auth/callback<br/>帶 code 與 state"]
+  S11{"⑪ state 比對通過?"}
+  S12["⑫ 401 拒絕<br/>防 CSRF"]
+  S13["⑬ POST token 端點<br/>code + client_secret<br/>伺服器對伺服器"]
+  S14["⑭ GET api.github.com/user<br/>Authorization: Bearer"]
+  S15{"⑮ uid 在白名單?"}
+  S16["⑯ 403 拒絕<br/>不建立 identity 記錄"]
+  S17["⑰ upsertIdentity<br/>寫入 postgres"]
+  S18{"⑱ uid 等於<br/>BOOTSTRAP_ADMIN_UID?"}
+  S19["⑲ 授予 platform_admin<br/>僅首次"]
+  S20["⑳ 建立 session<br/>token 以 SHA-256 存庫"]
+  S21["㉑ Set-Cookie asp_session<br/>HttpOnly SameSite=Lax Secure"]
+  S22["㉒ 302 回首頁<br/>載入角色與權限"]
+
+  S1 --> S2 --> S3 --> S4
+  S4 -->|否| S5
+  S5 -->|"點擊登入"| S6
+  S6 --> S7 --> S8 --> S9 --> S10 --> S11
+  S11 -->|否| S12
+  S11 -->|是| S13
+  S13 --> S14 --> S15
+  S15 -->|"不在名單"| S16
+  S15 -->|"在名單或未設定"| S17
+  S17 --> S18
+  S18 -->|是| S19 --> S20
+  S18 -->|否| S20
+  S20 --> S21 --> S22
+  S4 -->|是| S22

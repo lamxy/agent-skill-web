@@ -1,0 +1,66 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>通知中心線框 · Notification Inbox</title><style>
+:root{--ink:#16181d;--soft:#5b616e;--faint:#8b91a0;--line:#dfe2e8;--line2:#edeff3;--paper:#fff;--ground:#f6f7f9;--accent:#1f4fd8;--accent2:#eef2fe;--ok:#1a7f52;--ok2:#e8f5ee;--warn:#8a5a00;--warn2:#fdf3e0;--stop:#a32020;--stop2:#fdeceb;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC",sans-serif;--mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,monospace;--r:8px;--rl:11px;color-scheme:light dark}@media(prefers-color-scheme:dark){:root{--ink:#e8eaf0;--soft:#a2a9b8;--faint:#767d8d;--line:#2f333c;--line2:#24272e;--paper:#1a1d23;--ground:#131519;--accent:#7f9fff;--accent2:#1c2740;--ok:#5ec98e;--ok2:#14301f;--warn:#e0ab4c;--warn2:#33260d;--stop:#f08a80;--stop2:#3a1917}}*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:14px/1.5 var(--sans)}button,input{font:inherit;color:inherit}button{cursor:pointer}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.mono{font-family:var(--mono)}#stage{min-height:100vh;padding-bottom:92px}.shell{min-height:100vh;display:flex;flex-direction:column}.top{min-height:58px;padding:0 max(24px,calc((100vw - 1120px)/2));display:flex;align-items:center;gap:42px;background:var(--paper);border-bottom:1px solid var(--line)}.brand{font-size:16px;font-weight:750;white-space:nowrap}.nav{display:flex;gap:28px;color:var(--soft);white-space:nowrap;flex:1}.nav span{padding:18px 0 16px;border-bottom:2px solid transparent}.nav .active{color:var(--accent);border-color:var(--accent);font-weight:650}
+.bell{position:relative;display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);font-size:16px}.dot{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 5px;display:grid;place-items:center;border-radius:999px;background:var(--stop);color:#fff;font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.main{width:min(1120px,calc(100% - 48px));margin:auto;padding:32px 0 70px;flex:1}.foot{padding:20px max(24px,calc((100vw - 1120px)/2));display:flex;justify-content:space-between;background:var(--paper);border-top:1px solid var(--line);color:var(--faint);font-size:12px}
+.head{display:flex;justify-content:space-between;align-items:start;gap:24px;margin-bottom:18px}.head h1{margin:0;font-size:27px;letter-spacing:-.03em}.head p{margin:7px 0 0;color:var(--soft)}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 15px;margin-bottom:14px;border:1px solid var(--line);border-radius:var(--rl);background:var(--paper)}.segments{display:flex;gap:4px;flex-wrap:wrap}.segments button{border:0;border-radius:7px;background:transparent;padding:8px 11px;color:var(--soft)}.segments [data-active]{background:var(--accent2);color:var(--accent);font-weight:650}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--rl);box-shadow:0 1px 3px rgba(22,24,29,.06);overflow:hidden;margin-bottom:16px}
+.n{display:flex;gap:13px;padding:15px 16px;border-bottom:1px solid var(--line2);align-items:start}.n:last-child{border:0}.n[data-unread]{background:var(--accent2)}
+.n-i{flex:none;width:34px;height:34px;display:grid;place-items:center;border-radius:var(--r);font-size:15px;background:var(--ground);color:var(--soft)}.n-i.pub{background:var(--ok2);color:var(--ok)}.n-i.del{background:var(--warn2);color:var(--warn)}.n-i.emg{background:var(--stop2);color:var(--stop)}
+.n-b{flex:1;min-width:0;display:grid;gap:5px}.n-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.n-h b{font-size:13.5px}.tag{display:inline-flex;padding:3px 8px;border-radius:999px;background:var(--ground);color:var(--faint);font-size:11px}.tag.new{background:var(--accent);color:#fff;font-weight:650}
+.n-b p{margin:0;color:var(--soft);font-size:13px}.n-notes{padding:9px 11px;border-radius:var(--r);background:var(--ground);color:var(--soft);font-size:12.5px;white-space:pre-wrap}
+.n-f{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:2px}.n-f small{color:var(--faint);font-size:11.5px}.n-a{display:flex;gap:6px}
+.btn{min-height:38px;padding:8px 13px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);font-weight:620;white-space:nowrap}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.sm{min-height:31px;padding:5px 10px;font-size:12px;font-weight:560}
+.empty{padding:44px 20px;text-align:center;color:var(--soft)}.empty b{display:block;margin-bottom:5px;color:var(--ink)}
+.rule{padding:11px 12px;margin:0 16px 15px;border-radius:var(--r);background:var(--accent2);color:var(--soft);font-size:11.5px}.rule b{color:var(--accent)}
+.route{padding:11px 12px;margin-top:12px;border-radius:var(--r);background:var(--ground);font:11.5px/1.6 var(--mono);overflow-wrap:anywhere}
+.enter{animation:rise .22s ease-out both}@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.proto-picker{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:2147483647;display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;background:rgba(10,10,10,.82);-webkit-backdrop-filter:blur(12px) saturate(1.4);backdrop-filter:blur(12px) saturate(1.4);box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 8px 24px rgba(0,0,0,.24),0 2px 6px rgba(0,0,0,.12);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;line-height:1;user-select:none}.proto-picker-highlight{position:absolute;top:4px;left:0;height:28px;border-radius:999px;background:rgba(255,255,255,.12)}.proto-picker-item{position:relative;display:flex;align-items:center;height:28px;padding:0 12px;border:0;border-radius:999px;background:transparent;color:rgba(255,255,255,.55);font:inherit}.proto-picker-item[data-active]{color:#fff}.proto-picker-divider{width:1px;height:16px;margin:0 4px;background:rgba(255,255,255,.12)}.proto-picker-replay{padding:0 10px;font-size:14px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+@media(max-width:640px){.top{padding:10px 16px;align-items:start;gap:10px;flex-direction:column}.nav{width:100%;overflow:auto}.nav span{padding:6px 0 8px}.bell{position:absolute;top:12px;right:16px}.main{width:calc(100% - 32px);padding-top:22px}.foot{padding:17px 16px 96px;flex-direction:column}.head{flex-direction:column}.toolbar{align-items:stretch;flex-direction:column}.segments{overflow:auto}.segments button{white-space:nowrap}.n-a{width:100%}.n-a .btn{flex:1}}
+</style></head><body><div id="stage"></div><nav class="proto-picker"><span class="proto-picker-highlight"></span><button class="proto-picker-item" data-active aria-current="true">Notification Inbox</button><span class="proto-picker-divider"></span><button class="proto-picker-item proto-picker-replay" aria-label="Replay animation (R)">↻</button></nav><script>
+// GET /api/notifications 與 POST /api/notifications/:id/read 的真實 UserNotification 形狀。
+// notificationType 三種：version_published（Task 11 新增）、version_delisted、version_emergency_disabled。
+const META={
+version_published:{icon:'⬆',cls:'pub',title:'有新版本可用',lead:n=>`${n.packageName} 已發布 ${n.version}。你目前安裝的是 ${n.installedVersion}。`},
+version_delisted:{icon:'⚠',cls:'del',title:'版本已撤下',lead:n=>`${n.packageName} ${n.version} 已被撤下，無法再下載。`},
+version_emergency_disabled:{icon:'⛔',cls:'emg',title:'版本緊急停用',lead:n=>`${n.packageName} ${n.version} 已緊急停用，請儘快解除安裝。`}};
+let items=[
+{id:'n1',notificationType:'version_published',packageId:'pkg-analytics',packageName:'分析工具',version:'1.10.0',installedVersion:'1.9.0',payload:{releaseNotes:'支援 WSL 安裝目標。\n新增 --scope 選項可選擇安裝層級。'},status:'unread',createdAt:'2026-08-29 09:40'},
+{id:'n2',notificationType:'version_published',packageId:'pkg-lint',packageName:'前端品質技能',version:'3.2.0',installedVersion:'3.1.4',payload:{},status:'unread',createdAt:'2026-08-29 08:15'},
+{id:'n3',notificationType:'version_emergency_disabled',packageId:'pkg-deploy',packageName:'內部部署工具',version:'2.0.1',payload:{reasonCode:'security_issue',reasonDetail:'相依套件存在提權風險，請立即停用。'},status:'unread',createdAt:'2026-08-28 19:02'},
+{id:'n4',notificationType:'version_delisted',packageId:'pkg-legacy',packageName:'舊版轉換工具',version:'0.9.7',payload:{reasonCode:'superseded',reasonDetail:'已由 pkg-convert 取代。'},status:'read',createdAt:'2026-08-27 14:20'}];
+let filter='unread',route='';
+const esc=s=>{const n=document.createElement('span');n.textContent=s;return n.innerHTML};
+const one=n=>{const m=META[n.notificationType];const notes=n.payload.releaseNotes,reason=n.payload.reasonDetail;
+return `<div class="n"${n.status==='unread'?' data-unread':''}><span class="n-i ${m.cls}">${m.icon}</span><span class="n-b">
+<span class="n-h"><b>${m.title}</b>${n.status==='unread'?'<span class="tag new">未讀</span>':''}<span class="tag mono">${esc(n.packageId)}</span></span>
+<p>${esc(m.lead(n))}</p>
+${notes?`<div class="n-notes">${esc(notes)}</div>`:''}
+${reason?`<div class="n-notes">原因：${esc(reason)}${n.payload.reasonCode?` (${esc(n.payload.reasonCode)})`:''}</div>`:''}
+<span class="n-f"><small>${n.createdAt}</small><span class="n-a">
+${n.notificationType==='version_published'?`<button class="btn sm primary" data-diff="${n.id}">檢視差異</button>`:`<button class="btn sm" data-open="${n.id}">前往套件</button>`}
+${n.status==='unread'?`<button class="btn sm" data-read="${n.id}">標記已讀</button>`:''}</span></span></span></div>`};
+const page=()=>{const unread=items.filter(x=>x.status==='unread').length;
+const shown=items.filter(x=>filter==='all'||filter==='unread'&&x.status==='unread'||filter==='upgrade'&&x.notificationType==='version_published'||filter==='risk'&&x.notificationType!=='version_published');
+return `<div class="shell enter"><header class="top"><b class="brand">Agent 技能平台</b><nav class="nav"><span>技能池</span><span>我的安裝</span><span>上架技能</span><span>審核</span></nav><button class="bell" aria-label="通知">🔔${unread?`<span class="dot">${unread}</span>`:''}</button></header><main class="main">
+<header class="head"><div><h1>通知</h1><p>平台內通知是第一期唯一渠道；IM 與郵件的外部推送屬第二期。</p></div></header>
+<div class="toolbar"><div class="segments"><button data-f="unread"${filter==='unread'?' data-active':''}>未讀 (${unread})</button><button data-f="all"${filter==='all'?' data-active':''}>全部</button><button data-f="upgrade"${filter==='upgrade'?' data-active':''}>新版本</button><button data-f="risk"${filter==='risk'?' data-active':''}>撤下與停用</button></div>${unread?'<button class="btn" data-all>全部標記已讀</button>':''}</div>
+<section class="card">${shown.length?shown.map(one).join(''):`<div class="empty"><b>${filter==='unread'?'沒有未讀通知':'沒有符合條件的通知'}</b>新版本發布、版本撤下與緊急停用會出現在這裡。</div>`}
+<div class="rule"><b>誰會收到新版本通知</b><br>裝了同一套件<b>其他版本</b>的登入使用者。本次發布的版本還沒有安裝紀錄，已經在新版的人不需要被提醒；作者本人與匿名 UUID 不通知——匿名身分沒有收件匣。</div></section>
+${route?`<div class="route">${esc(route)}</div>`:''}
+</main><footer class="foot"><span>Agent 技能平台 · 企業內部使用</span><span>UserNotification[] · PC-first wireframe</span></footer></div>`};
+const stage=document.querySelector('#stage');
+function mount(){stage.innerHTML='';requestAnimationFrame(()=>{stage.innerHTML=page();wire()})}
+function render(){stage.innerHTML=page();wire()}
+function wire(){
+stage.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{filter=b.dataset.f;render()});
+const all=stage.querySelector('[data-all]');if(all)all.onclick=()=>{items.forEach(x=>x.status='read');route='逐筆 POST /api/notifications/:id/read；只更新伺服器回應成功的項目。';render()};
+stage.querySelectorAll('[data-read]').forEach(b=>b.onclick=()=>{const n=items.find(x=>x.id===b.dataset.read);n.status='read';route=`POST /api/notifications/${n.id}/read`;render()});
+stage.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{const n=items.find(x=>x.id===b.dataset.diff);
+ route=`GET /api/packages/${n.packageId}/versions/${n.installedVersion}/diff/${n.version}  →  /packages/${n.packageId}/versions/${n.installedVersion}/diff/${n.version}`;render()});
+stage.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{const n=items.find(x=>x.id===b.dataset.open);route=`/packages/${n.packageId}`;render()})}
+mount();
+const picker=document.querySelector('.proto-picker'),item=picker.querySelector('.proto-picker-item:not(.proto-picker-replay)'),hi=picker.querySelector('.proto-picker-highlight');requestAnimationFrame(()=>requestAnimationFrame(()=>{hi.style.width=item.offsetWidth+'px';hi.style.transform=`translateX(${item.offsetLeft}px)`}));picker.querySelector('.proto-picker-replay').onclick=mount;
+addEventListener('keydown',e=>{if(e.key==='r'||e.key==='R')mount()});
+</script></body></html>

@@ -1,0 +1,49 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.mi { display: grid; gap: var(--space-4); }
+.mi-head { display: flex; align-items: end; justify-content: space-between; gap: var(--space-5); padding-bottom: var(--space-4); border-bottom: 2px solid var(--ink); }
+/* 字級沿用 base.css 的 .page-h1 全站基準 */
+.mi-head h1 { margin: 0; font-size: 21px; font-weight: 650; letter-spacing: -.01em; }
+.mi-head p { margin: 5px 0 0; color: var(--ink-soft); font-size: 13px; }
+/*
+ * 底線式頁籤，與技能維護頁的 .mp-tabs 同一套視覺。
+ * 兩頁都是「同一份清單的不同切面」，外觀該一致；
+ * 這裡在語義上仍是篩選（aria-pressed），不是頁籤導覽。
+ */
+.mi-filters { display: flex; gap: 2px; margin-top: var(--space-4); overflow-x: auto; border-bottom: 1px solid var(--line); }
+.mi-filters button { padding: 10px 14px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--ink-soft); font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer; }
+.mi-filters button:hover { color: var(--ink); }
+.mi-filters button[data-active] { border-color: var(--accent); color: var(--accent); font-weight: 620; }
+.mi-panel { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); box-shadow: var(--shadow-card); }
+.mi-desktop table { width: 100%; border-collapse: collapse; }
+.mi-desktop th { padding: 11px 12px 8px; border-bottom: 1px solid var(--line); color: var(--ink-faint); font-size: 10.5px; letter-spacing: .05em; text-align: left; text-transform: uppercase; }
+.mi-desktop td { padding: 14px 12px; border-bottom: 1px solid var(--line-soft); font-size: 12.5px; }
+.mi-desktop td:first-child strong, .mi-desktop td:first-child small { display: block; }
+.mi-desktop td:first-child small { margin-top: 3px; color: var(--ink-faint); }
+.mi-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+.mi-actions a { text-decoration: none; }
+.mi-mobile { display: none; }
+.mi-filter-empty { padding: var(--space-6); color: var(--ink-soft); text-align: center; }
+.mi-filter-empty p { margin: 5px 0 0; }
+
+@media (max-width: 640px) {
+  .mi-head { display: block; }
+  .mi-filters button { padding-inline: 10px; }
+  .mi-desktop { display: none; }
+  .mi-mobile { display: grid; gap: var(--space-3); padding: var(--space-3); }
+  .mi-mobile article { display: grid; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius); }
+  .mi-mobile-head { display: flex; align-items: start; justify-content: space-between; gap: var(--space-2); }
+  .mi-mobile-head strong, .mi-mobile-head small { display: block; }
+  .mi-mobile-head small { margin-top: 3px; color: var(--ink-faint); }
+  .mi-mobile dl { display: grid; grid-template-columns: 90px 1fr; gap: 7px; margin: 0; font-size: 12px; }
+  .mi-mobile dt { color: var(--ink-faint); }
+  .mi-mobile dd { margin: 0; }
+  .mi-actions { display: grid; grid-template-columns: 1fr; }
+  .mi-actions a { width: 100%; text-align: center; }
+}

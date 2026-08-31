@@ -1,0 +1,930 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": "1",
+        "title": "專案初始化與技術架構設定",
+        "description": "建立模組化單體專案結構、資料庫 Schema、API 基礎架構與共用元件",
+        "verificationNotes": [
+          "2026-08-25 fresh verification：npm ls --depth=0 完整、TypeScript typecheck 通過、2 個 Vitest 測試檔共 8/8 通過、production build 通過。",
+          "真實 PostgreSQL 16.15 驗證通過：使用 Ubuntu 官方簽名套件在 /tmp 啟動僅監聽 127.0.0.1:55432 的一次性實例；npm run db:migrate 回報初始 migration 已完成，npm run db:check 回報資料庫連線正常。",
+          "編譯後 API 實測通過：NODE_ENV=test、127.0.0.1:3300 啟動 dist/server.js；GET /health 回傳 HTTP 200 與 {status: ok, database: up}，GET /docs/json 回傳 HTTP 200 與 OpenAPI 3.0.3 文件。",
+          "Docker Desktop daemon 仍受 registry mirror／http.docker.internal:3128 代理 TLS timeout 影響；此為本機 Docker 拉取環境問題，不影響專案 PostgreSQL migration、pg adapter、DI 與 API 的真實驗證結果。驗證完成後 API、PostgreSQL 與 /tmp 暫存均已停止並清理。"
+        ],
+        "details": "1. 選擇技術棧：建議使用 Node.js/TypeScript + PostgreSQL + Express/Fastify\n2. 建立專案目錄結構，按模組分離：\n   - src/modules/identity/\n   - src/modules/catalog/\n   - src/modules/script-generator/\n   - src/modules/governance/\n   - src/modules/telemetry/\n   - src/modules/analytics/\n   - src/modules/audit/\n   - src/shared/ (共用元件、middleware、utils)\n3. 設定 ORM（如 Prisma/TypeORM），建立基礎 Schema：\n   - packages, package_versions, installations, publication_reviews\n   - 實作 Outbox 模式的 domain_events 表\n4. 設定 API 路由基礎架構與 OpenAPI 文檔\n5. 建立共用 middleware：錯誤處理、日誌、請求驗證\n6. 設定環境配置管理（development/staging/production）\n\n偽代碼：\n```typescript\n// src/app.ts\nconst app = createApp({\n  modules: [\n    identityModule,\n    catalogModule,\n    scriptGeneratorModule,\n    governanceModule,\n    telemetryModule,\n    analyticsModule,\n    auditModule\n  ],\n  database: prismaClient,\n  middleware: [errorHandler, requestLogger, authMiddleware]\n});\n```",
+        "testStrategy": "驗證專案可成功啟動、資料庫連線正常、API 端點回應 health check、模組間依賴注入正確運作",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-08-24T20:17:48.774Z"
+      },
+      {
+        "id": "2",
+        "title": "M1 身份與權限模組實作",
+        "description": "實作 SSO 登入整合、團隊/角色映射、審核者指定與權限檢查機制",
+        "lockedRequirements": [
+          "安裝腳本頭部優先取得已登入使用者 uid；未識別使用者時生成並持久化 UUID。",
+          "uid 與 UUID fallback 必須是腳本生成器可依賴的穩定介面，且不得把未登入使用者誤標為已登入。",
+          "第一期以身份、session、角色、審核者與 API 功能閉環為主；只做基本安全處理，正式 OIDC 與進階安全加固延後到第二期。",
+          "身份 Provider 必須保留 adapter 介面，第一期使用 development/test 本地 Provider，production 未配置正式 Provider 時不得偽造登入。",
+          "資料庫採反範式與應用層完整性；新增或修改的 SQL 與 Drizzle schema 嚴禁外鍵、級聯刪除與 .references()。"
+        ],
+        "details": "1. SSO 整合（M1-1）：\n   - 實作 OAuth2/OIDC 流程，取得 uid 與所屬團隊\n   - Session 管理（JWT 或 server-side session）\n   - 未登入存取策略：允許瀏覽與下載，安裝上報使用 UUID\n\n2. 角色模型（M1-2）：\n   - 定義四種角色：employee、maintainer、reviewer、platform_admin\n   - 角色可疊加，實作 hasRole(uid, role, scope) 函數\n\n3. 審核者管理（M1-3, M1-4）：\n   - 平台管理員可按 Package 類型/分類指定審核者\n   - 作者迴避規則：canReview(uid, packageId) 必須驗證\n   - 指定/撤銷操作須進審計日誌\n\n偽代碼：\n```typescript\n// src/modules/identity/services/permission.service.ts\nasync function canReview(uid: string, packageId: string): Promise<boolean> {\n  const pkg = await packageRepo.findById(packageId);\n  const isAuthor = pkg.ownerTeam.members.includes(uid);\n  if (isAuthor) return false; // M1-4 作者迴避\n  \n  const reviewerAssignment = await reviewerRepo.findByScope({\n    packageType: pkg.type,\n    category: pkg.category\n  });\n  return reviewerAssignment.reviewers.includes(uid);\n}\n```\n\n4. API 端點：\n   - GET /api/auth/login (SSO redirect)\n   - GET /api/auth/callback\n   - GET /api/auth/me\n   - POST /api/admin/reviewers (指定審核者)\n   - DELETE /api/admin/reviewers/:id",
+        "testStrategy": "1. 單元測試：角色疊加邏輯、作者迴避規則\n2. 整合測試：SSO 登入流程（使用 mock IdP）\n3. E2E 測試：未登入可瀏覽但安裝使用 UUID、已登入取得正確 uid",
+        "priority": "high",
+        "dependencies": [
+          "1"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-08-25T02:14:52.535Z"
+      },
+      {
+        "id": "3",
+        "title": "M2 技能目錄模組實作",
+        "description": "實作 Package 與版本元數據管理、搜尋、詳情頁展示功能",
+        "lockedRequirements": [
+          "PackageVersion 必須保存發布者或維護者在 UI 命令填寫框提交的安裝命令，不由平台硬編碼中間部。",
+          "首期 supported_os 僅保證 Linux 與 Windows；supported_clients 首期保證 Claude Code 與 Codex，資料模型須保留新增 OS 與 Client runtime adapter 的能力。"
+        ],
+        "details": "1. Package 管理（M2-1）：\n   - 資料模型：package_id(穩定ID), type, name, owner_team, category, visibility, source_uri, license, lifecycle\n   - CRUD API 實作\n\n2. PackageVersion 管理（M2-2）：\n   - 資料模型：version, release_notes, supported_os[], lifecycle, script_digest\n   - Client 支援範圍：clients[{name, version, adaptation_source, maintainer}]\n   - 腳本內容：install_command, uninstall_command, has_residual_effects, residual_description\n\n3. 列表與搜尋（M2-3）：\n   - 支援關鍵字、分類、Client、系統篩選\n   - 分頁與排序\n\n4. 詳情頁（M2-4）：\n   - 展示順序：用途與所有者 → 支援 Client 與系統 → 安裝說明 → 殘留副作用聲明 → 下載入口 → 採用數據\n\n5. 可見性控制（M2-5）：\n   - review_required 狀態不出現在列表、搜尋與下載入口\n   - 僅作者與指定審核者可見待審版本\n\n偽代碼：\n```typescript\n// src/modules/catalog/services/package.service.ts\nasync function searchPackages(filters: SearchFilters, user?: User) {\n  let query = db.packages\n    .where('lifecycle', 'active')\n    .whereIn('visibility', getVisibleScopes(user));\n  \n  // M2-5: 過濾待審核版本\n  query = query.whereExists(\n    db.packageVersions\n      .where('lifecycle', 'published')\n      .orWhere(qb => {\n        qb.where('lifecycle', 'review_required')\n          .where(qb2 => {\n            qb2.where('author_uid', user?.uid)\n              .orWhereIn('reviewer_uid', getAssignedReviewers(user?.uid));\n          });\n      })\n  );\n  \n  if (filters.keyword) query = query.whereILike('name', `%${filters.keyword}%`);\n  if (filters.client) query = query.whereJsonContains('supported_clients', filters.client);\n  \n  return query.paginate(filters.page, filters.limit);\n}\n```\n\n6. 頁面狀態完整性（M2-6）：定義 Loading/Empty/Error/Partial/Success 狀態",
+        "testStrategy": "1. 單元測試：搜尋過濾邏輯、可見性規則\n2. 整合測試：Package CRUD、版本發布流程\n3. API 測試：各種篩選組合、分頁、權限邊界",
+        "priority": "high",
+        "dependencies": [
+          "1",
+          "2"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-08-25T05:39:55.559Z"
+      },
+      {
+        "id": "4",
+        "title": "M7 審計模組實作",
+        "description": "實作不可抵賴的操作記錄系統，涵蓋審核、權限變更、版本狀態與管理員操作",
+        "details": "1. 審計事件模型設計：\n```typescript\ninterface AuditLog {\n  id: string;\n  event_type: AuditEventType; // 枚舉\n  actor_uid: string;\n  target_type: 'package' | 'version' | 'user' | 'role';\n  target_id: string;\n  action: string;\n  details: Record<string, any>; // 結構化變更內容\n  ip_address?: string;\n  user_agent?: string;\n  created_at: Date;\n}\n\nenum AuditEventType {\n  REVIEW_SUBMITTED = 'review.submitted',\n  REVIEW_APPROVED = 'review.approved',\n  REVIEW_REJECTED = 'review.rejected',\n  REVIEWER_ASSIGNED = 'reviewer.assigned',\n  REVIEWER_REVOKED = 'reviewer.revoked',\n  VERSION_PUBLISHED = 'version.published',\n  VERSION_DEPRECATED = 'version.deprecated',\n  VERSION_DELISTED = 'version.delisted',\n  VERSION_DISABLED = 'version.emergency_disabled',\n  ADMIN_ACTION = 'admin.*'\n}\n```\n\n2. 審計服務實作：\n   - 使用裝飾器或中間件自動記錄\n   - 確保事務一致性（與業務操作同一事務）\n   - 不可變性：只 INSERT，不 UPDATE/DELETE\n\n3. 查詢 API：\n   - GET /api/audit/logs (管理員權限)\n   - 支援按時間、事件類型、操作者、目標過濾\n\n偽代碼：\n```typescript\n// src/modules/audit/decorators/auditable.decorator.ts\nfunction Auditable(eventType: AuditEventType) {\n  return function(target: any, key: string, descriptor: PropertyDescriptor) {\n    const original = descriptor.value;\n    descriptor.value = async function(...args: any[]) {\n      const result = await original.apply(this, args);\n      await auditService.log({\n        event_type: eventType,\n        actor_uid: getCurrentUser().uid,\n        target_type: extractTargetType(args),\n        target_id: extractTargetId(args),\n        action: key,\n        details: extractDetails(args, result)\n      });\n      return result;\n    };\n  };\n}\n```",
+        "testStrategy": "1. 單元測試：審計日誌格式正確性\n2. 整合測試：審計記錄與業務操作的事務一致性（業務回滾時審計不應存在）\n3. 驗證不可變性：嘗試 UPDATE/DELETE 應失敗\n4. 查詢測試：各種過濾條件組合",
+        "priority": "high",
+        "dependencies": [
+          "1"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-08-25T05:13:09.427Z"
+      },
+      {
+        "id": "5",
+        "title": "M3 腳本生成器模組實作（核心）",
+        "description": "實作四段式腳本模型、維護者填寫入口、防繞過機制、簽名與分發",
+        "lockedRequirements": [
+          "平台交付物是生成的安裝命令或腳本。頭部由平台生成：取得已登入 uid；無法識別時生成並持久化 UUID；初始化開始時間、腳本版本、PackageVersion、目標 OS、目標 Client 與冪等鍵。",
+          "中部由發布者或維護者透過 UI 的命令填寫框提交，不由平台硬編碼；中部必須隔離且不可覆寫、停用或跳過頭部與尾部。",
+          "尾部由平台生成，統一上報安裝成功、安裝失敗與結構化失敗原因；遙測上報失敗不得改寫安裝本身結果。",
+          "首期生成 Linux 與 Windows 變體，Client runtime 首期支援 Claude Code 與 Codex；以 OS adapter 和 Client adapter 保留擴展更多 runtime 的能力。",
+          "驗收必須覆蓋 uid、UUID fallback、Linux/Windows 與 Claude Code/Codex 的四種組合、頭尾防繞過、成功與失敗遙測。"
+        ],
+        "details": "**這是 MVP 的核心模組，實作 PRD §2.1 一鍵安裝腳本模型**\n\n1. 頭部模組（M3-1, 平台生成，不可修改）：\n```bash\n#!/usr/bin/env bash\nset -euo pipefail\n\n# 平台生成，維護者不可修改\n_SCRIPT_VERSION=\"1.0.0\"\n_PACKAGE_ID=\"${PACKAGE_ID}\"\n_PACKAGE_VERSION=\"${VERSION}\"\n_IDEMPOTENCY_KEY=\"$(uuidgen)\"\n_START_TIME=\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"\n\n# 使用者標識\nif [[ -f ~/.agent-platform/uid ]]; then\n  _USER_REF=$(cat ~/.agent-platform/uid)\n  _USER_REF_TYPE=\"uid\"\nelse\n  _UUID_FILE=~/.agent-platform/uuid\n  if [[ ! -f \"$_UUID_FILE\" ]]; then\n    mkdir -p ~/.agent-platform\n    uuidgen > \"$_UUID_FILE\"\n  fi\n  _USER_REF=$(cat \"$_UUID_FILE\")\n  _USER_REF_TYPE=\"uuid\"\nfi\n\n# 偵測 OS\n_OS_TYPE=\"unknown\"\ncase \"$(uname -s)\" in\n  Darwin*) _OS_TYPE=\"macos\" ;;\n  Linux*)  [[ -n \"${WSL_DISTRO_NAME:-}\" ]] && _OS_TYPE=\"wsl\" || _OS_TYPE=\"linux\" ;;\n  MINGW*|CYGWIN*) _OS_TYPE=\"windows\" ;;\nesac\n```\n\n2. 防繞過機制（M3-3, §6.1 最高優先）：\n   - 使用 trap 確保即使 exit 也執行底部上報\n   - 頭部變數設為 readonly\n   - 底部驗證必要變數未被篡改\n```bash\n# 防繞過：設為唯讀\nreadonly _SCRIPT_VERSION _PACKAGE_ID _PACKAGE_VERSION _IDEMPOTENCY_KEY _START_TIME _USER_REF _USER_REF_TYPE _OS_TYPE\n\n# 安裝結果追蹤\n_INSTALL_STATUS=\"pending\"\n_ERROR_CODE=\"\"\n\n# 確保退出時上報（即使中間部 exit）\ntrap '_report_result' EXIT\n```\n\n3. 中間部填寫入口（M3-4）：\n   - 維護者填寫安裝命令\n   - 須選擇適用系統（macos/linux/windows/wsl）\n   - 表單驗證：不允許覆寫 _* 變數、不允許 unset trap\n\n4. 卸載部填寫入口（M3-5）：\n   - 填寫卸載命令\n   - 必填 has_residual_effects\n   - 若為 true，填寫 residual_description 與 manual_cleanup_steps\n\n5. 底部模組（M3-2, 平台生成）：\n```bash\n_report_result() {\n  local status=\"${_INSTALL_STATUS:-unknown}\"\n  local error=\"${_ERROR_CODE:-}\"\n  local end_time=\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"\n  \n  # 僅上報白名單字段\n  local payload=$(cat <<EOF\n{\n  \"idempotency_key\": \"${_IDEMPOTENCY_KEY}\",\n  \"package_id\": \"${_PACKAGE_ID}\",\n  \"version\": \"${_PACKAGE_VERSION}\",\n  \"user_ref\": \"${_USER_REF}\",\n  \"user_ref_type\": \"${_USER_REF_TYPE}\",\n  \"os_type\": \"${_OS_TYPE}\",\n  \"status\": \"${status}\",\n  \"error_code\": \"${error}\",\n  \"start_time\": \"${_START_TIME}\",\n  \"end_time\": \"${end_time}\"\n}\nEOF\n)\n  \n  # 上報，失敗則寫入本機隊列\n  if ! curl -sf -X POST \"${TELEMETRY_ENDPOINT}/api/telemetry/report\" \\\n    -H \"Content-Type: application/json\" \\\n    -d \"$payload\"; then\n    echo \"$payload\" >> ~/.agent-platform/pending_reports.jsonl\n  fi\n}\n```\n\n6. 四段組合與簽名（M3-6）：組合後計算 SHA256 digest\n7. 按系統分發（M3-7）：未聲明的系統不提供下載\n8. 執行前預覽（M3-8）：展示安裝命令、影響資源、遙測字段",
+        "testStrategy": "1. **防繞過驗證（最高優先）**：\n   - 測試中間部 exit 時底部是否仍執行上報\n   - 測試中間部嘗試 unset/覆寫 _* 變數是否失敗\n   - 測試中間部嘗試改寫上報端點是否失敗\n2. 腳本組合測試：各系統的正確組合\n3. 簽名驗證：篡改後簽名驗證失敗\n4. 整合測試：完整安裝流程（含上報）",
+        "priority": "high",
+        "dependencies": [
+          "1",
+          "2",
+          "3"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-08-25T05:59:04.277Z"
+      },
+      {
+        "id": "6",
+        "title": "M4 發布審核模組實作",
+        "description": "實作版本生命週期狀態機、審核工作台、演示環境實測與撤下機制",
+        "details": "1. 版本生命週期狀態機（M4-1）：\n```typescript\nconst versionLifecycle = createStateMachine({\n  initial: 'draft',\n  states: {\n    draft: { on: { SUBMIT: 'validating' } },\n    validating: {\n      on: {\n        VALIDATION_PASSED: 'review_required',\n        VALIDATION_FAILED: 'draft'\n      }\n    },\n    review_required: {\n      on: {\n        APPROVE: 'published',\n        REJECT: 'draft'\n      }\n    },\n    published: {\n      on: {\n        DEPRECATE: 'deprecated',\n        DELIST: 'delisted',\n        EMERGENCY_DISABLE: 'emergency_disabled'\n      }\n    },\n    deprecated: {\n      on: {\n        DELIST: 'delisted',\n        EMERGENCY_DISABLE: 'emergency_disabled'\n      }\n    },\n    delisted: {\n      on: { EMERGENCY_DISABLE: 'emergency_disabled' }\n    },\n    emergency_disabled: { type: 'final' }\n  }\n});\n```\n\n2. 提交審核（M4-2）：\n   - POST /api/versions/{id}/submit-review\n   - 進入 review_required 後對員工不可見\n\n3. 審核工作台（M4-3）：\n   - 展示中間部與卸載部命令全文\n   - 支援系統、殘留聲明、遙測字段預覽\n   - 審核標準提示：遙測合規 + 安裝正確且遙測可得\n\n4. 演示環境實測（M4-4, §6.5 待解難題）：\n   - 提供乾淨容器環境（Docker）\n   - 覆蓋 macos/linux/windows/wsl\n   - 執行待審腳本，驗證安裝成功、遙測上報、卸載可執行\n\n5. 審核決議（M4-5）：\n   - POST /api/reviews/{id}/approve\n   - POST /api/reviews/{id}/reject\n   - 理由與操作者進審計\n\n6. 重新審核規則（M4-6）：作者修改後須重新審核\n\n7. 撤下版本（M4-7）：\n   - POST /api/versions/{id}/delist\n   - 記錄 reason_code, effective_at, 操作者\n   - 下載入口即時失效\n\n8. 通知受影響使用者（M4-8）：\n   - 依安裝記錄定位 uid\n   - 發送卸載或升級指引",
+        "testStrategy": "1. 狀態機測試：所有合法轉換、非法轉換拒絕\n2. 審核流程測試：作者迴避、重新審核觸發\n3. 演示環境測試：容器正確啟動、腳本執行、遙測收集\n4. 撤下測試：撤下後下載 404、通知發送",
+        "priority": "high",
+        "dependencies": [
+          "4",
+          "5"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-08-25T11:31:21.435Z"
+      },
+      {
+        "id": "7",
+        "title": "M5 遙測上報模組實作",
+        "description": "實作遙測接收端點、字段白名單校驗、冪等去重與斷線補交機制",
+        "lockedRequirements": [
+          "接收腳本尾部上報的安裝成功、安裝失敗與結構化失敗原因，保留 uid/UUID、Linux/Windows、Claude Code/Codex 維度。",
+          "遙測傳送或補交失敗不得把已成功的安裝標為失敗；必須區分安裝結果與遙測同步結果。"
+        ],
+        "details": "1. 上報接收端點（M5-1）：\n```typescript\n// POST /api/telemetry/report\ninterface TelemetryEvent {\n  idempotency_key: string;\n  package_id: string;\n  version: string;\n  user_ref: string;\n  user_ref_type: 'uid' | 'uuid';\n  os_type: 'macos' | 'linux' | 'windows' | 'wsl';\n  status: 'downloaded' | 'succeeded' | 'failed' | 'uninstalled';\n  error_code?: string;\n  start_time: string;\n  end_time: string;\n}\n```\n\n2. 字段白名單校驗（M5-2）：\n```typescript\nconst ALLOWED_FIELDS = new Set([\n  'idempotency_key', 'package_id', 'version',\n  'user_ref', 'user_ref_type', 'os_type',\n  'status', 'error_code', 'start_time', 'end_time'\n]);\n\nfunction validateTelemetry(payload: any): TelemetryEvent {\n  // 丟棄白名單外字段並記錄異常\n  const extra = Object.keys(payload).filter(k => !ALLOWED_FIELDS.has(k));\n  if (extra.length > 0) {\n    logger.warn('Dropped extra telemetry fields', { extra });\n  }\n  \n  return pick(payload, [...ALLOWED_FIELDS]) as TelemetryEvent;\n}\n```\n\n3. 冪等去重（M5-3）：\n   - 依 idempotency_key 去重\n   - 使用 UPSERT 或 INSERT ON CONFLICT\n\n4. 斷線補交（M5-4）：\n   - 接受延遲提交（按 start_time 判斷）\n   - 按序處理，維護一致性\n\n5. 狀態明確性（M5-5）：\n   - 安裝成功但上報失敗時，向使用者顯示「安裝成功，數據同步中」\n   - 不顯示為安裝失敗\n\n6. 結構化錯誤碼（M5-6）：\n```typescript\nenum InstallErrorCode {\n  DEPENDENCY_MISSING = 'E001',\n  PERMISSION_DENIED = 'E002',\n  NETWORK_UNREACHABLE = 'E003',\n  DISK_FULL = 'E004',\n  VERSION_CONFLICT = 'E005',\n  SCRIPT_TIMEOUT = 'E006',\n  UNKNOWN = 'E999'\n}\n```\n\n7. 日誌脫敏（M5-7）：\n   - 禁止保存環境變數全集\n   - 禁止保存命令輸出全文",
+        "testStrategy": "1. 白名單測試：額外字段被丟棄並記錄\n2. 冪等測試：重複提交不產生重複記錄\n3. 斷線補交測試：延遲提交正確處理\n4. 錯誤碼測試：各類失敗正確分類",
+        "priority": "medium",
+        "dependencies": [
+          "5"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-08-25T13:40:22.548Z"
+      },
+      {
+        "id": "8",
+        "title": "M6 分析頁模組實作",
+        "description": "實作三段漏斗、成功率統計、失敗分布、版本分布與待升級使用者分析",
+        "details": "1. 三段漏斗（M6-1）：\n```typescript\ninterface FunnelMetrics {\n  downloads: number;      // ScriptDownloaded 事件數\n  installs: number;       // InstallationSucceeded 事件數\n  uninstalls: number;     // PackageUninstalled 事件數\n  downloadToInstall: number;  // 轉化率\n  installToUninstall: number; // 流失率\n}\n\nasync function getFunnel(packageId: string, period: DateRange): Promise<FunnelMetrics> {\n  const downloads = await db.installations.count({\n    where: { package_id: packageId, status: 'downloaded', created_at: { gte: period.start, lte: period.end } }\n  });\n  // ... 其他統計\n}\n```\n\n2. 成功率與信賴區間（M6-2）：\n```typescript\nfunction wilsonScoreInterval(successes: number, total: number, confidence = 0.95): [number, number] {\n  const z = 1.96; // 95% confidence\n  const p = successes / total;\n  const n = total;\n  const denominator = 1 + z * z / n;\n  const center = (p + z * z / (2 * n)) / denominator;\n  const margin = z * Math.sqrt((p * (1 - p) + z * z / (4 * n)) / n) / denominator;\n  return [center - margin, center + margin];\n}\n```\n\n3. 失敗分布（M6-3）：\n   - 按 Version/OS/錯誤碼分類\n   - 熱力圖展示\n\n4. 首次可運行時間（M6-4）：\n   - 平台口徑：腳本執行 → 上報成功\n   - 員工口徑：下載 → 上報成功\n   - 計算中位數、P90、P95\n\n5. 版本分布（M6-5）：\n   - 由安裝成功事件推導\n   - 扣除已卸載\n\n6. 待升級使用者（M6-6）：\n   - 版本低於當前推薦版本且可升級者\n   - 僅含已登入 uid（UUID 無法通知）\n\n7. 分層展示（M6-7）：\n   - 已登入與 UUID 安裝分開統計\n   - 不合併為單一成功率\n\n8. 我的安裝（M6-8，員工視角）：\n   - 當前版本、狀態、可升級版本",
+        "testStrategy": "1. 統計準確性測試：已知數據集驗證漏斗、成功率、信賴區間\n2. 分層測試：uid 與 UUID 正確分離\n3. 待升級列表測試：版本比較邏輯\n4. 效能測試：大數據量下的查詢效能",
+        "priority": "medium",
+        "dependencies": [
+          "7"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-08-26T00:32:27.621Z"
+      },
+      {
+        "id": "9",
+        "title": "前端介面實作",
+        "description": "實作技能目錄頁、詳情頁、安裝頁、分析頁、審核工作台與管理後台",
+        "lockedRequirements": [
+          "發布者與維護者必須有按目標 OS 與 Client runtime 分組的安裝命令填寫框；首期 UI 支援 Linux、Windows、Claude Code、Codex。",
+          "表單要清楚區分平台生成且不可編輯的頭部/尾部與維護者可編輯的中部，並預覽最後生成命令及遙測字段。",
+          "後續新增 OS 或 Client runtime 時透過 adapter 元數據擴展，不重寫表單主流程。"
+        ],
+        "details": "建議使用 React/Next.js + TailwindCSS\n\n1. 技能池列表頁：\n   - 搜尋與篩選（關鍵字、分類、Client、系統）\n   - 卡片式展示：名稱、所有者、支援範圍、採用數據摘要\n   - 分頁\n\n2. 技能詳情頁（M2-4 順序）：\n   - 用途與所有者\n   - 支援 Client 與系統\n   - 安裝說明\n   - 殘留副作用聲明（M3-9）\n   - 下載入口\n   - 採用數據\n\n3. 安裝頁（M3-8 執行前預覽）：\n   - 安裝命令全文\n   - 影響資源\n   - 所需權限\n   - 將上報的遙測字段\n   - 下載按鈕\n\n4. 作者分析頁：\n   - 三段漏斗圖表\n   - 成功率（含 Wilson 信賴區間）\n   - 失敗分布熱力圖\n   - 版本分布餅圖\n   - 待升級使用者列表\n\n5. 審核工作台：\n   - 待審列表\n   - 審核詳情：命令全文、支援系統、殘留聲明、遙測預覽\n   - 演示環境入口\n   - 審核決議按鈕\n\n6. 管理後台：\n   - 審核者管理\n   - 版本撤下\n   - 審計日誌查看\n\n7. 我的安裝頁：\n   - 已安裝列表\n   - 當前版本與可升級版本\n   - 卸載入口\n\n8. 頁面狀態（M2-6）：\n   - 每頁實作 Loading/Empty/Error/Partial/Success",
+        "testStrategy": "1. 元件測試：各元件正確渲染\n2. 整合測試：頁面流程（搜尋→詳情→下載）\n3. E2E 測試：完整使用者旅程\n4. 響應式測試：桌面/平板/手機\n5. 無障礙測試",
+        "priority": "medium",
+        "dependencies": [
+          "3",
+          "6",
+          "8"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "前端專案初始化與共用基礎設施",
+            "description": "建立 React/Next.js + TailwindCSS 前端專案，設定 API 客戶端、共用 hooks 與五態頁面狀態管理",
+            "dependencies": [],
+            "details": "1. 在專案根目錄建立 `web/` 子目錄，初始化 Next.js 14+ App Router 專案\n2. 設定 TailwindCSS、TypeScript 與 ESLint\n3. 建立 API 客戶端層 (`web/lib/api/client.ts`)，包裝 fetch 並處理 Cookie 傳遞\n4. 實作 `CatalogPageState<T>` 對應的 React 狀態 hook (`usePageState`)，映射 loading/empty/error/partial/success 五態\n5. 建立共用 UI 元件：Loading skeleton、Empty state、Error state (含 retryable 重試按鈕)、Partial data 警告\n6. 設定環境變數 `NEXT_PUBLIC_API_BASE_URL` 指向後端\n7. 建立共用 layout 與導航架構\n<info added on 2026-08-26T07:01:24.278Z>\n根據程式碼分析與文件內容，我產出以下子任務更新：\n\n選型變更：取消 Next.js，改採 Vite + React，置於 `web/`。後端 Fastify（`src/app.ts`）將靜態託管建置產物。同源部署可沿用 `HttpOnly` Cookie 的 opaque session 機制（見 `src/modules/identity/session-service.ts` 與 `src/modules/identity/cookie.ts`），免跨域設定。\n\n實作依據：`docs/前端實作指導.md` 與 `docs/前端API契約.md`。\n\n9.1 需建立項目調整為：\n\n1. 在 `web/` 初始化 Vite React 專案（TypeScript、ESLint），不使用 Next.js\n2. design token 以 CSS 自訂屬性定義，淺色於裸 `:root`，深色同時放 `@media (prefers-color-scheme: dark)` 搭配 `:root:not([data-theme=\"light\"])` 保護以及 `:root[data-theme=\"dark\"]`；任何色彩不得只存在於主題區塊內\n3. 色彩：中性色帶冷偏、語意色（成功/警告/危險）與強調色分離\n4. 字體：系統字體堆疊含繁中字型、等寬字用於版本號/路徑/命令/檔名、數字對齊使用 `font-variant-numeric: tabular-nums`\n5. 建立 API 查詢層 `web/lib/api/client.ts`，包裝 fetch 並帶 credentials，將 `CatalogPageState<T>`（定義於 `src/modules/catalog/types.ts`）五態映射為 React hook\n6. 共用元件：表格骨架、chip、按鈕、編輯區；五態呈現元件（Loading skeleton、Empty state、Error state 含 retryable 重試按鈕、Partial data 警告）\n7. 在 Fastify `src/app.ts` 註冊 `@fastify/static` 插件託管 `web/dist/`，並設定 SPA fallback\n</info added on 2026-08-26T07:01:24.278Z>\n<info added on 2026-08-26T08:19:23.321Z>\n全站框架需包含首頁底部的隱私聲明入口。\n\n隱私聲明實作要點：\n1. 在 `web/` 建立 `/privacy` 路由，首頁底部導覽區加入「隱私聲明」連結\n2. 聲明頁逐欄列出上報欄位與用途，欄位清單參照 `src/modules/script-generator/script-generator-service.ts:6-9` 的 `TELEMETRY_FIELDS` 定義（`idempotency_key`、`package_id`、`version`、`user_ref`、`user_ref_type`、`os_type`、`client_runtime`、`status`、`error_code`、`start_time`、`end_time`），待後端擴充 `script_version` 與 `options` 後同步更新\n3. 明確說明不收集的項目：命令輸出、檔案內容、環境變數\n4. 說明未登入時使用本機 UUID 識別、UUID 存放位置（macOS/Linux 為 `~/.agent-platform/uuid`、Windows 為 `%APPDATA%\\agent-platform\\uuid`、WSL 獨立於 Windows）與清除方式\n5. 欄位清單必須與 `TELEMETRY_FIELDS` 常數保持一致，PRD 第 76 行定義其為隱私聲明範圍與審核依據，第 89 行要求欄位變更須重新隱私審核\n6. 詳情頁與上架頁的遙測欄位清單以連結形式指向此聲明頁，避免多處重複維護\n</info added on 2026-08-26T08:19:23.321Z>",
+            "status": "done",
+            "testStrategy": "1. Next.js 專案可正常啟動\n2. API client 正確呼叫後端並處理錯誤\n3. 五態元件各自正確渲染\n4. TailwindCSS 樣式正確套用",
+            "parentId": "undefined",
+            "updatedAt": "2026-08-26T08:44:54.962Z"
+          },
+          {
+            "id": 2,
+            "title": "技能池列表頁實作",
+            "description": "實作技能目錄首頁，包含搜尋、篩選、卡片式展示與分頁功能 [Updated: 8/26/2026]",
+            "dependencies": [
+              1
+            ],
+            "details": "1. 建立 `web/app/packages/page.tsx` 列表頁\n2. 實作搜尋輸入框（關鍵字）與篩選器（分類、Client、系統）\n3. 呼叫 `GET /api/packages` 並使用 `CatalogSearchFilters` 參數\n4. 卡片式展示每個套件：name、ownerTeam、supportedOs/supportedClients 範圍、adoption 摘要\n5. 實作 cursor-based 分頁（使用 nextCursor）\n6. 套用五態狀態：搜尋中 loading、無結果 empty、網路錯誤 error、正常 success\n7. 響應式設計：桌面三欄、平板雙欄、手機單欄\n<info added on 2026-08-26T07:06:34.878Z>\n我已讀取了專案的型別定義和 API 契約。現在我根據使用者請求生成更新內容：\n\n選型修正：改用 Vite + React，路徑調整為 web/src/pages/PackageListPage.tsx。\n\n版面改採 Ledger（表格）而非卡片：內部高頻回訪工具優化掃描效率，表格骨架可複用於 9.6 審核工作台與 9.7 管理後台。\n\n欄位順序與資料來源：\n套件（name + ownerTeam）\n類型（type: skill | tool）\n狀態（latestVersion.lifecycle，直接使用 VersionLifecycle 值：draft / validating / validation_failed / review_required / published / deprecated / delisted / emergency_disabled）\n支援範圍（supportedOs + supportedClients，可收合展開）\n殘留（latestVersion.hasResidualEffects，布林值轉標籤「有」/「無」）\n安裝次數（adoption.installations）\n成功率（adoption.successRate，為 null 時顯示「尚無數據」，禁止顯示 0%）\n操作（詳情連結、快速安裝按鈕等）\n\n硬性禁止：\n不得引入可信等級概念（公司推廣／精品／已驗證），PackageRecord 無對應欄位\n狀態一律使用 VersionLifecycle 真實值，安全判斷使用 hasResidualEffects\n\n響應式設計：桌面全欄表格，平板可收合支援範圍欄，手機採單欄卡片降級顯示。\n\n線框參考：https://claude.ai/code/artifact/22a12829-b6c5-4e33-8bd4-1ff27f685e27 變體 1 Ledger。\n</info added on 2026-08-26T07:06:34.878Z>\n<info added on 2026-08-26T08:27:47.956Z>\n線框狀態：已由使用者審核通過，存於 design/wireframes/技能池列表線框.html，可直接進入實作階段，無需重新產出。若實作過程需調整資訊架構或互動模型，須先更新該線框檔案並重新取得使用者確認後方可繼續。\n</info added on 2026-08-26T08:27:47.956Z>",
+            "status": "done",
+            "testStrategy": "1. 元件測試：卡片正確顯示套件資訊\n2. 整合測試：搜尋與篩選參數正確傳遞\n3. 分頁載入更多正常運作\n4. 響應式斷點正確切換",
+            "parentId": "undefined",
+            "updatedAt": "2026-08-26T08:53:37.773Z"
+          },
+          {
+            "id": 3,
+            "title": "技能詳情頁實作",
+            "description": "依 M2-4 順序實作詳情頁，展示用途、Client/OS 支援、安裝說明、殘留聲明、下載入口與採用數據 [Updated: 8/26/2026]",
+            "dependencies": [
+              1
+            ],
+            "details": "1. 建立 `web/app/packages/[packageId]/page.tsx` 詳情頁\n2. 呼叫 `GET /api/packages/:packageId` 取得 CatalogDetail\n3. 依序展示：\n   - 用途、名稱、類型、所有團隊、來源、授權\n   - 版本清單與支援 Client/OS 矩陣\n   - 發布者安裝/解除安裝命令（程式碼區塊）\n   - 殘留副作用聲明（hasResidualEffects + residualDescription）\n   - 下載入口（僅 published 版本顯示按鈕，連結至安裝頁）\n4. 採用數據：installations、succeeded、successRate（null 顯示 N/A）\n5. 套用 partial 狀態：核心資料可用但採用統計失敗時仍可查看\n<info added on 2026-08-26T07:03:37.611Z>\n已完整分析專案結構與相關文件。根據用戶請求與程式碼庫現況，以下是需要新增至子任務 9.3 的實作細節：\n\n---\n\n**版面類型：Target（以選擇安裝目標為主流程）**\n\n頁面區塊依序：\n1. 名稱與基本資料（套件名、類型、所有者團隊、來源、授權）\n2. 用途描述（`purpose` 欄位）\n3. 目標選擇與下載\n4. 注意事項\n5. 腳本組成說明\n\n**硬性規則**：詳情頁不得顯示中部安裝命令。中部是平台內部腳本片段，不是員工決策依據。此規則取代 PRD M3-8「下載頁展示安裝命令全文」的描述，該描述建立在已廢棄的 InstallPlan 原語模型上。\n\n**目標選擇實作**：\n- 兩組選擇器：OS（對應 `targetOs`）與 Client（對應 `clientRuntime`）\n- 對應 `POST /api/packages/:packageId/versions/:version/scripts` 的必填參數\n- 依 `PackageVersionRecord.supportedOs` 與 `supportedClients` 判斷可選項\n- 未聲明支援的組合顯示停用態並標註原因（例如「此版本未支援 Windows」），不隱藏\n- 第一期優先支援：OS 為 `linux`、`windows`；Client 為 `Claude Code`、`Codex`\n- 其餘目標保留擴充位置（UI 顯示但停用）\n\n**生成檔名格式**：\n```\ninstall-{packageId}-{version}-{os}-{client}-{userRef}.{sh|ps1}\n```\n- Linux 使用 `.sh`，Windows 使用 `.ps1`\n- `userRef` 來自 `toInstallationUserReference(identity)`\n\n**注意事項區塊**（固定三類）：\n1. 殘留副作用：依 `hasResidualEffects` 與 `residualDescription` 呈現，為 `true` 時使用警告色\n2. 權限邊界：說明腳本執行所需權限\n3. 會回報安裝結果：說明遙測機制為 best-effort\n\n**腳本組成說明**：\n- 必須標明三段式結構：上部與尾部由平台生成、腳本內不可見；中部由發布者維護\n- 說明目的是讓員工理解遙測從何而來\n\n**下載按鈕**：\n- 選擇有效的 OS 與 Client 組合後啟用\n- 點擊後呼叫 `POST /api/packages/:packageId/versions/:version/scripts`（body 含 `targetOs`、`clientRuntime`）\n- 僅 `published` 版本顯示下載按鈕\n\n**線框參考**：https://claude.ai/code/artifact/f768ec00-b113-4377-855f-9043c5e5f80c 變體 1\n</info added on 2026-08-26T07:03:37.611Z>\n<info added on 2026-08-26T07:59:11.465Z>\n基於程式碼庫與用戶請求分析，以下是需新增至子任務 9.3 詳情頁的實作細節：\n\n---\n\n**2026-08-26 需求收斂更新**\n\n**目標選擇收斂**\n作業系統改為三項：`linux/macos`、`windows`、`wsl`。線框已體現此收斂，「Linux / macOS」合併為單一選項，WSL 獨立。Client 只顯示名稱不含版本號，介面顯示「Claude Code」而非「Claude Code 1.8」。版本相容性由發布者在使用說明中描述。\n\n**安裝選項區塊**\n詳情頁新增「安裝選項」區塊，呈現發布者宣告的選項參數。每個參數顯示參數名（等寬字體）、說明文字與可選值。員工選擇後，平台將選定值寫入下載的腳本。參考線框 `.d-opts-box` 結構，參數以列呈現，可選值以分段按鈕呈現。\n\n**下載區塊擴充**\n下載區塊須同時顯示：\n- 生成檔名，格式為 `install-{packageId}-{packageVersion}-{os}-{client}-{userRef}-v{scriptVersion}.{sh|ps1}`\n- 帶選項的完整執行命令，例如 `./install-superpowers-3.2.1-linux-claude-code-u1042-v3.sh --scope user --with-hooks false`\n\n此設計讓員工複製命令後可直接執行，無需自行拼接選項。\n\n**使用說明區塊**\n新增獨立區塊顯示發布者填寫的腳本使用說明，內容同腳本 `--help` 輸出。位於注意事項下方。參考線框 `.d-help` 樣式，以等寬字體呈現。\n\n**腳本版本紀錄區塊**\n新增區塊顯示腳本版本歷程：\n- 標題顯示目前腳本版本（如 `v3`）\n- 列表顯示歷次變更：版本號、描述、時間\n- 未填描述者顯示「無描述資訊」，使用 `--ink-faint` 色與斜體\n\n參考線框 `.hist` 結構實作。此區塊讓員工判斷腳本是否近期修改。\n\n**使用者回饋區塊（第二期功能佔位）**\n保留版面位置，刻意不隱藏：\n- 標題旁標註「第二期功能，尚未實作」\n- 讚與踩按鈕不可點擊（`.soon` 樣式）\n- 計數顯示破折號「—」而非 0，避免誤讀為「沒人評價」\n- 評論列表位置顯示「評論功能尚未實作」\n\n參考線框 `.fb` 與 `.fb-empty` 結構。\n\n**注意事項區塊更新**\n第三條更新為：「回報時間、環境、腳本版本與所選選項，不收集命令輸出或檔案內容。」\n\n**頁面區塊順序**\n依序呈現：基本資料（名稱、類型、所有者、來源、授權）、用途描述、目標選擇與安裝選項、下載、注意事項與使用說明、腳本版本紀錄、使用者回饋佔位、腳本組成說明。\n\n**線框參考**\n`design/wireframes/技能池與上架線框.html` 變體 1（詳情頁）\n</info added on 2026-08-26T07:59:11.465Z>\n<info added on 2026-08-26T08:28:20.905Z>\n線框已產出並經使用者審核通過，可直接進入實作。線框存於 `design/wireframes/技能池與上架線框.html`，不需重新產出。若實作過程需要調整資訊架構或互動模型，須先更新線框並重新取得確認。\n</info added on 2026-08-26T08:28:20.905Z>",
+            "status": "done",
+            "testStrategy": "1. 元件測試：各區段正確渲染\n2. 測試 published 與 review_required 版本的下載按鈕顯示邏輯\n3. successRate null 時顯示 N/A 而非 0%\n4. partial 狀態正確標示缺失區段",
+            "parentId": "undefined",
+            "updatedAt": "2026-08-26T09:09:40.134Z"
+          },
+          {
+            "id": 4,
+            "title": "安裝頁（執行前預覽）實作",
+            "description": "依 M3-8 實作安裝預覽頁，展示完整命令、影響資源、權限與遙測字段",
+            "dependencies": [
+              1,
+              3
+            ],
+            "details": "1. 建立 `web/app/packages/[packageId]/versions/[version]/install/page.tsx`\n2. 呼叫 `GET /api/packages/:packageId/versions/:version/download` 取得 PackageDownload\n3. 展示安裝命令全文（程式碼區塊，支援複製）\n4. 影響資源：supportedOs、supportedClients 清單\n5. 所需權限：從命令分析（或未來 API 擴展）\n6. 將上報的遙測字段：固定顯示白名單十一欄（idempotency_key、package_id 等）\n7. 下載/複製安裝腳本按鈕\n8. 殘留副作用區段：hasResidualEffects 為 true 時顯示 residualDescription 與 manualCleanupSteps\n<info added on 2026-08-26T08:23:51.073Z>\n根據 `docs/前端實作指導.md` 第 13 行，安裝頁尚未產出線框。以下是依使用者請求應新增到子任務詳情的內容：\n\n---\n\n前置流程約束：實作此頁面前，必須先執行專案級 prototype 技能產出安裝頁（執行前預覽）線框，並保存到 design/wireframes/。線框必須使用真實後端欄位與真實產品資料，不得使用 lorem ipsum 或虛構欄位。單次只探索此頁面。\n\n線框完成後交由使用者審核結構是否滿足需求；未經審核不得直接進入頁面實作。\n\n審核通過後，將該頁面的結構決策寫入 docs/前端實作指導.md 的「頁面決策」章節（新增「安裝頁」小節），同時回頭更新本子任務的實作細節，使任務描述與文件規範保持一致。\n</info added on 2026-08-26T08:23:51.073Z>\n<info added on 2026-08-26T12:11:12.567Z>\n定位釐清（2026-08-26 使用者確認）：安裝頁是「生成後完整腳本的執行前預覽」，不是中部片段預覽。\n\n與詳情頁的分工：\n- 詳情頁回答「這個技能是什麼、要不要裝」，不顯示任何命令\n- 安裝頁是執行前的最後確認，讓員工在執行會改動機器的腳本前能看到完整內容\n\n這與「詳情頁不得顯示中部安裝命令」的規則不衝突：詳情頁禁的是攤開平台內部的中部片段，安裝頁展示的是平台已生成、員工即將執行的完整三段式腳本。\n\n後端已支援的端點：POST /api/packages/:packageId/versions/:version/scripts 回傳 GeneratedScript，包含：\n- script：完整腳本全文\n- digest：腳本摘要\n- preview.telemetryFields：十一欄遙測欄位清單\n- preview.hasResidualEffects、residualDescription、manualCleanupSteps：殘留說明與手動清理步驟\n\n前端 `web/src/api/catalog.ts:50-59` 已有 `generateScript()` 函式，呼叫該端點並返回 `GeneratedScript` 型別（定義於 `web/src/api/types.ts:109-126`）。安裝頁不需要新端點。\n\n頁面路由變更：從原規劃的 `web/app/packages/[packageId]/versions/[version]/install/page.tsx` 調整為 `web/src/pages/InstallPreviewPage.tsx`，與現有頁面結構一致（參考 `PackageDetailPage.tsx`）。\n\n頁面內容（對應 PRD M3-8）：\n1. 完整腳本全文：可捲動程式碼區塊，支援複製，使用等寬字體\n2. 腳本摘要：顯示 digest 值，讓員工確認腳本完整性\n3. 影響資源與所需權限：supportedOs、supportedClients 清單，權限從殘留說明推導\n4. 將上報的遙測欄位：固定十一欄清單（idempotency_key、package_id、version、target_os、client_runtime、user_ref、timestamp、status、error_code、duration_ms、env_info）\n5. 殘留副作用聲明：hasResidualEffects 為 true 時顯示 residualDescription 與 manualCleanupSteps\n6. 下載按鈕：下載腳本檔案，觸發瀏覽器下載\n\n進入路徑：由詳情頁的下載動作導向此頁。現有 `PackageDetailPage.tsx:209-228` 的 `handleDownload()` 呼叫 `generateScript()` 後直接觸發瀏覽器下載；需改為導向安裝預覽頁，讓員工確認腳本內容後才真正下載。\n</info added on 2026-08-26T12:11:12.567Z>\n<info added on 2026-08-26T12:58:53.796Z>\n線框審核通過（2026-08-26），採 Inspect 方向。線框：design/wireframes/安裝頁線框.html，線上預覽 https://claude.ai/code/artifact/e53147a0-a884-4cb5-ad35-0a271a7d150d\n\n頁面結構決策：\n\n1. 頁面路由：`web/src/pages/InstallPreviewPage.tsx`，與現有頁面結構一致\n2. 進入路徑：由詳情頁 `PackageDetailPage.tsx:209-228` 的 `handleDownload()` 導向此頁，員工確認腳本內容後才真正下載；現有直接觸發下載的行為需改為導向安裝預覽頁\n3. 資料來源：呼叫現有 `generateScript()` 函式（`web/src/api/catalog.ts:50-59`），取得 `GeneratedScript` 型別（`web/src/api/types.ts:109-126`），不需要新端點\n\n版面順序：\n\n1. 麵包屑：技能池 ／ {套件名} ／ 執行前預覽\n2. 標題與目標標籤：套件名、技能版本、OS、Client、腳本版本（chip 形式）\n3. 這份腳本會做什麼\n4. 完整腳本\n5. 影響資源與所需權限\n6. 將上報的欄位\n7. 固定在底部的動作列\n\n「這份腳本會做什麼」區塊：\n\n- 只列出有確定來源的三條：\n  1. 在本機保存一組 UUID —— 平台固定行為，前端直接呈現\n  2. 執行結束時回報結果 —— 平台固定行為，前端直接呈現\n  3. 解除安裝後的殘留 —— 來自 `preview.hasResidualEffects`：為 true 時顯示 `preview.residualDescription` 與 `preview.manualCleanupSteps`；為 false 時改為顯示「解除安裝後不留殘留」的正向說明\n- 區塊末尾註明：「發布者的安裝命令會做什麼，需展開下方完整腳本的中部自行檢視」\n\n完整腳本區塊：\n\n- 顯示 `GeneratedScript.script` 全文，帶行號、可捲動、可複製，使用等寬字體\n- 中部以 seal 色底標示，與上部尾部區分；附圖例說明哪一段由平台生成\n- 腳本摘要顯示 `GeneratedScript.digest`\n- 分段切換（全部／上部／中部／尾部）第一期保留為純視覺佔位，標註「尚待實現」，不接功能；第一期先以完整腳本呈現\n\n影響資源與所需權限區塊：\n\n- 第一期顯示「發布者未提供此資訊」的空狀態\n- 不得以靜態分析從 `installCommand` 推導寫入路徑或權限需求；bash 圖靈完備，變數展開與 eval 都能繞過分析，推導錯誤比不顯示更糟\n- 結構化欄位留到第二期，見 `docs/第二期需求收集.md` 的 P2-3\n\n將上報的欄位區塊：\n\n- 顯示 `preview.telemetryFields` 十一欄：idempotency_key、package_id、version、user_ref、user_ref_type、os_type、client_runtime、status、error_code、start_time、end_time\n- 連結至隱私聲明頁（`web/src/pages/PrivacyPage.tsx`）\n\n底部動作列（sticky）：\n\n- 返回詳情：導回詳情頁\n- 下載腳本：以 Blob 觸發瀏覽器下載，檔名格式沿用現有邏輯 `install-{packageId}-{version}-{os}.{ext}`\n\n實作參考元件：\n\n- 程式碼區塊樣式可參考線框的 `.code`、`.code-wrap` 樣式\n- 卡片樣式可複用 `PackageDetailPage.tsx` 的 `.pd-card` 結構\n- Chip 標籤可複用 `web/src/components/primitives.tsx` 的 `Chip` 元件\n</info added on 2026-08-26T12:58:53.796Z>\n<info added on 2026-08-26T14:33:33.222Z>\n實作完成（2026-08-26）。\n\n實際落點：\n- 新增 web/src/pages/InstallPreviewPage.tsx 與 install-preview.css\n- 路由 /packages/:packageId/versions/:version/install，安裝目標以 query 參數 os 與 client 傳遞（App.tsx）\n- PackageDetailPage.tsx 的下載按鈕改為「檢視並下載腳本」，只導向此頁；generateScript 與錯誤處理移至此頁，詳情頁不再直接觸發下載。TargetPicker 的 onDownload 改為 onInspect，busy/error 狀態隨之移除，package-detail.css 的 .pd-out-error 一併刪除\n\n與規劃的差異與補充：\n- 中部色底範圍由後端生成的固定註解界定，非行號硬編碼。bash 以 '# 維護者…命令：只在隔離子程序執行' 起、'_asp_exit_code=$?' 迄；PowerShell 以 '# 維護者…命令' 起、'if ($LASTEXITCODE -ne 0) {' 迄。找不到邊界時全段不標示（標錯比不標示更糟）。後端調整標記時前端需同步\n- 缺少 os/client 時拋 ApiError 而非一般 Error：usePageState 只保留 ApiError 的訊息，一般 Error 會被換成通用文案。retryable=false\n\n實機驗證（headless Chrome + CDP，seed 資料）：\n- 詳情頁點擊導向正確 URL；superpowers 3.2.1 渲染 163 行、9 行標為中部\n- mysql-mcp 1.4.0 linux：161 行、7 行中部，與 API 回傳的 145-151 行一致\n- pm-skill windows：145 行、3 行中部，OS chip 顯示 Windows\n- 殘留分支：superpowers 顯示殘留說明與 rm -rf ~/.superpowers 清理步驟\n- 複製全文：焦點正常時標籤切換為「已複製」，剪貼簿取得 5125 字元全文，2 秒後復原\n- 下載：install-superpowers-3.2.1-linux.sh，內容與 API 回傳 byte 相同，SHA-256 與頁面顯示的 digest 一致\n- 缺參數：顯示「缺少安裝目標，請回到詳情頁重新選擇系統與 Client。」且不出現重試按鈕\n- 分段切換四顆按鈕皆 disabled，主控台無 error/warning\n\ntypecheck、build 通過；28 個測試檔 219 項測試通過。\n</info added on 2026-08-26T14:33:33.222Z>",
+            "status": "done",
+            "testStrategy": "1. 命令區塊正確顯示並可複製\n2. 遙測字段清單完整\n3. 殘留聲明區段根據 hasResidualEffects 條件顯示\n4. 非 published 版本導向 404 或錯誤頁",
+            "parentId": "undefined",
+            "updatedAt": "2026-08-26T14:33:52.842Z"
+          },
+          {
+            "id": 5,
+            "title": "作者分析頁實作",
+            "description": "已審核選定 Signal Board；以 Vite + React 實作套件分析儀表板，直接使用後端 PackageAnalyticsReport，包含漏斗圖、Wilson 信賴區間成功率、失敗熱力圖、版本分布與升級候選清單",
+            "dependencies": [
+              1
+            ],
+            "details": "2026-08-27 使用者已審核並選定 Signal Board。\n\n實作依據：`docs/前端實作指導.md` 與 `design/wireframes/作者分析頁線框.html`。\n\n1. 使用 Vite + React 實作 `web/src/pages/AnalyticsPage.tsx`，路由為 `/packages/:packageId/analytics`。\n2. 呼叫 `GET /api/packages/:packageId/analytics?start=&end=`，直接呈現 `PackageAnalyticsReport`，不得虛構或推估缺失欄位。\n3. 呈現 dataGaps、四項摘要、手寫 SVG 採用漏斗、UID/UUID 成功率與 Wilson 95% 區間、failureCells 熱力矩陣與 OS 篩選、可執行時間、版本分布、upgradeCandidates。\n4. 日期輸入轉為 UTC RFC 3339 閉區間；拒絕反向期間與超過 366 天；預設值依瀏覽器當地日曆日。\n5. `null` 成功率顯示「尚無數據」；標示 `best-effort` 與「數據僅供參考」。\n6. 使用既有 `usePageState` 與 `PageStateView` 處理 loading/error/success；401/403 由 API 錯誤訊息呈現。\n7. 原始 Next.js、TailwindCSS 與 Recharts/Chart.js 建議已由專案既定 Vite/React、CSS token 與手寫 SVG 決策取代。\n\n驗收：資料模型單元測試、真實後端 analytics 200、無效日期零 API 請求、OS 篩選、390px 響應式、零 console error、typecheck 與 production build。",
+            "status": "done",
+            "testStrategy": "1. 分析查詢日期轉為 UTC RFC 3339 閉區間，拒絕反向與超過 366 天\n2. 圖表正確渲染真實 PackageAnalyticsReport，null 成功率顯示尚無數據\n3. failureCells 熱力矩陣與 OS 篩選正確\n4. 權限不足時顯示 403 錯誤訊息\n5. dataGaps 原樣顯示，不推估缺失事件\n6. 390px 響應式、有效日期 API 200、無效日期零請求且無 console error",
+            "parentId": "undefined",
+            "updatedAt": "2026-08-26T16:10:05.652Z"
+          },
+          {
+            "id": 6,
+            "title": "審核工作台實作",
+            "description": "審核工作台進行中：Queue Ledger 列表已完成；單一 PC 審核詳情 Evidence Desk 線框已產出並完成互動驗證，待使用者視覺確認後才可實作詳情與決議操作",
+            "dependencies": [
+              1
+            ],
+            "details": "1. 建立 `web/app/reviews/page.tsx` 待審列表頁\n2. 呼叫 `GET /api/reviews?status=pending` 取得待審清單\n3. 支援 os/client 篩選與分頁\n4. 審核詳情頁 `web/app/reviews/[id]/page.tsx`：\n   - 呼叫 `GET /api/reviews/:id` 取得 ReviewWorkbench\n   - 顯示命令全文（install/uninstall）\n   - 支援系統與 Client 矩陣\n   - 殘留聲明（residualDescription）\n   - 遙測預覽（固定白名單字段）\n   - 驗證結果（validationResults）\n5. 演示環境入口按鈕（預留，第二期實作）\n6. 審核決議：\n   - 批准按鈕 → `POST /api/reviews/:id/approve`\n   - 駁回按鈕 → `POST /api/reviews/:id/reject`（需填寫 reason）\n7. 作者迴避規則：前端顯示但按鈕 disabled\n<info added on 2026-08-26T08:25:56.384Z>\n基於程式碼庫分析完成。`ReviewWorkbench` 介面定義於 `src/modules/governance/governance-service.ts:29-45`，包含 `review`、`package`、`version`、`validation` 四個區塊。後端 API 於 `src/modules/governance/index.ts` 實作，`GET /api/reviews` 支援 `status`、`os`、`client`、`cursor`、`limit` 篩選。現有線框位於 `design/wireframes/`，已完成技能池與上架頁。\n\n---\n\n線框先行約束：實作審核工作台前，必須先產出線框原型並保存到 `design/wireframes/`，交由使用者審核原型結構是否滿足需求，取得確認後才開始寫實作程式碼。未經審核不得直接進入頁面實作。\n\n線框產出方式：使用專案級 `prototype` 技能產出，單次只探索一個頁面。線框必須使用真實產品資料與真實後端欄位，不得使用 lorem ipsum，也不得虛構後端不存在的欄位。審核工作台需使用 `ReviewWorkbench` 介面（`src/modules/governance/governance-service.ts:29-45`）的實際欄位：`review`（含 `status`、`authorUid`、`packageId`）、`package`、`version`（含 `supportedOs`、`supportedClients`、`installCommand`、`uninstallCommand`、`hasResidualEffects`、`residualDescription`）、`validation`（含 `status`、`matrixResults`）。\n\n待產出線框：審核工作台待審列表頁 (`design/wireframes/審核工作台列表線框.html`)、審核詳情頁 (`design/wireframes/審核詳情線框.html`)。\n\n審核通過後，將結構決策寫入 `docs/前端實作指導.md` 的「頁面決策」章節，並回頭更新本子任務的實作細節。\n</info added on 2026-08-26T08:25:56.384Z>\n<info added on 2026-08-26T17:50:10.638Z>\n根據程式碼庫分析，我已掌握完整實作上下文。以下是應追加到子任務詳情的內容：\n\n---\n\n線框審核完成，使用者選定 Queue Ledger 方向（同屏可掃描最多待審項目；單筆證據需進詳情頁）。\n\n生產實作計畫：\n\n1. 建立 `web/src/pages/ReviewListPage.tsx`，遵循現有頁面模式（CatalogPage.tsx）：\n   - 使用 `useSearchParams` 保存 status/os/client 篩選條件\n   - 使用 `usePageState` 管理五態（loading/empty/error/partial/success）\n   - 使用 `PageStateView` 統一渲染狀態\n\n2. 建立 `web/src/api/governance.ts` 新增 API 呼叫函式：\n   ```typescript\n   interface ReviewListFilters {\n     status?: 'pending' | 'approved' | 'rejected' | 'superseded';\n     os?: string;\n     client?: string;\n     cursor?: string;\n     limit?: number;\n   }\n   interface ReviewListResult {\n     items: ReviewWorkbench[];\n     nextCursor?: string;\n     state: 'empty' | 'success';\n   }\n   function listReviews(filters: ReviewListFilters, signal: AbortSignal): Promise<ReviewListResult>\n   ```\n\n3. 前端 `ReviewWorkbench` 型別定義（對應 `governance-service.ts:29-45`）加入 `web/src/api/types.ts`：\n   - `review`: { id, status, authorUid, packageId, version, createdAt }\n   - `package`: { packageId, name, type, category, ownerTeam }\n   - `version`: { version, supportedOs[], supportedClients[], installCommand, uninstallCommand, hasResidualEffects, residualDescription }\n   - `validation`: { id, status, matrixResults[], startedAt }\n\n4. Queue Ledger 表格欄位（依線框 `審核工作台列表線框.html:210-211`）：\n   - 套件（名稱 + packageId）\n   - 版本（mono）\n   - 類型／分類（Chip）\n   - 支援系統（tag 列表）\n   - Client（tag 列表，seal 色調）\n   - 驗證矩陣（mini grid 顯示通過組數）\n   - 殘留（有殘留=warn / 無殘留=ok）\n   - 提交者／時間\n   - 操作（查看審核按鈕 → 連結到 `/reviews/:id`）\n\n5. 篩選工具列：\n   - 狀態（pending/approved/rejected/superseded）\n   - 作業系統（全部/linux/windows/macos）\n   - Client（全部/codex/claude-code）\n   - 套用篩選 + 清除按鈕\n\n6. 分頁：使用 cursor 分頁，每頁 20 筆（與後端 `page()` 函式一致，見 `governance/index.ts:52-63`）\n\n7. 更新 `web/src/App.tsx` 路由：\n   - `/reviews` → `<ReviewListPage />`\n   - `/reviews/:id` → 第二階段詳情頁（本任務後續項目）\n\n8. 建立 `web/src/pages/reviews.css` 樣式，複用 tokens.css 變數與 catalog.css 表格模式\n\n9. 複用既有元件：`Chip`、`LifecycleChip`、`PageStateView`、`Button`（來自 primitives.tsx）\n</info added on 2026-08-26T17:50:10.638Z>",
+            "status": "done",
+            "testStrategy": "1. 待審列表正確篩選與分頁\n2. 審核詳情完整顯示 snapshot 資料\n3. approve/reject API 呼叫正確\n4. 作者嘗試審核時按鈕不可點擊",
+            "parentId": "undefined",
+            "updatedAt": "2026-08-27T14:05:30.882Z"
+          },
+          {
+            "id": 7,
+            "title": "管理後台與我的安裝頁實作",
+            "description": "實作平台管理員後台（審核者管理、版本撤下、審計日誌）與使用者已安裝技能頁面",
+            "dependencies": [
+              1
+            ],
+            "details": "**管理後台** (`web/app/admin/`)：\n1. 審核者管理頁：\n   - 顯示現有 reviewer assignments\n   - 新增/撤銷審核者（packageType × category）\n2. 版本撤下頁：\n   - 搜尋套件 → 選擇版本\n   - delist：`POST /api/packages/:id/versions/:v/delist`\n   - emergency-disable：`POST /api/packages/:id/versions/:v/emergency-disable`\n3. 審計日誌查看：\n   - 呼叫 `GET /api/audit-logs`（需 platform_admin）\n   - 顯示 actor、action、target、occurredAt\n   - cursor 分頁\n\n**我的安裝頁** (`web/app/me/installations/page.tsx`)：\n1. 呼叫 `GET /api/me/installations` 取得 MyInstallation[]\n2. 顯示已安裝清單：packageName、currentVersion、availableVersion\n3. 升級提示：upgradeAvailable 為 true 時顯示徽章\n4. 卸載入口（連結至卸載腳本下載）\n<info added on 2026-08-26T08:26:53.600Z>\n根據程式碼庫分析，現有已審核通過的線框包括：技能池列表頁、詳情頁、上架頁（存於 `design/wireframes/`），但管理後台與我的安裝頁尚未產出線框。\n\n---\n\n**線框審核流程約束**\n\n實作本子任務的頁面前，必須先完成以下步驟：\n\n1. 管理後台：依序為審核者管理頁、版本撤下頁、審計日誌頁各產出一份線框，使用專案級 `prototype` 技能，單次只探索一個頁面\n2. 我的安裝頁：產出獨立線框\n\n線框要求：\n- 保存至 `design/wireframes/`\n- 必須使用真實產品資料與 `docs/前端API契約.md` 定義的後端欄位，不得使用 lorem ipsum 或虛構欄位\n- 審核者管理頁使用 `POST /api/admin/reviewers`、`DELETE /api/admin/reviewers/:id`\n- 版本撤下頁使用 `POST /api/packages/:id/versions/:v/delist`、`POST /api/packages/:id/versions/:v/emergency-disable`\n- 審計日誌頁使用 `GET /api/audit/logs`，支援 cursor 分頁\n- 我的安裝頁使用 `GET /api/me/installations` 回傳的 `MyInstallation[]`，包含 `packageName`、`currentVersion`、`availableVersion`、`upgradeAvailable`\n\n交由使用者審核原型結構是否滿足需求，取得確認後才開始寫實作程式碼。未經審核不得直接進入頁面實作。\n\n審核通過後：\n- 將結構決策寫入 `docs/前端實作指導.md` 的頁面決策章節\n- 回頭更新本子任務的實作細節\n</info added on 2026-08-26T08:26:53.600Z>",
+            "status": "done",
+            "testStrategy": "1. 管理員權限檢查正確\n2. 審核者指派/撤銷 API 呼叫成功\n3. delist/emergency-disable 表單驗證\n4. 我的安裝頁正確顯示升級狀態\n5. 非管理員存取管理頁顯示 403",
+            "parentId": "undefined",
+            "updatedAt": "2026-08-27T23:21:07.817Z"
+          },
+          {
+            "id": 8,
+            "title": "頁面狀態統一套用與響應式/無障礙完善",
+            "description": "依 M2-6 統一套用五態狀態至所有頁面，並完成響應式與無障礙測試",
+            "dependencies": [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "details": "1. 審查所有頁面確保套用 CatalogPageState 五態：\n   - loading：顯示 skeleton 骨架\n   - empty：顯示引導訊息\n   - error：顯示錯誤訊息與重試按鈕（retryable）\n   - partial：顯示可用資料 + unavailableSections 警告\n   - success：正常顯示\n2. 統一 loading 骨架樣式\n3. 統一 error boundary 捕捉非預期錯誤\n4. 響應式測試：\n   - 桌面（≥1024px）\n   - 平板（768-1023px）\n   - 手機（<768px）\n5. 無障礙完善：\n   - 語義化 HTML（nav、main、article、section）\n   - ARIA labels（按鈕、表單）\n   - 鍵盤導航（Tab 順序、Enter/Space 觸發）\n   - 顏色對比度檢查\n6. 建立 Storybook 或簡易元件展示頁（可選）",
+            "status": "done",
+            "testStrategy": "1. E2E 測試：完整使用者旅程（搜尋→詳情→安裝）\n2. 響應式截圖測試各斷點\n3. Lighthouse 無障礙分數 ≥ 90\n4. 手動鍵盤導航測試\n5. 各頁面五態切換正確",
+            "parentId": "undefined",
+            "updatedAt": "2026-08-28T00:10:17.211Z"
+          },
+          {
+            "id": 9,
+            "title": "上架頁與腳本目標矩陣實作",
+            "description": "發布者為每個系統×Client組合填寫中部命令，含腳本列表、跨組合複製、殘留聲明 [Updated: 8/26/2026]",
+            "details": "<info added on 2026-08-26T07:09:03.128Z>\n版面採 Matrix 版面，核心為安裝腳本列表。每列呈現一個「系統 × Client」組合，欄位包含目標組合、填寫狀態、腳本語言、字元數、生成檔名樣式。填寫狀態分三種：已填寫、複製自其他組合、待填寫。每列操作包括編輯、複製命令、刪除。列表下方提供系統與 Client 下拉選擇以加入新組合。\n\n跨組合複製為必要功能。Linux 與 macOS 的 bash 命令多數可共用，編輯區提供已建立腳本的複製按鈕，點擊將該組合的中部命令填入編輯框後可自行調整。複製來源提供預覽以避免誤選，複製而來的項目在列表標記來源，內容經修改後標記改為已填寫。\n\n已建立的腳本可刪除後重新編寫。已加入但未填寫命令的組合阻擋送出審核，送出時列出尚缺幾個組合。\n\n編輯區三項禁止提示：不要寫 shebang、不要自行回報結果、不要讀取使用者識別。上部與尾部已處理這三件事，發布者重複實作會與平台衝突。\n\n殘留聲明使用開關搭配條件展開。hasResidualEffects 為 true 時 residualDescription 與 manualCleanupSteps 均必填，與 src/modules/script-generator/script-generator-service.ts:381-389 的服務端校驗一致。\n\n尾部十一欄以唯讀清單呈現，欄位名與 TELEMETRY_FIELDS 一致：idempotency_key、package_id、version、user_ref、user_ref_type、os_type、client_runtime、status、error_code、start_time、end_time。對應定義見 src/modules/script-generator/script-generator-service.ts:6-9。\n\n阻塞事項：PackageVersionRecord 目前只有單一 installCommand 欄位，per-target 儲存層尚未支援。此事項記錄於 docs/待決策與延後事項.md 的 D-3 章節，使用者已確認先不改 schema，因此只能實作單一命令降級版本。儲存層補齊前無法完整實作跨組合編輯與每目標命令獨立儲存。\n\n線框參考：https://claude.ai/code/artifact/f768ec00-b113-4377-855f-9043c5e5f80c 變體 2。\n</info added on 2026-08-26T07:09:03.128Z>\n<info added on 2026-08-26T07:57:19.152Z>\n2026-08-26 需求收斂整合：\n\n目標系統收斂為三項：linux/macos、windows、wsl。Linux 與 macOS 命令多數可共用，合併為單一目標以減少發布者重複填寫。此收斂需後端將 ScriptTargetOs 從目前的 'linux' | 'windows' 調整為三值列舉，見 src/modules/script-generator/types.ts:3。Client 只記名稱不含版本號，介面顯示「Claude Code」而非「Claude Code 1.8」，版本相容性由發布者在使用說明中自行描述。\n\n腳本自身版本機制：每份一鍵安裝腳本有獨立於技能版本的遞增版本號，首次建立為 v1，每次編輯儲存後自動遞增。檔名格式為 install-{packageId}-{packageVersion}-{os}-{client}-{userRef}-v{scriptVersion}.{ext}，linux/macos 與 wsl 為 .sh，windows 為 .ps1。每次遞增需記錄變更描述、時間與版本號；描述為選填，未填時版本紀錄顯示「無描述資訊」，不得顯示空白或自動產生的佔位文字。列表新增「版本紀錄」操作，詳情頁與上架頁均可查看腳本歷次變更。\n\n刪除改為軟刪除：標記為不可見而非從紀錄移除，版本紀錄仍可追溯已刪除的腳本。列表下方需說明「刪除的腳本改為不可見，仍可在版本紀錄中追溯」。\n\n選項參數為此次需求收斂的重點：發布者可為腳本宣告參數，每個參數包含參數名、類型（單選、開關、文字）、說明與預設值。參數以 ASP_OPT_ 前綴環境變數原樣傳給中部命令，例如 --scope 對應 ${ASP_OPT_SCOPE}、--with-hooks 對應 ${ASP_OPT_WITH_HOOKS}。上架頁必須顯示此參數名到環境變數的對應預覽，發布者才知道在命令中如何讀取。平台不解析也不改寫參數值，只負責傳遞，參數語意由發布者的命令自行處理。典型用途為安裝層級選擇（全域或使用者、專案或家目錄）。線框中選項參數區塊位於 design/wireframes/技能池與上架線框.html 第 647-671 行，包含參數名、類型、說明、預設值四欄與對應預覽區塊。\n\n使用說明為必填的多行輸入，描述如何執行腳本。說明顯示於詳情頁，並寫入腳本的 --help 輸出。缺少使用說明的腳本，員工下載後不知道如何帶入選項參數。上架頁需註明「說明會顯示在詳情頁，並寫入腳本的 --help 輸出」。\n\n遙測欄位擴充：基礎十一欄（見 src/modules/script-generator/script-generator-service.ts:6-9 的 TELEMETRY_FIELDS）加入 script_version 與 options 兩個新增欄位。上架頁與詳情頁展示遙測欄位時，需以不同樣式標示新增欄位，如線框第 263-266 行所示的 .tele span.added 樣式。需注意 options 含員工選擇的安裝參數，屬行為資料，隱私敏感度高於現有欄位，十一欄白名單原已提交隱私審核，擴充需重新確認，此事項已記錄於 docs/待決策與延後事項.md 的 D-3 章節。\n\n線框參考：design/wireframes/技能池與上架線框.html 變體 2（上架頁）。\n規範參考：docs/前端實作指導.md 第 51-91 行與第 105-126 行。\n</info added on 2026-08-26T07:57:19.152Z>\n<info added on 2026-08-26T08:28:52.786Z>\n線框狀態：線框已完成並經使用者審核通過。相關文件存於 design/wireframes/，包含技能池與上架線框.html（詳情頁與上架頁）及技能池列表線框.html。實作可直接參照線框結構進行，不需重新產出。若實作過程中需要調整資訊架構或互動模型，須先更新線框並重新取得使用者確認後才可變更實作方向。\n</info added on 2026-08-26T08:28:52.786Z>\n<info added on 2026-08-28>\n實作完成：因 D-3 後端仍只有單一 installCommand／uninstallCommand，本期交付明示限制的單一目標降級版，不在前端假存多組命令。/publish 使用 Catalog 真實套件候選，支援目前後端真實值 Linux／Windows 與 Claude Code／Codex；目標選擇會同步更新唯一 Matrix 列與 bash／PowerShell 語言。保存前由前端校驗版本、安裝／解除安裝命令；hasResidualEffects 開啟時殘留說明與手動清理步驟同時必填，校驗失敗不得發出建立草稿請求。草稿建立成功後才開放送審，伺服器仍負責維護權限與資料校驗。完整多目標能力由高優先 Task 13 承接。自動驗證為 publish model／SSR 2 檔 6 項、typecheck、production build 通過；瀏覽驗收確認欄位聯動、前端阻擋時零網路請求、1280×800 與 1024×768 無整頁橫向溢位，console 無錯誤。\n</info added on 2026-08-28>",
+            "status": "done",
+            "dependencies": [
+              "9.1"
+            ],
+            "parentTaskId": 9,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-28T03:57:15.152Z"
+          }
+        ],
+        "updatedAt": "2026-08-28T03:57:15.152Z"
+      },
+      {
+        "id": "10",
+        "title": "外部依賴整合與部署配置",
+        "description": "整合 SSO、通知渠道、演示環境，配置 CI/CD 與生產部署。第一期本地可交付部分已完成，需外部團隊提供的項目已記錄於 docs/待決策與延後事項.md D-2。",
+        "status": "in-progress",
+        "dependencies": [
+          "2",
+          "6",
+          "7"
+        ],
+        "priority": "medium",
+        "details": "## 已完成（第一期本地交付）\n\n### CI/CD 工作流（.github/workflows/ci.yml）\n- `verify` job：型別檢查、建置、migration 冪等驗證、資料庫健康檢查、零外鍵閘門（pg_constraint 查詢）、測試\n- `container` job：容器映像建置驗證（不推送）\n- 同分支只保留最新執行（concurrency group）\n- PostgreSQL 17-alpine service container，port 55432\n\n### 容器化\n- 多階段 Dockerfile：builder 產生 dist 與生產依賴，runtime 只保留執行所需\n- 非 root 執行（app 使用者）\n- 內建 HEALTHCHECK 請求 /health\n- .dockerignore 排除 node_modules、dist、test、docs、.env 等\n\n### SSO adapter 邊界（Task #2 完成）\n- `src/modules/identity/identity-provider.ts` 定義 IdentityProvider 介面\n- 非 development 環境缺少 DATABASE_URL 或 IdP 配置時 fail-closed\n- 退回 DisabledIdentityProvider 拒絕登入\n\n### 文檔\n- `docs/運維指南.md` 補入容器化與 CI 章節\n\n## 待外部提供（docs/待決策與延後事項.md D-2）\n\n| 項目 | 需要提供的內容 | 備註 |\n|---|---|---|\n| SSO 正式 IdP | OAuth2 端點、client id/secret | AGENTS.md #33：OIDC/PKCE/JWKS 延後到第二期 |\n| 腳本簽名密鑰 | HSM 或 Vault 存取權 | AGENTS.md #33：密鑰輪替延後到第二期 |\n| 遙測欄位隱私核准 | 法務對 §2.3 白名單的書面核准 | 流程事項 |\n| 演示環境資源 | VM Pool 或 DinD，覆蓋四個目標系統 | 第一期已驗證 powershell-wsl 與本機 Docker |\n| 公司通知渠道 | Slack/Teams/Lark webhook 憑證 | 需真實憑證 |\n| 生產部署目標 | Kubernetes 叢集或 registry 存取 | CI 已驗證映像可建置 |\n\n## 驗證結果\n- typecheck 與 build 通過\n- 28 個測試檔共 219 項測試通過\n- pg_constraint 查詢確認外鍵數量為 0\n- CI YAML 可解析\n- 容器映像建置：本機網路無法拉取 node:24-alpine，記於 R-0",
+        "testStrategy": "### 已通過驗證\n1. CI YAML 解析正確\n2. 零外鍵閘門：pg_constraint 查詢 count=0\n3. 型別檢查與建置通過\n4. 219 項測試全通過\n\n### 待驗證（需外部資源）\n1. SSO 整合測試：需正式 IdP 憑證\n2. 容器映像建置：本機 docker build 待網路恢復後實測（R-0），CI 的 container job 在 GitHub Actions 上會覆蓋\n3. 通知渠道送達：需真實 webhook 憑證\n4. 灰度部署與回滾：需 Kubernetes 叢集\n5. 監控告警觸發：需生產環境",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "CI 工作流配置",
+            "description": "建立 .github/workflows/ci.yml，包含型別檢查、建置、migration 冪等驗證、資料庫健康檢查、零外鍵閘門、測試、容器建置驗證",
+            "dependencies": [],
+            "details": "已完成。verify job 啟動 postgres:17-alpine service container (port 55432)，依序執行 npm ci、typecheck、build、db:migrate（兩次驗證冪等）、db:check、零外鍵 pg_constraint 查詢、npm test。container job 在 verify 通過後執行 docker build 驗證映像可建置。concurrency group 確保同分支只保留最新執行。",
+            "status": "done",
+            "testStrategy": "CI YAML 可解析；GitHub Actions 執行通過",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "多階段 Dockerfile 與 .dockerignore",
+            "description": "建立生產級容器映像配置，builder 階段產生 dist 與生產依賴，runtime 階段只保留執行所需",
+            "dependencies": [],
+            "details": "已完成。Dockerfile 兩階段建置：builder 執行 npm ci、npm run build、npm prune --omit=dev；runtime 複製 node_modules、dist、package.json、drizzle、scripts。以非 root app 使用者執行，ENV NODE_ENV=production、HOST=0.0.0.0、PORT=3000。內建 HEALTHCHECK 請求 /health，資料庫不可用時 503。.dockerignore 排除 node_modules、dist、.git、.env、test、docs 等。",
+            "status": "done",
+            "testStrategy": "本機 docker build 待網路恢復後實測（R-0）；CI container job 在 GitHub Actions 上驗證",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "運維指南補充容器化與 CI 章節",
+            "description": "更新 docs/運維指南.md，加入容器化操作與 CI 工作流說明",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "已完成。運維指南已包含：容器化章節（docker build/run 命令、非 root 執行、HEALTHCHECK）；持續整合章節（ci.yml 觸發條件、verify/container job 流程、零外鍵閘門）；健康與監控章節（/health 端點、關鍵指標）。",
+            "status": "done",
+            "testStrategy": "文檔審查確認技術準確性",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "SSO adapter fail-closed 驗證",
+            "description": "確認非 development 環境下缺少 IdP 配置時 fail-closed，不以開發身份靜默放行",
+            "dependencies": [],
+            "details": "已在 Task #2 完成。src/modules/identity/identity-provider.ts 定義 IdentityProvider 介面；loadConfig 在 NODE_ENV 非 development 且缺少 DATABASE_URL 時直接拋錯；身份模組缺少正式 IdP 配置時退回 DisabledIdentityProvider 拒絕登入。",
+            "status": "done",
+            "testStrategy": "現有測試覆蓋 fail-closed 行為",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "記錄待外部提供項目",
+            "description": "將需要公司資源或外部團隊提供的項目記錄於 docs/待決策與延後事項.md D-2",
+            "dependencies": [],
+            "details": "已完成。D-2 列出六項待提供項目：SSO 正式 IdP、腳本簽名密鑰、遙測欄位隱私核准、演示環境資源、公司通知渠道、生產部署目標。每項註明需提供內容與第一期原則的關係。OIDC/PKCE/JWKS 與密鑰輪替依 AGENTS.md #33 本就延後到第二期。",
+            "status": "done",
+            "testStrategy": "文檔審查確認項目完整",
+            "parentId": "undefined"
+          },
+          {
+            "id": 6,
+            "title": "SSO 正式 IdP 整合",
+            "description": "取得正式 OAuth2/OIDC IdP 憑證並完成整合，對接公司 IdP 取得 uid、團隊、角色",
+            "dependencies": [
+              4
+            ],
+            "details": "等待外部提供。需要：OAuth2 端點 URL、client id 與 secret。IdentityProvider adapter 邊界已就緒，取得憑證後實作 OAuth2IdentityProvider 並注入。AGENTS.md #33 指明 OIDC、PKCE、JWKS 延後到第二期，第一期只接基本 OAuth2。\n<info added on 2026-08-29T00:04:19.030Z>\n我已掌握足夠脈絡，現在生成更新內容。\n\n2026-08-29 部分交付：採方案 A（本機模擬 IdP）推進，企業 IdP 授權 URL 尚未開放。\n\n後端已完成：\n- OAuth2IdentityProvider（src/modules/identity/identity-provider.ts:123-301）：authorize 轉導、code→token 交換、userinfo 映射；一次性 state 防重放（SHA-256 digest）、10 分鐘 TTL、10 秒請求逾時、IdP 不可達回 502 IDENTITY_PROVIDER_UNREACHABLE。\n- claim 名稱可配置（OIDC_CLAIM_UID/DISPLAY_NAME/TEAMS），支援 a.b 巢狀路徑（readClaim），teams 接受陣列或逗號空白分隔字串（normaliseTeams）。\n- OidcConfig（src/shared/config/config.ts:37-51）：六個 OIDC_ 變數全有或全無，部分配置啟動報錯；正式與 staging 拒絕端點指向本機位址（LOCAL_HOST_PATTERN）。\n- selectProvider（src/modules/identity/index.ts:62-69）：OIDC 配置齊全時優先 OAuth2IdentityProvider，未配置則退回開發身份，非開發環境 fail-closed 為 DisabledIdentityProvider。\n- callback 改以 state 取回 returnTo（peekReturnTo），外部轉導仍被 safeReturnTo 擋下。\n- mock IdP（src/modules/identity/mock-idp-server.ts）：/authorize、/token、/userinfo，npm run dev:idp，預設 127.0.0.1:4780。\n\n驗證：typecheck 通過；全量 373 項測試通過（新增 15 項：9 項 provider 協議與端點整合、6 項 config OIDC）。模擬 IdP 以真實 HTTP 完成 authorize→token→userinfo 全鏈路，並確認 code 重放與錯誤 client_secret 皆被拒。\n\n仍待外部提供：真實端點 URL、client id/secret、userinfo 欄位規格、對接後冒煙測試。取得後只需替換環境變數，程式碼不動。\n\n未完成（不需憑證，屬本子任務範圍）：前端登入頁與身份選單、依角色的導覽控制。web/src 目前仍未呼叫 /api/auth/me。\n\n新增阻塞項 D-4：正式環境無產生首位 platform_admin 的路徑。AuthorizationService.requirePlatformAdmin 要求授予角色必須先有 platform_admin，但正式環境沒有任何管道產生第一個。開發環境靠 createIdentityModule 中 provider.kind === 'development' && uid === 'dev-admin' 分支自動授予，OAuth2 provider 啟用後該分支不生效。SSO 接通後仍無人能授權，須在正式對接前定案。詳見 docs/待決策與延後事項.md D-4 節候選方案。\n\n.env.example 因權限限制未能更新，OIDC 變數說明待補。\n</info added on 2026-08-29T00:04:19.030Z>\n<info added on 2026-08-29T01:14:24.728Z>\n2026-08-29 前端交付完成。\n\n新增：\n- web/src/api/identity.ts：fetchViewer、logout、buildLoginUrl（returnTo 只接受站內路徑，// 開頭與外部網址一律退回首頁）、isAuthenticated、hasRole、isPlatformAdmin、canReview（審核人與平台管理員皆可）、roleLabel、scopeLabel\n- web/src/api/viewer-context.tsx：ViewerProvider 全站只發一次 /api/auth/me；authenticated／anonymous 明確區分，查詢失敗時 viewer 為 undefined，不猜測身份也不假設角色\n- web/src/components/ViewerMenu.tsx：身份解析完成前以等高佔位取代登入鍵，避免已登入者看到「使用公司帳號登入」閃動；未登入顯示登入鍵，已登入顯示頭像、displayName、uid、團隊、角色與範圍；沒有角色顯示「一般員工權限」而非空白；Escape 與點擊外部關閉\n- web/src/pages/LoginPage.tsx：單一按鈕，無帳密輸入框；身份服務不可用時顯示明確訊息並保留重試；已登入者自動轉回 returnTo\n- web/src/App.tsx：ViewerProvider 包裹 AppShell；ShellNav 依角色增減入口（技能池、我的安裝、通知、上架、審核、管理）；/login 路由\n\n驗證：typecheck 通過；全量 388 項測試通過（新增 15 項 identity-viewer.test.tsx：9 項身份判斷、6 項轉導與標示）；vite build 成功。\n\n未做瀏覽器實機驗收：驗證所需的 Bash 命令被權限拒絕，改以 5 項端到端測試覆蓋登入流程（匿名態、登入後欄位形狀、登出回匿名、returnTo 轉導、角色授予後可見）。實機驗收待使用者執行。\n\n文件：docs/前端實作指導.md 新增 Task 10.6 章節，記錄 ViewerProvider 三態語義、匿名非攔截牆規則、登入整頁轉導原因、身份選單內容設計與角色導覽不構成安全邊界的說明。\n\n10.6 剩餘：真實 IdP 憑證與欄位規格（外部），以及 D-4 首位 platform_admin 產生路徑（未決）。\n</info added on 2026-08-29T01:14:24.728Z>\n<info added on 2026-08-29T02:20:54.174Z>\n2026-08-29 D-4 結案：首位 platform_admin 改以 BOOTSTRAP_ADMIN_UID 環境變數產生（使用者定案採方案 A）。\n\n實作位置：\n- config.ts:62-68 新增 bootstrapAdminUid 選填設定，對應 BOOTSTRAP_ADMIN_UID 環境變數\n- AuthorizationService.grantBootstrapAdmin（authorization-service.ts:124-129）：只在該 uid 尚無 platform_admin 時授予 global 範圍；已是管理員則回傳 undefined，實現冪等\n- grantPlatformAdmin（authorization-service.ts:131-146）：assignedByUid 記為 bootstrap 而非人為授予的 uid，稽核時可區分\n- identity/index.ts:186-201：callback 觸發授予並寫 warn 日誌（只記 uid，不記其他身份欄位）\n\n刻意行為：管理員被撤銷後重新登入會再次取得。否則撤銷最後一位管理員會讓平台永久失去授權能力且無法自救。要真正移除須先清除環境變數再撤銷。此行為於 bootstrap-admin.test.ts 以測試固定。\n\n未配置時不授予任何人；開發環境 dev-admin 分支維持不變。\n\n驗證：432 項測試全通過（本次新增 7 項於 test/identity/bootstrap-admin.test.ts），涵蓋未配置、正確授予、他人不受影響、重複登入不重複授予、assignedByUid 標示、grantBootstrapAdmin 冪等，以及取得管理員後可實際 POST /api/admin/reviewers 成功（證明授權鏈完整）。\n\n文件更新：\n- docs/待決策與延後事項.md D-4 節結案，記錄選 A 的理由\n- docs/運維指南.md「首位平台管理員」章節（72-80 行），警示此值必須與 IdP 回傳 uid 完全一致，否則登入不會取得權限且無錯誤提示\n\nTask 10.6 至此本地部分全部完成，僅餘外部憑證與欄位規格。\n</info added on 2026-08-29T02:20:54.174Z>",
+            "status": "pending",
+            "testStrategy": "SSO 整合測試：登入/登出流程、角色映射",
+            "parentId": "undefined"
+          },
+          {
+            "id": 8,
+            "title": "遙測欄位隱私核准",
+            "description": "提交 §2.3 白名單給法務/隱私團隊審核，取得書面核准",
+            "dependencies": [],
+            "details": "等待外部提供。屬流程事項而非工程任務。十一欄白名單已在 Task #7 固定。",
+            "status": "pending",
+            "testStrategy": "取得書面核准文件",
+            "parentId": "undefined"
+          },
+          {
+            "id": 9,
+            "title": "演示環境資源配置",
+            "description": "取得 VM Pool 或 Docker-in-Docker 環境，覆蓋四個目標系統並建立環境重置腳本",
+            "dependencies": [],
+            "details": "等待外部提供。第一期 Runner 為 powershell-wsl 與本機 Docker，已可驗證兩個平台。完整四個目標系統（macOS、Linux、Windows、WSL）需要 VM Pool 或 DinD。\n<info added on 2026-08-29T02:53:02.424Z>\n2026-08-29 降級改版：使用者確認目前為個人開發／MVP 驗證期，不使用 VM Pool。\n\n原範圍（作廢）：VM Pool 或 DinD 覆蓋 macOS、Linux、Windows、WSL 四個目標系統。\n\n新範圍——單機演示環境：\n- 以 Docker Compose 擴充既有 compose.yaml（目前僅含 postgres service），加入平台後端與前端服務，形成 docker compose up 即可跑的完整本機環境。\n- 腳本執行驗證限於本機可及的目標：Linux/macOS（DockerLinuxValidationRunner，使用 redis:8.2.1 容器）與 WSL（PowerShellValidationRunner，呼叫 pwsh 執行 .ps1）。Windows 原生與 macOS 原生不在 MVP 範圍。\n- 環境重置以 docker compose down -v 加 npm run db:migrate 達成，不需 VM 快照。\n- 明確記錄限制：未覆蓋的目標系統（Windows 原生、macOS 原生）其生成腳本仍可下載，只是平台端未做執行驗證。此限制須在運維文件與審核頁標明，不得讓使用者誤以為四系統都已驗證。\n\n理由：MVP 階段驗證的是平台流程本身（上架、審核、生成、下載、遙測回報），而非跨四系統的腳本相容性。後者需要真實多平台資源，屬正式推廣前的工作。\n</info added on 2026-08-29T02:53:02.424Z>\n<info added on 2026-08-29T03:34:15.046Z>\n2026-08-29 完成。\n\n交付項目：\n1. npm run demo:reset 腳本（scripts/reset-demo-environment.ts）：依序執行 docker compose down -v、重啟資料庫、db:migrate、db:seed，完成演示環境重建。\n2. 安全閘門：NODE_ENV 非 development/test 時拒絕執行，避免誤清生產資料。\n3. 運維指南演示環境章節（docs/運維指南.md）：說明 demo:reset 用途、安全限制，並以表格列明已驗證（Linux/macOS 本機 bash、WSL powershell-wsl runner）與未驗證（Windows 原生、macOS 原生）的目標系統。\n\n驗證範圍聲明原則：未驗證的系統生成腳本仍可下載，只是平台端未實際執行。文件明令不得聲稱四系統皆已驗證——與「不用靜態分析推導權限」同一條原則：不聲稱未經證實的事。覆蓋另兩個系統需真實多平台資源，不在 MVP 範圍。\n</info added on 2026-08-29T03:34:15.046Z>",
+            "status": "done",
+            "testStrategy": "各目標系統的腳本執行與環境重置",
+            "parentId": "undefined",
+            "updatedAt": "2026-08-29T03:31:45.408Z"
+          },
+          {
+            "id": 10,
+            "title": "公司通知渠道整合",
+            "description": "取得 Slack/Teams/Lark webhook 憑證並完成通知渠道整合",
+            "dependencies": [],
+            "details": "等待外部提供。需要真實 workspace 與 webhook 憑證才能整合，無法以 stub 取代驗證。需實作：通知模板、郵件通知、各渠道送達。\n<info added on 2026-08-29T02:06:28.635Z>\n根據程式碼庫分析，生成的更新文字如下：\n\n2026-08-29 部分交付：不需憑證的部分已完成。\n\n已完成：\n- src/modules/notification/templates.ts：文案單一來源，站內通知與外部渠道描述同一事件不各自漂移。新版本通知僅在已知安裝版本時連向差異頁，否則退回套件詳情（差異比較需來源與目標兩版，猜錯比不提供更糟）。三種通知類型分別對應 info/warning/critical。\n- channels.ts：SlackChannel（blocks，fields 上限 10）、TeamsChannel（MessageCard，依嚴重度給主題色）、LarkChannel（post 富文本）、EmailChannel（純文字，傳送層由 EmailTransport 介面注入，不綁 SMTP 或服務商）。\n- 投遞結果三分：2xx 送達；429 與 5xx、連線失敗、逾時為可重試；其餘 4xx 為拒絕不重試（重試只會得到相同結果並浪費配額）。\n- notification-dispatcher.ts：重試至上限（預設 3 次）、被拒即停、單一渠道失敗不影響其餘、目標指定未啟用渠道時記錄後繼續。以 DeliveryLog 保證同一 outbox 事件對同一端點不重複送達。渲染只做一次，多渠道共用同一份內容。\n- channel-factory.ts：依配置建立已啟用渠道，未配置者不建立。\n- config.ts：NOTIFY_SLACK/TEAMS/LARK_WEBHOOK_URL 與 PLATFORM_BASE_URL；三個 webhook 都要求 https，非 https 啟動即拋錯（webhook 打錯字會讓通知靜默消失，比啟動失敗難查）。\n\n驗證：typecheck 通過；全量 425 項測試通過（本次新增 37 項：6 項模板、10 項渠道 payload 與結果分類、14 項派送重試與冪等、7 項工廠與配置）。\n\n設計要點：外部通知為加值，渠道未配置時站內通知照常寫入與顯示，不因外送失敗影響主流程。既有 domain_events outbox（含 status/attempts/last_error）已在治理事件中寫入 user_notification 事件，是後續接上派送的整合點。\n\n仍待外部提供：真實 Slack/Teams/Lark webhook 憑證與 workspace、公司郵件通道。取得後只需設定環境變數並實作 EmailTransport，模板與派送邏輯不必更動。\n\n未做：outbox 輪詢器（將 domain_events 的 pending 事件取出交給 dispatcher）尚未實作，因無憑證無法端到端驗證；收件人目錄目前為 StaticRecipientDirectory 靜態對照，取得公司目錄服務後改為逐人解析。\n</info added on 2026-08-29T02:06:28.635Z>",
+            "status": "pending",
+            "testStrategy": "通知測試：各渠道正確送達",
+            "parentId": "undefined"
+          },
+          {
+            "id": 11,
+            "title": "生產部署與監控",
+            "description": "取得 Kubernetes 叢集存取權，配置灰度部署、回滾、健康檢查與告警",
+            "dependencies": [
+              2,
+              6
+            ],
+            "details": "等待外部提供。CI 已驗證映像可建置；推送 registry 與部署需要憑證。需配置：灰度部署策略、錯誤率告警、遙測上報延遲告警。/health 端點已就緒。\n<info added on 2026-08-29T02:54:45.883Z>\n2026-08-29 降級改版：個人開發／MVP 驗證期，不使用 Kubernetes。\n\n原範圍作廢：Kubernetes 叢集、灰度發布、registry 推送、生產級監控告警。\n\n新範圍——單機 Docker Compose 部署與輕量可觀測性：\n\n部署形態：\n- Docker Compose 單機部署。既有多階段 Dockerfile（node:24-alpine builder→runtime、非 root 執行、HEALTHCHECK /health）維持不變，compose 直接 build 而非推送 registry；不需 registry 憑證。\n- 新增 docker-compose.yml，服務項：app（depends_on: postgres: condition: service_healthy）。\n\n發布策略：\n- 不做灰度。單機以 `docker compose up -d --build` 重建，接受短暫停機。\n- 回滾方式：切回前一個 image tag 或 git revert 後重建。MVP 階段停機成本可接受，灰度與零停機屬正式推廣後的工作。\n\n健康檢查：\n- 既有 Dockerfile HEALTHCHECK（interval=10s、timeout=3s、start-period=20s、retries=3，打 /health 端點）已就緒。\n- compose 加上 depends_on healthy 條件，確保 postgres 健康後才啟動 app。\n\n監控降級（本機可行方案）：\n- 結構化日誌：既有 pino 維持，LOG_LEVEL 環境變數控制。\n- 輕量健康輪詢：一個 cron 或 systemd timer 定期打 /health；異常時走 Task 10.10 的通知渠道（NotificationDispatcher）送出。\n- 不引入 Prometheus、Grafana 或外部 APM。\n\n錯誤率與遙測延遲告警：\n- 以既有 AnalyticsRepository 為來源做週期性查詢。\n- 閾值寫在環境變數（如 ALERT_ERROR_RATE_THRESHOLD、ALERT_TELEMETRY_DELAY_THRESHOLD），不做動態配置。\n- 超出閾值即調用通知渠道送出，複用 Task 10.10 的 NotificationDispatcher 與渠道 adapter。\n\n待實作項目：\n1. 新增 docker-compose.yml，含 app 與 postgres 服務、depends_on healthy。\n2. 新增健康輪詢腳本（scripts/health-poll.sh 或 Node.js），讀 /health、異常時 notify。\n3. 新增 analytics 閾值查詢邏輯，環境變數驅動，超閾值走通知渠道。\n4. 文件更新：運維指南加上單機部署、compose 指令、回滾、健康輪詢與告警配置章節。\n\n理由：MVP 驗證的是平台功能閉環，不是部署基礎設施的成熟度。降級後所有項目本機可完成，不再是硬阻塞。\n</info added on 2026-08-29T02:54:45.883Z>\n<info added on 2026-08-29T03:33:09.106Z>\n2026-08-29 完成並實機驗證。\n\n交付產物：\n- compose.deploy.yaml：三服務架構（postgres 具名 volume 且不對外開放 port；migrate 一次性服務、postgres healthy 後執行；app 依賴 migrate 成功才啟動）\n- 健康輪詢：src/modules/monitoring/health-monitor.ts（HealthMonitor 類）與 src/modules/monitoring/notification-alert-sink.ts（NotificationAlertSink 類）\n- npm 腳本：deploy:up / deploy:down / deploy:logs\n\n實機驗證結果（docker 實際執行）：\n- 映像建置成功\n- 14 個 migration 全數套用\n- 重跑 migrate 顯示「資料庫 migration 已是最新狀態」，證明冪等\n- /health 回傳 {status:ok,database:up}\n- 前端 index.html 回傳 200\n- /api/auth/me 回傳 200\n- app 與 postgres 容器均為 healthy，證明 HEALTHCHECK 生效\n- 容器內 pg_constraint 查詢外鍵數為 0\n\n過程修正既有缺陷：Dockerfile builder 階段只複製 src，未複製 web 與 vite.config.ts，但 npm run build 會執行 build:web——導致映像無法建出前端。已修正並確認 dist/web/index.html 與 assets 存在於映像內。此缺陷早於本次任務，R-0 未實測時無法發現。\n\nmigration 進入點改造：邏輯移入 src/shared/database/migrator.ts，新增 src/migrate.ts 編譯後產生 dist/migrate.js。原因：scripts/ 不在 tsconfig.build.json 的 rootDir 內不會編譯，而 runtime 階段已 npm prune 掉 tsx，容器內無法執行 .ts。已在映像內確認 tsx 不存在。\n\n健康輪詢設計原則：\n- 連續三次失敗才告警（避免單次抖動）\n- 只在狀態轉換時發送（持續異常不重複，避免每週期產生雜訊被忽略）\n- 告警送出失敗不中斷輪詢（否則無法偵測恢復）\n- 未配置通知渠道時不啟動（告警無處可送）\n\nR-0 一併結案。\n</info added on 2026-08-29T03:33:09.106Z>",
+            "status": "done",
+            "testStrategy": "部署測試：灰度發布、回滾；監控測試：告警觸發",
+            "parentId": "undefined",
+            "updatedAt": "2026-08-29T03:31:47.514Z"
+          }
+        ],
+        "updatedAt": "2026-08-29T03:31:47.514Z"
+      },
+      {
+        "id": "11",
+        "title": "批次三體驗完善功能",
+        "description": "實作升級流程、維護者支援入口、結構化反饋與推薦更新通知",
+        "details": "1. 升級流程與版本差異展示：\n   - 顯示當前版本與目標版本的差異\n   - 權限變更提示\n   - 一鍵升級腳本生成\n\n2. 維護者支援入口配置：\n   - 維護者可設定支援渠道（IM群、郵件、工單系統）\n   - 詳情頁展示支援入口\n   - 使用者可快速發起支援請求\n\n3. 結構化使用反饋：\n   - 反饋表單：滿意度、問題分類、詳細描述\n   - 「需要人工協助」標記\n   - 反饋統計與趨勢\n\n4. 推薦更新通知：\n   - 當新版本發布時通知已安裝使用者\n   - 通知渠道：IM、郵件、平台內通知\n   - 可配置通知頻率與安靜時段\n\n偽代碼：\n```typescript\n// 升級差異計算\ninterface VersionDiff {\n  addedPermissions: Permission[];\n  removedPermissions: Permission[];\n  changedCommands: CommandDiff[];\n  releaseNotes: string;\n  requiresReapproval: boolean;\n}\n\nasync function calculateVersionDiff(\n  currentVersion: string,\n  targetVersion: string\n): Promise<VersionDiff> {\n  const current = await versionRepo.findByVersion(currentVersion);\n  const target = await versionRepo.findByVersion(targetVersion);\n  \n  return {\n    addedPermissions: difference(target.permissions, current.permissions),\n    removedPermissions: difference(current.permissions, target.permissions),\n    changedCommands: diffCommands(current.script, target.script),\n    releaseNotes: target.releaseNotes,\n    requiresReapproval: hasNewSensitivePermissions(target, current)\n  };\n}\n```",
+        "testStrategy": "1. 升級流程測試：差異計算正確性\n2. 通知測試：各渠道正確送達\n3. 反饋測試：表單提交、統計計算\n4. 整合測試：完整升級流程",
+        "priority": "low",
+        "dependencies": [
+          "9"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "升級差異計算後端",
+            "description": "以 target/revision 為來源精確計算版本差異：腳本目標增減、命令變更、選項參數變更、殘留效應變化、releaseNotes；判定 requiresReapproval。提供差異查詢 API。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 11,
+            "updatedAt": "2026-08-28T17:45:55.259Z",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "維護者支援入口後端",
+            "description": "維護者可為套件設定支援渠道（IM 群、郵件、工單系統），詳情頁可讀取。渠道類型與位址皆結構化儲存。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 11,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-28T17:45:55.265Z"
+          },
+          {
+            "id": 3,
+            "title": "結構化使用反饋後端",
+            "description": "反饋表單資料模型與 API：滿意度、問題分類、詳細描述、需要人工協助標記；反饋統計聚合供作者/維護者查看。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 11,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-28T17:45:55.271Z"
+          },
+          {
+            "id": 4,
+            "title": "新版本發布通知",
+            "description": "新版本發布時通知已安裝該套件的 UID 使用者；擴充既有 user_notifications 的 version_published 型別；匿名 UUID 不通知；平台內通知為第一期唯一渠道。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 11,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-28T17:45:55.276Z"
+          },
+          {
+            "id": 5,
+            "title": "前端線框與頁面實作",
+            "description": "升級差異檢視、支援入口展示、反饋表單與通知中心的線框產出、使用者審核與生產實作。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 11,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-28T20:43:47.385Z"
+          }
+        ],
+        "updatedAt": "2026-08-28T20:43:47.385Z"
+      },
+      {
+        "id": "12",
+        "title": "§6 待解難題驗證與文檔",
+        "description": "驗證防繞過機制可靠性、解決跨系統腳本一致性、UUID 持久化等技術難題，並完成文檔",
+        "lockedRequirements": [
+          "首期驗證矩陣固定為 Linux/Windows × Claude Code/Codex；每一組都驗證頭部 uid/UUID 初始化、中部命令隔離、尾部成功/失敗遙測。",
+          "形成 OS adapter 與 Client adapter 的擴展契約，證明新增 runtime 不需要修改不可變的頭尾協議。"
+        ],
+        "details": "**§6.1 防繞過機制（最高優先）**：\n- 驗證 trap EXIT 在各種 exit 情況下都能執行\n- 驗證 readonly 變數無法被覆寫\n- 驗證無法 unset trap\n- **若無法從機制保證**：降級為「遙測為盡力而為，數據僅供參考」，並在分析頁標註\n\n**§6.2 跨系統腳本一致性**：\n- 確定 Windows 使用 PowerShell 還是要求 WSL\n- 定義各系統的模板差異\n- WSL 與 Linux 的複用邊界\n\n**§6.3 UUID 持久化**：\n- 各系統存放位置：\n  - macOS/Linux: ~/.agent-platform/uuid\n  - Windows: %APPDATA%\\\\agent-platform\\\\uuid\n  - WSL: ~/.agent-platform/uuid (獨立於 Windows)\n- 同機多使用者：各使用者獨立 UUID\n- 清除後重新生成規則：視為新使用者，影響去重\n\n**§6.4 上報失敗的使用者體驗**：\n- 安裝成功但上報失敗時，顯示「安裝成功，數據同步中」\n- 本機隊列格式：~/.agent-platform/pending_reports.jsonl\n- 重試策略：下次執行任何腳本時觸發、或獨立同步腳本\n\n**§6.5 演示環境**：\n- 使用 Docker 容器（Linux/WSL）\n- macOS 使用雲端 macOS VM（如 MacStadium）或模擬\n- Windows 使用 Windows Server 容器\n- 環境重置：每次審核後銷毀容器\n\n**§6.6 殘留副作用判定**：\n- 提供審核者工具：diff 安裝前後檔案系統\n- 標準判定清單：\n  - 新增配置檔案\n  - 修改系統設定\n  - 安裝系統服務\n  - 新增 cron/scheduled tasks\n- 維護者自行聲明 + 審核者驗證\n\n**文檔產出**：\n- 維護者指南：如何填寫安裝/卸載命令、殘留聲明\n- 審核者指南：審核標準、演示環境使用\n- 使用者指南：如何安裝、卸載、回報問題\n- API 文檔：OpenAPI 規格\n- 運維文檔：部署、監控、故障排除",
+        "testStrategy": "1. 防繞過機制系統性測試（見 Task 5）\n2. 跨系統測試：4 個目標系統的腳本執行\n3. UUID 持久化測試：各系統存放、多使用者隔離\n4. 文檔審查：技術準確性、完整性",
+        "priority": "high",
+        "dependencies": [
+          "5",
+          "6",
+          "7"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-08-25T14:13:21.576Z"
+      },
+      {
+        "id": "13",
+        "title": "補齊上架頁完整腳本目標 Matrix",
+        "description": "補齊每個系統與 Client 組合的獨立腳本儲存與上架頁完整 Matrix；此項是 Task 9.9 單一目標降級版之後的優先待辦。",
+        "details": "依已審核 design/wireframes/技能池與上架線框.html 實作完整 Matrix。後端先將 PackageVersionRecord 與 CreatePackageVersionInput 改為以「系統 × Client」為鍵保存獨立安裝／解除安裝命令，禁止外鍵；ScriptTargetOs 收斂為 linux/macos、windows、wsl。同步補齊跨組合複製與來源標記、腳本自身版本號與變更描述、版本紀錄、軟刪除、選項參數與 ASP_OPT_ 注入、使用說明與 --help、script_version/options 遙測欄位及隱私審核。前端移除 9.9 的單一目標限制，完整還原已審核 Matrix；任何資料都必須可重新載入且不得只存前端狀態。驗收需覆蓋每目標獨立保存、複製後修改不影響來源、版本遞增、軟刪除可追溯、缺命令阻擋送審、Linux/Windows/WSL 生成與回歸測試。",
+        "testStrategy": "1. 資料層：每個 OS × Client 命令可獨立新增、重載、修改與軟刪除，禁止外鍵；複製後修改不影響來源。\n2. 版本與選項：首次 v1、每次保存遞增、變更描述與刪除紀錄可追溯；ASP_OPT_ 注入、預設值與 --help 正確。\n3. API 與腳本：Linux／Windows／WSL × Claude Code／Codex payload、生成、送審缺命令阻擋及回歸測試通過。\n4. 隱私：TELEMETRY_FIELDS、隱私聲明與 script_version／options 白名單一致。\n5. 前端：完整 Matrix 可重新載入，跨組合複製來源標記正確，1024px 以上無整頁橫向溢位且 console 無錯誤。",
+        "status": "done",
+        "dependencies": [
+          "9"
+        ],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2026-08-28T16:42:36.759Z"
+      },
+      {
+        "id": "14",
+        "title": "角色管理前端頁面",
+        "description": "在管理後台新增角色管理頁面，讓 platform_admin 使用 GET/POST/DELETE /api/admin/roles API 授予與撤銷 maintainer、reviewer、employee 角色；範圍可選 global、team、package_type、category、package 五種，但不得提供授予或撤銷 platform_admin 的入口。",
+        "details": "## 流程約束\n依 AGENTS.md 前端流程，須先產出線框存於 `design/wireframes/角色管理線框.html` 並經使用者審核，通過後才實作。線框使用專案級 prototype 技能產出，採用真實欄位與後端資料結構。\n\n## 後端 API 參考（已完成）\n- **GET /api/admin/roles?uid=xxx** — 查詢指定使用者的有效角色列表，回傳 `{ items: RoleAssignment[] }`\n- **POST /api/admin/roles** — 授予角色，body: `{ uid, role, scopeType, scopeValue? }`\n  - role 限 `employee | maintainer | reviewer`（不含 platform_admin）\n  - scopeType: `global | team | package_type | category | package`\n  - scopeType 為 global 時不得帶 scopeValue；其餘類型 scopeValue 為必填\n- **DELETE /api/admin/roles** — 撤銷角色，body: `{ uid, role }`\n- **GET /api/admin/reviewer-candidates** — 既有 API，取得可選身份清單\n\n## 前端實作要點\n\n### 1. 新增路由與導覽\n- 在 `AdminNav.tsx` 加入「角色管理」連結（路徑 `/admin/roles`）\n- 在 `App.tsx` 或路由設定新增 RoleAdminPage 路由\n\n### 2. 頁面結構（參考 ReviewerAdminPage 模式）\n```tsx\n// web/src/pages/RoleAdminPage.tsx\n- AdminHeader 標題「角色管理」\n- 使用者搜尋區：輸入 UID 查詢該使用者的現有角色\n- 角色列表：顯示該使用者的 RoleAssignment[]\n- 授予角色表單：\n  - 角色選擇：employee / maintainer / reviewer（三選一）\n  - 範圍類型選擇：global / team / package_type / category / package\n  - 範圍值輸入：scopeType 為 global 時停用輸入框；其餘類型必填\n  - 身份候選下拉：來自 /api/admin/reviewer-candidates\n```\n\n### 3. API 整合（web/src/api/admin.ts 新增）\n```typescript\n// 路徑建構\nexport function buildRolesPath(uid?: string): string {\n  const base = '/api/admin/roles';\n  return uid ? `${base}?uid=${encodeURIComponent(uid)}` : base;\n}\n\n// 取得使用者角色\nexport async function fetchUserRoles(\n  uid: string,\n  signal: AbortSignal\n): Promise<RoleAssignment[]>\n\n// 授予角色\nexport interface GrantRoleInput {\n  uid: string;\n  role: 'employee' | 'maintainer' | 'reviewer';\n  scopeType: 'global' | 'team' | 'package_type' | 'category' | 'package';\n  scopeValue?: string;\n}\nexport async function grantRole(input: GrantRoleInput): Promise<RoleAssignment>\n\n// 撤銷角色\nexport interface RevokeRoleInput {\n  uid: string;\n  role: 'employee' | 'maintainer' | 'reviewer';\n}\nexport async function revokeRole(input: RevokeRoleInput): Promise<{ revoked: number }>\n```\n\n### 4. 型別定義（web/src/api/types.ts 新增）\n```typescript\nexport interface RoleAssignment {\n  id: string;\n  uid: string;\n  role: 'employee' | 'maintainer' | 'reviewer' | 'platform_admin';\n  scopeType: 'global' | 'team' | 'package_type' | 'category' | 'package';\n  scopeValue: string;\n  assignedByUid: string;\n  active: boolean;\n  createdAt: string;\n  revokedAt?: string;\n}\n\nexport interface RoleAssignmentPage {\n  items: RoleAssignment[];\n}\n```\n\n### 5. 硬約束\n- **禁止顯示 platform_admin 授予/撤銷入口**：角色選擇器只含 employee、maintainer、reviewer\n- **global 範圍停用輸入框**：scopeType 選擇 global 時，scopeValue 輸入框 disabled 並清空\n- **其餘範圍必填**：team/package_type/category/package 選擇時，scopeValue 為 required\n- **只有 platform_admin 可存取此頁面**：前端入口應只對有 platform_admin 角色的使用者顯示\n\n### 6. 樣式\n- 複用現有 `admin.css` 樣式類\n- 採用 ReviewerAdminPage 相同的表格與表單佈局模式\n- 支援桌面與行動端響應式（已有 adm-desktop-table / adm-mobile-list 模式）\n\n## 目錄結構\n```\nweb/src/\n├── api/\n│   ├── admin.ts          # 新增 role API 函數\n│   └── types.ts          # 新增 RoleAssignment 型別\n├── pages/\n│   ├── RoleAdminPage.tsx # 新增角色管理頁面\n│   └── AdminNav.tsx      # 新增「角色管理」連結\ndesign/wireframes/\n└── 角色管理線框.html      # 線框原型（實作前必須先完成並審核）\n```",
+        "testStrategy": "## 線框審核（實作前）\n1. 在瀏覽器開啟 `design/wireframes/角色管理線框.html`，確認版面、欄位與互動符合需求\n2. 使用者審核通過後才進入實作\n\n## 功能測試\n1. **查詢流程**：輸入 UID 後可顯示該使用者的現有角色列表\n2. **授予角色**：\n   - 選擇 employee/maintainer/reviewer 三種角色\n   - 選擇 global 時輸入框停用且 scopeValue 不送出\n   - 選擇 team/package_type/category/package 時輸入框必填\n   - 提交後列表即時更新\n3. **撤銷角色**：點擊撤銷按鈕，確認對話後成功撤銷，列表即時更新\n4. **platform_admin 不可操作**：介面上無任何授予或撤銷 platform_admin 的入口\n5. **身份候選下拉**：來自 /api/admin/reviewer-candidates 且正確渲染\n\n## 錯誤處理測試\n1. 查詢不存在的 UID → 顯示「找不到身份」或空列表\n2. global 帶 scopeValue → API 400（前端應阻擋提交）\n3. 其餘類型缺 scopeValue → 前端阻擋提交\n4. 嘗試授予 platform_admin → 介面無此選項（即使繞過前端，後端回傳 403）\n\n## 響應式測試\n1. 桌面端（≥1024px）：表格形式顯示\n2. 行動端（<640px）：卡片形式顯示，表單可用\n\n## 權限測試\n1. 非 platform_admin 存取 /admin/roles → 無法看到導覽或頁面內容\n2. platform_admin 可正常存取與操作",
+        "status": "done",
+        "dependencies": [
+          "9"
+        ],
+        "priority": "medium",
+        "subtasks": [],
+        "updatedAt": "2026-08-29T15:19:17.727Z"
+      },
+      {
+        "id": "15",
+        "title": "測試資料庫與開發資料庫隔離",
+        "description": "修正 Postgres 整合測試的預設連線字串，使測試不再回退到開發資料庫，避免 npm test 清空本機開發資料。",
+        "details": "## 問題現況\n\n6 個 Postgres 整合測試檔案在缺少 `TEST_DATABASE_URL` 環境變數時，預設連接開發資料庫：\n- `test/catalog/postgres-catalog-repository.test.ts:20-21`\n- `test/identity/postgres-identity-repository.test.ts:19-20`\n- `test/analytics/postgres-analytics-repository.test.ts:12-13`\n- `test/audit/postgres-audit-repository.test.ts:13-14`\n- `test/governance/postgres-governance-repository.test.ts:28-29`\n- `test/governance/governance-api.test.ts:631-632`\n- `test/telemetry/postgres-telemetry-repository.test.ts:17-18`（此檔使用 `DATABASE_URL` 而非 `TEST_DATABASE_URL`）\n\n這些測試在 `beforeEach` 執行 delete 清空 `packages`、`package_versions`、`identities` 等表，導致執行 `npm test` 會刪除開發中的資料。\n\n## 採用方案\n\n採用 **方案 A + 防呆機制**：\n\n### 1. compose.yaml 新增測試資料庫\n\n```yaml\nservices:\n  postgres:\n    image: postgres:17-alpine\n    environment:\n      POSTGRES_DB: agent_skill_platform\n      POSTGRES_USER: postgres\n      POSTGRES_PASSWORD: postgres\n    ports:\n      - \"127.0.0.1:55432:5432\"\n    healthcheck:\n      test: [\"CMD-SHELL\", \"pg_isready -U postgres -d agent_skill_platform\"]\n      interval: 2s\n      timeout: 3s\n      retries: 15\n    tmpfs:\n      - /var/lib/postgresql/data\n\n  # 新增專用測試資料庫\n  postgres-test:\n    image: postgres:17-alpine\n    environment:\n      POSTGRES_DB: agent_skill_platform_test\n      POSTGRES_USER: postgres\n      POSTGRES_PASSWORD: postgres\n    ports:\n      - \"127.0.0.1:55433:5432\"\n    healthcheck:\n      test: [\"CMD-SHELL\", \"pg_isready -U postgres -d agent_skill_platform_test\"]\n      interval: 2s\n      timeout: 3s\n      retries: 15\n    tmpfs:\n      - /var/lib/postgresql/data\n```\n\n### 2. 修改測試檔案預設連線字串\n\n將所有測試檔案的預設值從開發資料庫改為測試資料庫：\n\n```typescript\n// 修改前\nconst databaseUrl = process.env.TEST_DATABASE_URL ??\n  'postgresql://postgres:postgres@127.0.0.1:55432/agent_skill_platform';\n\n// 修改後\nconst databaseUrl = process.env.TEST_DATABASE_URL ??\n  'postgresql://postgres:postgres@127.0.0.1:55433/agent_skill_platform_test';\n```\n\n需修改的檔案清單：\n1. `test/catalog/postgres-catalog-repository.test.ts`\n2. `test/identity/postgres-identity-repository.test.ts`\n3. `test/analytics/postgres-analytics-repository.test.ts`\n4. `test/audit/postgres-audit-repository.test.ts`\n5. `test/governance/postgres-governance-repository.test.ts`\n6. `test/governance/governance-api.test.ts`\n7. `test/telemetry/postgres-telemetry-repository.test.ts`（需同時修正為使用 `TEST_DATABASE_URL`）\n\n### 3. 新增測試啟動防呆機制\n\n在 `test/setup.ts`（或新增 `test/helpers/database-guard.ts`）加入防呆檢查：\n\n```typescript\n// test/helpers/database-guard.ts\nimport { beforeAll } from 'vitest';\n\nconst PRODUCTION_DATABASE_PATTERNS = [\n  'agent_skill_platform', // 不含 _test 後綴\n];\n\nexport function guardAgainstProductionDatabase(databaseUrl: string): void {\n  const url = new URL(databaseUrl);\n  const dbName = url.pathname.slice(1); // 移除開頭 /\n\n  // 檢查是否意外連接到開發資料庫\n  if (PRODUCTION_DATABASE_PATTERNS.includes(dbName) && !dbName.endsWith('_test')) {\n    throw new Error(\n      `🚨 測試資料庫防呆機制觸發！\\n` +\n      `偵測到連線字串指向非測試資料庫：${dbName}\\n` +\n      `請設定 TEST_DATABASE_URL 環境變數或使用 compose 的 postgres-test 服務。\\n` +\n      `開發資料庫位於 port 55432，測試資料庫位於 port 55433。`\n    );\n  }\n\n  // 額外檢查：若與 DATABASE_URL 相同且指向 55432，也阻擋\n  const devUrl = process.env.DATABASE_URL;\n  if (devUrl && databaseUrl === devUrl && databaseUrl.includes(':55432')) {\n    throw new Error(\n      `🚨 TEST_DATABASE_URL 與 DATABASE_URL 相同！\\n` +\n      `執行測試會清空開發資料。請使用獨立的測試資料庫。`\n    );\n  }\n}\n```\n\n在 `vitest.config.ts` 或各測試檔案的 `beforeAll` 中呼叫此檢查。\n\n### 4. 更新 .env.example\n\n```bash\n# 開發資料庫\nDATABASE_URL=\"postgresql://postgres:postgres@127.0.0.1:55432/agent_skill_platform\"\n\n# 測試資料庫（本機執行 npm test 時使用）\nTEST_DATABASE_URL=\"postgresql://postgres:postgres@127.0.0.1:55433/agent_skill_platform_test\"\n```\n\n### 5. CI 配置維持不變\n\n`.github/workflows/ci.yml` 已使用獨立的 service container，且為拋棄式環境，無需修改。CI 環境的 `TEST_DATABASE_URL` 指向 CI 專用容器，不影響任何人的開發資料。\n\n### 6. 更新 README.md 開發指南\n\n新增本機測試資料庫啟動說明：\n\n```bash\n# 啟動開發與測試資料庫\ndocker compose up -d\n\n# 僅開發\nDATABASE_URL=postgresql://postgres:postgres@127.0.0.1:55432/agent_skill_platform npm run dev\n\n# 執行測試（預設連接 55433 測試庫）\nnpm test\n```\n\n## 遷移注意事項\n\n- 現有開發者需執行 `docker compose down && docker compose up -d` 以啟動新的 postgres-test 服務\n- 若開發者仍使用舊版 compose，防呆機制會在測試啟動時立即報錯，提示更新",
+        "testStrategy": "## 隔離驗證\n\n1. **測試資料庫獨立性**\n   - 啟動 `docker compose up -d`\n   - 確認 55432（開發）與 55433（測試）兩個 port 都在監聽\n   - `psql -h 127.0.0.1 -p 55432 -U postgres -c '\\l'` 列出開發庫\n   - `psql -h 127.0.0.1 -p 55433 -U postgres -c '\\l'` 列出測試庫\n\n2. **測試不再清空開發資料**\n   - 在開發資料庫手動插入測試資料：\n     ```sql\n     INSERT INTO packages (package_id, type, name, purpose, owner_team, category, visibility, source_uri, license, lifecycle)\n     VALUES ('isolation-check', 'skill', '隔離測試', '驗證隔離', 'test', 'test', 'public', 'https://example.com', 'MIT', 'active');\n     ```\n   - 執行 `npm test`\n   - 測試完成後確認開發資料庫中 `isolation-check` 仍存在\n\n3. **防呆機制測試**\n   - 暫時將某測試檔案的預設值改回開發資料庫連線\n   - 執行該測試，確認防呆機制攔截並顯示明確錯誤訊息\n   - 還原修改\n\n4. **CI 相容性**\n   - 推送到 PR，確認 CI workflow 通過\n   - CI 環境使用拋棄式容器，不受本變更影響\n\n5. **回歸測試**\n   - `npm test` 全部 219 項測試通過\n   - 無新增測試失敗\n\n## 文件驗證\n\n- README.md 包含測試資料庫啟動說明\n- .env.example 包含 TEST_DATABASE_URL 範例\n- 錯誤訊息使用繁體中文且說明清楚",
+        "status": "done",
+        "dependencies": [
+          "10"
+        ],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2026-08-29T14:59:14.163Z"
+      },
+      {
+        "id": "16",
+        "title": "上架頁支援建立新技能",
+        "description": "上架頁目前只能對已發布套件上架新版本，無法建立新技能，形成無法引入新技能的死結。後端 POST /api/packages 已存在且可用，缺的是前端入口與一個可列出草稿階段套件的端點。",
+        "details": "問題有兩層，缺一不可：\n\n1. 前端缺建立套件入口。PublishPage 只有『現有套件』下拉（web/src/pages/PublishPage.tsx:415-419），沒有任何建立新套件的路徑。\n\n2. 更關鍵：PublishPage 用 searchPackages 取清單（PublishPage.tsx:551），而 CatalogService.search 只回傳有 published 版本的套件（catalog-service.ts:279-284）。新建套件沒有已發布版本，建立後會立刻從下拉選單消失，使用者無法為它上架第一個版本。純加表單無法解決。\n\n實作範圍：\n- 後端新增端點列出當前身份可維護的套件（含尚無 published 版本者），沿用 CatalogService.requireMaintainer 的授權判斷，不得放寬可見性。\n- 前端 web/src/api/publish.ts 封裝 createPackage。\n- PublishPage 基本資料區改為雙模式：選擇現有套件 / 建立新套件（packageId、type、name、purpose、ownerTeam、category、visibility、sourceUri、license 九個必填欄位，對齊 catalog/index.ts:129-138 的 schema）。\n- 建立成功後自動選定該套件並接續建立版本草稿。\n- ownerTeam 需與使用者的 maintainer 授權範圍一致，否則後端會回 403。\n- 409 PACKAGE_ALREADY_EXISTS 需有可理解的錯誤提示。\n\n依 AGENTS.md 需先產出 design/wireframes/ 線框給使用者確認。",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2026-08-29T11:15:10.770Z"
+      },
+      {
+        "id": "17",
+        "title": "技能列表分類標籤資料化",
+        "description": "技能列表的來源、發布者、分類、分級、熱度五組標籤目前在前端寫死，需要資料模型與後端支援。",
+        "details": "現況：web/src/pages/CatalogPage.tsx 已呈現五組標籤但值為寫死常數，僅用於驗證版面與資訊密度。\n\n需要資料化的欄位：\n- 來源 source：開源 / 自定義。\n- 發布者 publisher：個人（如張三）/ 組織（如公共架構）。需區分類型與名稱兩個維度。\n- 分類 category：前端 / 後端等。注意 PackageRecord 已有 category 欄位但目前是自由文字，需決定是否收斂為列舉。\n- 分級 grade：基礎（預設）/ 精品 / 通用 / 全員推廣 / 對外開源。需決定由誰設定（發布者自評或審核人核定）。\n- 熱度 popularity：下載數、安裝數等指標。安裝數已有真實資料（installations 表），下載數尚未埋點，見任務 18。\n\n實作範圍：\n- packages 表加欄位（專案規則：不建外鍵，反範式）。\n- 上架頁補對應輸入欄位。\n- 列表篩選器支援按分級、來源、分類篩選。\n- 分級若由審核人核定，需在審核頁補操作。\n\n前置決策：分級的設定權責、category 是否收斂為列舉。",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": [],
+        "updatedAt": "2026-08-29T17:09:32.303Z"
+      },
+      {
+        "id": "18",
+        "title": "技能詳情頁下載到安裝漏斗數據",
+        "description": "詳情頁採用數據區需從安裝數、成功率擴充為下載→安裝→成功的完整漏斗，其中下載數目前完全沒有埋點。",
+        "details": "現況：web/src/pages/PackageDetailPage.tsx 採用數據區已呈現漏斗版面但下載數為寫死值。\n\n缺口：平台目前只在腳本執行後回報遙測（installations 表），下載腳本這個動作本身沒有任何記錄。因此漏斗的第一段沒有資料來源。\n\n實作範圍：\n- 在腳本生成端點記錄下載事件（套件、版本、targetOs、clientRuntime、身份、時間）。需注意這與遙測回報是不同來源：下載發生在伺服器端，可靠；安裝回報是盡力而為，可能遺失。兩者的可信度差異需在 UI 上說明。\n- AdoptionSummary 擴充 downloads 欄位，並計算下載→安裝、安裝→成功兩段轉換率。\n- 詳情頁與分析頁同步顯示。\n- 隱私聲明需同步更新：新增了一類記錄行為，見 docs/ 隱私相關文件與任務 10.8。\n\n注意：下載數 > 安裝數是正常的（下載後未執行），轉換率低本身就是有價值的訊號，不應把它當成資料錯誤。",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": "19",
+        "title": "上架用語改為發布與更新",
+        "description": "介面把「上架」當成使用者動作，但實際上上架（可見）是審核通過後自動發生的結果。用語需改為發布技能與更新版本，並補上下架操作。",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "details": "## 已完成（任務 16 一併處理）\n\n前端用語改動已於任務 16 完成：\n- 導覽列：「上架技能」→「發布技能」\n- 技能池按鈕：「上架技能」→「發布技能」並指向 `/publish/new`\n- 更新頁標題：「上架新版本」→「更新技能版本」\n- 空狀態文案已對應調整\n\n## 剩餘範圍\n\n### 1. 文件用語更新\n\n`docs/試駕手冊.html` 仍有三處「上架」用語需修正：\n- 第 421 行：「上架 → 審核 → 安裝 → 撤下 → 通知」→「發布 → 審核 → 安裝 → 撤下 → 通知」\n- 第 477 行：「無法安裝、上架、審核」→「無法安裝、發布、審核」\n- 第 498 行：「上架技能」→「發布技能」\n\n其他文件如 `docs/全局開發記憶.md`、`docs/前端實作指導.md`、`docs/驗收記錄/` 下的歷史記錄以「上架」描述既有功能，可視為歷史術語保留，或在下一階段統一處理。\n\n### 2. 下架操作入口\n\n後端狀態轉換 API 已齊備（`src/modules/governance/index.ts`）：\n- 臨時下架：`POST /api/packages/:packageId/versions/:version/delist`\n  - 參數：`reasonCode`（必填）、`reasonDetail`（選填）、`effectiveAt`（必填，生效時間）\n  - 對應狀態：`delisted`，可從 `published` 或 `deprecated` 轉入\n- 緊急停用：`POST /api/packages/:packageId/versions/:version/emergency-disable`\n  - 參數：`reasonCode`（必填）、`reasonDetail`（選填）\n  - 對應狀態：`emergency_disabled`，可從 `published`、`deprecated`、`delisted` 轉入，為終態\n\n前端缺口：\n- 「管理 → 版本治理」頁已有臨時下架與緊急停用的操作入口（試駕手冊步驟 5 描述），需確認該頁面實際是否已實作對應按鈕與表單\n- 若尚未實作，需新增下架對話框，包含原因代碼輸入、原因說明（選填）、生效時間（臨時下架）\n- 兩種下架的 UI 區分：臨時下架強調「預期會恢復」，緊急停用強調「不可逆、高優先級」\n\n## 語意差異說明\n\n| 術語 | 定義 | 執行者 |\n|------|------|--------|\n| 發布 | 維護者提交新技能或新版本送審 | 維護者 |\n| 上架 | 審核通過後自動生效，版本對員工可見 | 系統 |\n| 臨時下架 | 將已發布版本移出目錄，預期未來恢復 | 管理員/維護者 |\n| 永久下架（緊急停用） | 將版本永久停用，不可恢復 | 管理員 |",
+        "testStrategy": "1. 文件檢查：確認 `docs/試駕手冊.html` 中「上架」用語已改為「發布」\n2. 下架功能測試：以管理員身份進入版本治理頁面，對已發布版本執行臨時下架與緊急停用，確認 API 調用成功並觸發通知\n3. UI 語意測試：確認臨時下架與緊急停用的操作入口清楚區分兩者差異",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "更新試駕手冊中的「上架」用語",
+            "description": "將 docs/試駕手冊.html 中三處「上架」用語改為「發布」",
+            "dependencies": [],
+            "details": "修改 docs/試駕手冊.html：\n- 第 421 行：「上架 → 審核」改為「發布 → 審核」\n- 第 477 行：「無法安裝、上架、審核」改為「無法安裝、發布、審核」\n- 第 498 行：「上架技能」改為「發布技能」\n\n保留其他開發文件中的歷史記錄不變，避免混淆版本記錄的脈絡。",
+            "status": "pending",
+            "testStrategy": "以文字搜尋確認試駕手冊中不再出現「上架技能」或「上架 →」等用於描述使用者動作的用語",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "確認版本治理頁面下架操作入口實作狀態",
+            "description": "檢查管理後台「版本治理」頁面是否已有臨時下架與緊急停用按鈕",
+            "dependencies": [],
+            "details": "檢查 web/src/pages/ 下管理後台版本治理頁面：\n- 是否存在對應的下架按鈕與確認對話框\n- 對話框是否包含必填的 reasonCode、選填的 reasonDetail\n- 臨時下架是否包含 effectiveAt 日期時間選擇器\n- 兩種下架是否有明確的 UI 區分（標籤、顏色、說明文字）\n\n若尚未實作，需新增任務規劃前端下架操作入口。",
+            "status": "pending",
+            "testStrategy": "以管理員帳號登入，進入版本治理頁面，確認可對已發布版本執行臨時下架與緊急停用操作",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "實作下架操作前端入口（如尚未實作）",
+            "description": "若子任務 2 確認尚未實作，需在版本治理頁新增下架操作按鈕與對話框",
+            "dependencies": [
+              2
+            ],
+            "details": "若版本治理頁尚未實作下架操作入口，需新增：\n\n1. 臨時下架對話框：\n   - 原因代碼輸入（必填，下拉或輸入框）\n   - 原因說明（選填，多行文字）\n   - 生效時間選擇器（必填）\n   - 明確說明「此操作預期未來可恢復」\n\n2. 緊急停用對話框：\n   - 原因代碼輸入（必填）\n   - 原因說明（選填，多行文字）\n   - 警告標籤：「此操作不可逆」\n   - 確認前需二次確認\n\n3. 呼叫後端 API：\n   - 臨時下架：POST /api/packages/:packageId/versions/:version/delist\n   - 緊急停用：POST /api/packages/:packageId/versions/:version/emergency-disable",
+            "status": "pending",
+            "testStrategy": "1. 以管理員帳號對已發布版本執行臨時下架，確認 API 回應成功、版本狀態變為 delisted\n2. 以管理員帳號對已發布版本執行緊急停用，確認 API 回應成功、版本狀態變為 emergency_disabled\n3. 確認操作後員工端可收到撤下通知",
+            "parentId": "undefined"
+          }
+        ],
+        "updatedAt": "2026-08-29T11:55:18.333Z"
+      },
+      {
+        "id": "20",
+        "title": "版本下架後的恢復能力",
+        "description": "目前三種下架處置都不可逆，版本狀態機沒有回到 published 的轉換。需評估並實作恢復能力。",
+        "details": "現況：src/modules/governance/version-state-machine.ts 的轉換表中，deprecated 只能再往 delisted 或 emergency_disabled，delisted 只能往 emergency_disabled，emergency_disabled 是最終狀態。沒有任何路徑回到 published。\n\n因此使用者要求的「臨時下架（可恢復）」目前無法實現——三種處置對員工的效果完全相同（都停止腳本生成、從技能池消失），差別只在稽核語意與執行權限。\n\n實作範圍：\n- 狀態機新增 RESTORE 事件：deprecated → published、delisted → published。emergency_disabled 建議維持最終狀態（緊急停用代表有重大問題，恢復應走重新送審而非一鍵還原），但此決策需確認。\n- 後端 API：POST /api/packages/:packageId/versions/:version/restore，需要原因與稽核事件。\n- 權限：建議與原處置對等（維護者可恢復自己撤下的，緊急停用若開放則限管理員）。\n- 通知：版本重新上架應通知曾收到下架通知的使用者，否則他們不知道可以重新安裝。對應 notificationType 需新增。\n- 前端：版本治理頁的處置選項依狀態顯示恢復；admin-model.ts 的 availableGovernanceActions 與 test/web/governance-actions-parity.test.ts 會自動反映狀態機變更。\n\n前置決策：\n1. emergency_disabled 是否可恢復。\n2. 恢復是否需要重新審核（直接回 published 等於繞過審核流程）。這是關鍵問題：若下架的原因是內容有問題，直接恢復會讓問題版本重新對外。",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": "21",
+        "title": "權限模型收斂",
+        "description": "移除審核範圍與角色範圍，收斂為四級權限：未登入、員工（無角色）、maintainer、reviewer。",
+        "details": "決策已定（2026-08-29）：\n\n## 收斂後的模型\n- 未登入：瀏覽公開技能、下載安裝腳本\n- 無角色即員工：＋發布新技能、更新自己團隊的技能（ownerTeam 對 teamIds）\n- maintainer：＋更新所有技能（跨團隊）\n- reviewer：＋審核所有技能，除自己送的\n- platform_admin：全部，只能由部署設定指定\n\n## 改動範圍\n\n1. canReviewPackageSnapshot（authorization-service.ts:62）移除同團隊限制，只保留作者迴避。\n   兩個測試守著舊行為需一併改：test/identity/authorization-service.test.ts:88 與 test/governance/governance-api.test.ts:359。\n\n2. 權限判斷不再讀 reviewer_assignments（authorization-service.ts:69）。有 reviewer 角色即可審全部。\n   表、API 與審核者管理頁「暫時保留」，實跑一輪確認後另開任務刪除。目前僅 1 筆資料，刪除零損失但不可逆，故分兩步。\n\n3. requireMaintainer（catalog-service.ts:455）新增員工路徑：identity.teamIds.includes(ownerTeam) 即可，不需 maintainer 角色。\n   建立新套件時 ownerTeam 必須在自己的 teamIds 內。\n\n4. employee 角色不落庫：無角色即視為員工。API enum 保留 employee 以免破壞既有呼叫，但不作為權限判斷依據。\n\n## 不在本任務範圍\n- 分類自由文字的收斂 → 任務 17 的前置決策\n- 刪除 reviewer_assignments 表與審核者管理頁 → 待第一步實跑後另開\n\n## 注意\n授權放寬屬不可逆的安全性變更，每條路徑都需測試覆蓋，特別是「員工不能更新別團隊的技能」這條負向斷言。",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2026-08-29T14:59:12.007Z"
+      },
+      {
+        "id": "22",
+        "title": "Bug 待辦",
+        "description": "集中登記各頁面發現的缺陷，子任務為具體 bug。",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "發布新技能頁：來源位址與授權條款應為選填",
+            "description": "兩個欄位目前是 required，實際上技能未必有公開來源位址或明確授權條款，強制填寫會逼使用者亂填。前端移除 required 與驗證，後端 schema 放寬為選填。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-29T20:20:04.761Z"
+          },
+          {
+            "id": 2,
+            "title": "發布新技能頁：發布者名稱應依類型自動帶入且為選填",
+            "description": "選擇發布者類型後，名稱應自動帶入預設值：個人帶入當前登入者顯示名稱，組織帶入所屬團隊。名稱同時改為選填，使用者未填時沿用帶入值。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-29T20:20:07.029Z"
+          },
+          {
+            "id": 3,
+            "title": "技能詳情頁：回報使用問題與點讚評論區塊移至頁面最底部",
+            "description": "技能詳情頁中「回報使用問題」與「點讚與評論」兩個區塊應調整版面順序，放到頁面最底部。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-29T21:10:42.813Z"
+          },
+          {
+            "id": 4,
+            "title": "頂部導覽列：通知改用圖標並移至右側登入使用者按鈕旁",
+            "description": "頂部菜單欄的「通知」目前為文字項目，應改為圖標呈現，並移動到導航欄右側、緊鄰登入使用者按鈕。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-29T21:10:42.879Z"
+          },
+          {
+            "id": 5,
+            "title": "各頁面 H5 移動端適配檢查與修復",
+            "description": "檢查所有頁面在移動端（H5）的自適應情況並修復；本子任務僅調整 H5 適配問題，不變更功能邏輯。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-29T21:10:42.892Z"
+          },
+          {
+            "id": 6,
+            "title": "技能池列表：表頭文案調整與殘留手動清理提示",
+            "description": "技能池列表表頭「下載」改為「下載數」、「殘留」改為「卸載殘留」、操作欄「查看」改為「查看詳情」；「卸載殘留」值為有殘留時，補小字提示可能需要手動清理殘留檔案。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "updatedAt": "2026-08-29T21:41:35.246Z",
+            "parentId": "undefined"
+          },
+          {
+            "id": 7,
+            "title": "使用者下拉選單增加白天/夜晚瀏覽樣式切換",
+            "description": "導覽列使用者登入下拉選單中增加主題切換，可在白天（淺色）與夜晚（深色）樣式間切換；tokens.css 已具備 data-theme 機制，需補切換 UI 與偏好持久化。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-29T21:41:35.271Z"
+          },
+          {
+            "id": 8,
+            "title": "為技能平台設計 logo",
+            "description": "平台目前缺少 logo，需設計一個並套用到頂部導覽列品牌位置與瀏覽器 favicon。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-29T21:41:35.280Z"
+          },
+          {
+            "id": 9,
+            "title": "主選單頁面頂部冗餘元素清理",
+            "description": "移除各主選單頁面頂部的裝飾性元素：我的安裝與通知頁的「個人工作區」kicker、管理頁的「管理後台」kicker、審核頁第一層的麵包屑，以及所有主選單頁面的「資料來源：xxx」小字。第三層子頁面（審核詳情、安裝預覽、版本差異）保留麵包屑。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "updatedAt": "2026-08-29T22:11:55.118Z",
+            "parentId": "undefined"
+          },
+          {
+            "id": 10,
+            "title": "全站圖標補齊：使用者頭像、下拉選單項、頁尾與頁面標題",
+            "description": "導覽列未登入使用者按鈕增加預設頭像圖標；使用者下拉選單各列表項增加圖標並與頭像對齊；頁尾「隱私聲明」加圖標；各主選單頁面標題前增加對應圖標。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-29T22:11:55.124Z"
+          },
+          {
+            "id": 11,
+            "title": "補齊發布按鈕、預設使用者頭像與下拉選單分區圖標",
+            "description": "發布技能按鈕加上適配日夜主題的圖標；已登入頭像改用預設使用者圖標取代單一文字；使用者下拉選單的「團隊」「角色」「瀏覽樣式」三個分區補上對應圖標。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "updatedAt": "2026-08-29T22:52:32.746Z",
+            "parentId": "undefined"
+          },
+          {
+            "id": 12,
+            "title": "管理頁搜尋表單欄位對齊修正",
+            "description": "審核者管理與稽核日誌頁的搜尋表單，帶說明文字與不帶說明文字的欄位混排時輸入框無法對齊，版面不整齊且窄屏適配不佳。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-29T22:52:32.759Z"
+          },
+          {
+            "id": 13,
+            "title": "下拉選單分區圖標與標題尺寸間距對齊選單項",
+            "description": "使用者下拉選單內「團隊」「角色」「瀏覽樣式」的圖標尺寸、標題字級與間距，需與「我的安裝」「登出」選單項一致並垂直對齊。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "updatedAt": "2026-08-30T01:52:27.186Z",
+            "parentId": "undefined"
+          },
+          {
+            "id": 14,
+            "title": "審核詳情頁核定為下拉修正與全站下拉選單樣式優化",
+            "description": "審核詳情頁「核定為」下拉表單顯示異常；同時統一優化全站 select 樣式與展開後的選項列表外觀，要求圓潤大氣。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-30T01:52:27.192Z"
+          }
+        ],
+        "updatedAt": "2026-08-30T01:52:27.192Z"
+      },
+      {
+        "id": "23",
+        "title": "UI/UX 優化點收集",
+        "description": "本輪收集的 8 個前後端優化點，逐子任務落地",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "輸入框樣式對齊 Select 風格",
+            "description": "下拉列表已由自製元件 web/src/components/Select.tsx + components/select.css 統一。現況 input/textarea 樣式散落在 admin.css、catalog.css、feedback.css、support-admin.css、publish.css、analytics.css、review-detail.css 等處，尺寸與 focus 狀態不一致。需抽出全站表單基準（min-height 38px、padding 8px 12px、border 1px var(--line)、radius var(--radius)、focus 用 accent + 3px accent-soft 陰影），與 .ui-select-trigger 完全一致，再清掉各頁重複覆寫。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 23,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-30T04:30:05.019Z"
+          },
+          {
+            "id": 2,
+            "title": "技能池列表頁搜尋按鈕加放大鏡圖標",
+            "description": "CatalogPage.tsx 的搜尋按鈕加上搜尋小圖標，圖標統一放 web/src/components/icons.tsx。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 23,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-30T04:03:59.316Z"
+          },
+          {
+            "id": 3,
+            "title": "更新技能版本頁改用麵包屑",
+            "description": "PublishPage.tsx:428 的 '← 回我維護的技能' 改為麵包屑，風格參考 ReviewDetailPage.tsx:468 的 .rd-crumb（review-detail.css:1）。同時替換掉該頁頂部的『發佈技能』標題區。麵包屑樣式建議提為共用元件。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 23,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-30T04:16:17.432Z"
+          },
+          {
+            "id": 4,
+            "title": "技能詳情頁補第二層麵包屑",
+            "description": "PackageDetailPage.tsx 作為第二層頁面，頂部加麵包屑，與『檢視並下載』腳本下載頁（InstallPreviewPage）的麵包屑一致。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 23,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-30T04:16:17.440Z"
+          },
+          {
+            "id": 5,
+            "title": "按鈕文案：保存當前 target → 保存當前填寫的組合",
+            "description": "PublishPage.tsx:552 按鈕文字修改，發佈與更新版本頁面皆適用。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 23,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-30T04:03:59.278Z"
+          },
+          {
+            "id": 6,
+            "title": "頂部導航固定頂端、頁腳固定底部",
+            "description": "app.css 的 .shell / .shell-top 與頁腳改為 sticky 固定佈局，內容區可滾動。需處理 z-index 與浮層（Select 下拉、ViewerMenu、FieldHelp）疊層關係，避免遮擋。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 23,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-30T04:16:17.424Z"
+          },
+          {
+            "id": 7,
+            "title": "平台版本號選單（前後端）",
+            "description": "頂部導航使用者區、通知圖標左側新增平台版本號下拉，預設顯示 v0.0.1，展開含 v0.0.1 與 v1.0.0，v1.0.0 置灰標示暫未開放。後端新增平台版本管理表（版本號、發佈時間、是否開放 is_available、說明），提供查詢介面；前端點擊版本項呼叫介面，以彈框提示該版本是否開放。資料表遵循專案反範式規則：不建外鍵。",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 23,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-30T04:43:32.606Z"
+          },
+          {
+            "id": 8,
+            "title": "全部程式碼檔案頂部加版權聲明",
+            "description": "每個程式碼檔案頂部加下列註釋，與程式碼之間空一行：\\n// Copyright (c) 2026 lamxy and Contributors\\n// SPDX-License-Identifier: MIT\\n//\\n// Author: lamxy <pytho5170@hotmail.com>\\n// GitHub: https://github.com/lamxy\\n涵蓋 src/、web/src/、test/、scripts/ 下的 .ts/.tsx；.css 與 .sql 用各自註釋語法。建議寫成腳本批次處理並加冪等檢查。",
+            "details": "<info added on 2026-08-30T03:59:47.992Z>\n基於程式碼庫分析完成，以下是子任務 23.8 的實作細節：\n\n授權確認：採用 PolyForm Internal Use License 1.0.0（非開源協議，原需求「僅內部使用、商業化需授權」與任何 OSI 開源協議互斥，MIT 明確允許商業化故不適用）。\n\n檔頭註釋格式：\n.ts/.tsx 檔案（共約 130 支，含 src/ 82 支、web/src/ 39 支、test/ 52 支、scripts/ 5 支）：\n// Copyright (c) 2026 lamxy and Contributors\n// SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0\n//\n// Author: lamxy <pytho5170@hotmail.com>\n// GitHub: https://github.com/lamxy\n\n.css 檔案（web/src/ 約 30 支）：\n/* Copyright (c) 2026 lamxy and Contributors\n * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0\n *\n * Author: lamxy <pytho5170@hotmail.com>\n * GitHub: https://github.com/lamxy\n */\n\n.sql 檔案（drizzle/ 16 支）：\n-- Copyright (c) 2026 lamxy and Contributors\n-- SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0\n--\n-- Author: lamxy <pytho5170@hotmail.com>\n-- GitHub: https://github.com/lamxy\n\n額外範圍：\n1. 新增 LICENSE 檔案，內含 PolyForm Internal Use License 1.0.0 全文，Licensor 填入 lamxy。\n2. package.json 的 license 欄位改為 SEE LICENSE IN LICENSE（避免 npm 警告）。\n3. README.md 目前無 MIT 字樣，無需修正。\n\n批次腳本需求（建議放 scripts/add-copyright-headers.ts）：\n- 冪等檢查：掃描檔案前 5 行，若已包含 Copyright (c) 2026 lamxy 則跳過\n- 依副檔名選擇註釋語法：.ts/.tsx 用 //、.css 用 /* */、.sql 用 --\n- 排除 node_modules/、dist/、.taskmaster/\n- 在檔頭聲明與原始程式碼間插入一行空行\n- 輸出處理統計：已跳過、已新增、錯誤檔案清單\n</info added on 2026-08-30T03:59:47.992Z>",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 23,
+            "parentId": "undefined",
+            "updatedAt": "2026-08-30T04:48:48.385Z"
+          }
+        ],
+        "updatedAt": "2026-08-30T04:48:48.385Z"
+      }
+    ],
+    "metadata": {
+      "version": "1.0.0",
+      "lastModified": "2026-08-30T04:48:48.386Z",
+      "taskCount": 23,
+      "completedCount": 20,
+      "tags": [
+        "master"
+      ]
+    }
+  }
+}

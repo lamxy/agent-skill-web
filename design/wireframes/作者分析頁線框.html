@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>作者分析頁線框 · Signal Board</title>
+  <style>
+    :root {
+      --ink: #16181d; --ink-soft: #5b616e; --ink-faint: #8b91a0;
+      --line: #dfe2e8; --line-soft: #edeff3;
+      --paper: #ffffff; --ground: #f6f7f9;
+      --accent: #1f4fd8; --accent-soft: #eef2fe; --accent-ink: #ffffff;
+      --ok: #1a7f52; --ok-soft: #e8f5ee;
+      --warn: #8a5a00; --warn-soft: #fdf3e0;
+      --stop: #a32020; --stop-soft: #fdeceb;
+      --seal: #6b5bd2; --seal-soft: #efecfd;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC',
+        'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+      --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+      --radius-sm: 5px; --radius: 8px; --radius-lg: 11px;
+      --shadow-card: 0 1px 3px rgba(22, 24, 29, .06);
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme='light']) {
+        --ink: #e8eaf0; --ink-soft: #a2a9b8; --ink-faint: #767d8d;
+        --line: #2f333c; --line-soft: #24272e;
+        --paper: #1a1d23; --ground: #131519;
+        --accent: #7f9fff; --accent-soft: #1c2740; --accent-ink: #0e1014;
+        --ok: #5ec98e; --ok-soft: #14301f;
+        --warn: #e0ab4c; --warn-soft: #33260d;
+        --stop: #f08a80; --stop-soft: #3a1917;
+        --seal: #a99cf0; --seal-soft: #221d3d;
+        --shadow-card: 0 1px 3px rgba(0, 0, 0, .3);
+      }
+    }
+    :root[data-theme='dark'] {
+      --ink: #e8eaf0; --ink-soft: #a2a9b8; --ink-faint: #767d8d;
+      --line: #2f333c; --line-soft: #24272e;
+      --paper: #1a1d23; --ground: #131519;
+      --accent: #7f9fff; --accent-soft: #1c2740; --accent-ink: #0e1014;
+      --ok: #5ec98e; --ok-soft: #14301f;
+      --warn: #e0ab4c; --warn-soft: #33260d;
+      --stop: #f08a80; --stop-soft: #3a1917;
+      --seal: #a99cf0; --seal-soft: #221d3d;
+      --shadow-card: 0 1px 3px rgba(0, 0, 0, .3);
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font-sans);
+      font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    #stage { min-height: 100vh; padding-bottom: 92px; }
+    .shell { min-height: 100vh; display: flex; flex-direction: column; }
+    .shell-top { display: flex; align-items: center; gap: 30px; padding: 12px 30px;
+      border-bottom: 1px solid var(--line); background: var(--paper); flex-wrap: wrap; }
+    .brand { font-size: 15px; font-weight: 640; letter-spacing: -.01em; }
+    .nav { display: flex; gap: 4px; }
+    .nav span { padding: 6px 12px; border-radius: var(--radius); color: var(--ink-soft); font-size: 13.5px; }
+    .nav .active { background: var(--accent-soft); color: var(--accent); font-weight: 550; }
+    .shell-main { width: 100%; max-width: 1240px; margin: 0 auto; padding: 28px 30px 60px; flex: 1; }
+    .shell-foot { display: flex; justify-content: space-between; padding: 16px 30px;
+      border-top: 1px solid var(--line); background: var(--paper); color: var(--ink-faint); font-size: 12.5px; }
+    .crumb { margin-bottom: 12px; color: var(--ink-faint); font-size: 12.5px; }
+    .crumb b { color: var(--accent); font-weight: 500; }
+    .page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 20px; }
+    h1 { margin: 0; font-size: 24px; font-weight: 680; letter-spacing: -.025em; }
+    .subtitle { margin: 6px 0 0; color: var(--ink-soft); }
+    .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    .assurance { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px;
+      border-radius: 999px; background: var(--warn-soft); color: var(--warn); font-size: 11.5px; font-weight: 600; }
+    .assurance::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .period { display: flex; align-items: end; gap: 8px; flex-wrap: wrap; }
+    .period label { display: grid; gap: 4px; color: var(--ink-faint); font-size: 11.5px; }
+    .period input, .period select { min-height: 36px; padding: 7px 9px; border: 1px solid var(--line);
+      border-radius: var(--radius); background: var(--paper); font-size: 12.5px; }
+    .btn { min-height: 36px; padding: 7px 13px; border: 1px solid var(--line); border-radius: var(--radius);
+      background: var(--paper); font-size: 12.5px; font-weight: 550; }
+    .btn:hover { border-color: var(--ink-faint); }
+    .btn.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+    .period-status { width: 100%; min-height: 18px; color: var(--ok); font-size: 11.5px; text-align: right; }
+
+    .notice { display: flex; gap: 12px; align-items: flex-start; padding: 13px 15px; margin-bottom: 18px;
+      border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--line)); border-radius: var(--radius-lg);
+      background: var(--warn-soft); }
+    .notice strong { display: block; color: var(--warn); font-size: 13px; }
+    .notice p { margin: 3px 0 0; color: var(--ink-soft); font-size: 12.5px; }
+    .notice-code { flex: 0 0 auto; padding: 2px 7px; border-radius: var(--radius-sm);
+      background: var(--paper); color: var(--warn); font: 11px var(--font-mono); }
+    .grid { display: grid; gap: 16px; }
+    .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.main-side { grid-template-columns: minmax(0, 1.55fr) minmax(280px, .75fr); }
+    .card { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper);
+      box-shadow: var(--shadow-card); overflow: hidden; }
+    .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+      padding: 14px 17px; border-bottom: 1px solid var(--line); }
+    .card-head h2 { margin: 0; font-size: 14px; font-weight: 630; }
+    .card-head span { color: var(--ink-faint); font-size: 11.5px; }
+    .card-body { padding: 17px; }
+    .metric { padding: 16px; }
+    .metric-label { color: var(--ink-soft); font-size: 12px; }
+    .metric-value { margin-top: 5px; font-size: 25px; font-weight: 680; letter-spacing: -.03em;
+      font-variant-numeric: tabular-nums; }
+    .metric-note { margin-top: 4px; color: var(--ink-faint); font-size: 11.5px; }
+    .metric-note.good { color: var(--ok); }
+    .chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .chart-label { fill: var(--ink-soft); font: 11px var(--font-sans); }
+    .chart-number { fill: var(--ink); font: 650 13px var(--font-sans); }
+    .chart-grid { stroke: var(--line-soft); stroke-width: 1; }
+    .chart-accent { fill: var(--accent); }
+    .chart-seal { fill: var(--seal); }
+    .chart-soft { fill: var(--accent-soft); }
+    .chart-ok { fill: var(--ok); }
+    .chart-warn { fill: var(--warn); }
+    .rate-row { display: grid; grid-template-columns: 60px 1fr 68px; gap: 12px; align-items: center;
+      padding: 13px 0; border-bottom: 1px solid var(--line-soft); }
+    .rate-row:last-child { border-bottom: 0; }
+    .rate-name { font: 12px var(--font-mono); color: var(--ink-soft); }
+    .rate-track { position: relative; height: 8px; border-radius: 999px; background: var(--line-soft); }
+    .rate-fill { height: 100%; border-radius: inherit; background: var(--accent); }
+    .rate-ci { position: absolute; top: -4px; height: 16px; border-left: 1px solid var(--seal);
+      border-right: 1px solid var(--seal); }
+    .rate-ci::after { content: ''; position: absolute; left: 0; right: 0; top: 7px; border-top: 1px solid var(--seal); }
+    .rate-value { text-align: right; font-weight: 650; font-variant-numeric: tabular-nums; }
+    .rate-meta { grid-column: 2 / -1; margin-top: -7px; color: var(--ink-faint); font-size: 11px; }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; color: var(--ink-faint); font-size: 11px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .swatch { width: 9px; height: 9px; border-radius: 2px; background: var(--accent); }
+    .swatch.ci { width: 13px; height: 1px; background: var(--seal); }
+
+    .heatmap { width: 100%; border-collapse: separate; border-spacing: 4px; font-size: 11.5px; }
+    .heatmap th { padding: 4px; color: var(--ink-faint); font-weight: 500; text-align: center; }
+    .heatmap th:first-child { text-align: left; }
+    .heatmap td { min-width: 60px; padding: 14px 8px; border-radius: 6px; background: var(--line-soft);
+      text-align: center; font-variant-numeric: tabular-nums; }
+    .heatmap td.hot { background: var(--stop-soft); color: var(--stop); font-weight: 650; }
+    .heatmap td.warm { background: var(--warn-soft); color: var(--warn); font-weight: 650; }
+    .heatmap td.zero { color: var(--ink-faint); }
+    .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter { padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper);
+      color: var(--ink-soft); font-size: 11.5px; }
+    .filter[data-active] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+    .table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .table th { padding: 9px 10px; border-bottom: 1px solid var(--line); color: var(--ink-faint);
+      font-size: 11px; font-weight: 550; text-align: left; }
+    .table td { padding: 11px 10px; border-bottom: 1px solid var(--line-soft); }
+    .table tr:last-child td { border-bottom: 0; }
+    .arrow { color: var(--accent); padding: 0 4px; }
+    .empty { padding: 16px; border: 1px dashed var(--line); border-radius: var(--radius);
+      background: var(--ground); color: var(--ink-soft); font-size: 12.5px; }
+    .stack { display: grid; gap: 16px; }
+    .section-label { margin: 4px 0 9px; color: var(--ink-faint); font-size: 11px; font-weight: 650;
+      letter-spacing: .08em; text-transform: uppercase; }
+
+    /* Narrative Flow */
+    .story { max-width: 900px; margin: 0 auto; }
+    .story-lead { padding: 22px; margin-bottom: 16px; border-left: 4px solid var(--accent); }
+    .story-lead p { max-width: 68ch; margin: 6px 0 0; color: var(--ink-soft); }
+    .journey { position: relative; display: grid; gap: 14px; padding-left: 42px; }
+    .journey::before { content: ''; position: absolute; left: 17px; top: 20px; bottom: 20px;
+      width: 2px; background: var(--line); }
+    .journey-step { position: relative; }
+    .journey-step::before { content: attr(data-step); position: absolute; left: -42px; top: 17px;
+      display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+      background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 700; }
+    .journey-step .card-body { display: grid; grid-template-columns: 170px 1fr; gap: 24px; align-items: center; }
+    .story-number { font-size: 34px; font-weight: 700; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+    .story-caption { color: var(--ink-soft); font-size: 12px; }
+    .evidence { padding: 16px; border-radius: var(--radius); background: var(--ground); }
+
+    /* Diagnostic Matrix */
+    .diagnostic-toolbar { display: flex; justify-content: space-between; gap: 16px; align-items: end;
+      padding: 15px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); }
+    .diag-layout { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 16px; }
+    .diag-callout { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 12px;
+      border-radius: var(--radius); background: var(--stop-soft); color: var(--stop); }
+    .diag-callout small { color: var(--ink-soft); }
+    .breakdown { display: grid; gap: 10px; }
+    .break-row { display: grid; grid-template-columns: 84px 1fr 22px; gap: 8px; align-items: center; font-size: 11.5px; }
+    .break-bar { height: 7px; border-radius: 999px; background: var(--line-soft); overflow: hidden; }
+    .break-bar i { display: block; height: 100%; background: var(--stop); }
+
+    .enter { animation: rise 220ms ease-out both; transform-origin: top center; }
+    @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @media (prefers-reduced-motion: reduce) {
+      .enter { animation: none; }
+    }
+    @media (max-width: 900px) {
+      .grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid.main-side, .diag-layout { grid-template-columns: 1fr; }
+      .page-head, .diagnostic-toolbar { flex-direction: column; }
+      .journey-step .card-body { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .shell-main, .shell-top, .shell-foot { padding-left: 16px; padding-right: 16px; }
+      .nav { width: 100%; overflow-x: auto; }
+      .grid.four, .grid.two { grid-template-columns: 1fr; }
+      .period { width: 100%; }
+      .period label { flex: 1; min-width: 130px; }
+      .period input { width: 100%; }
+      .heatmap { min-width: 560px; }
+      .heatmap-wrap { overflow-x: auto; }
+      .journey { padding-left: 0; }
+      .journey::before, .journey-step::before { display: none; }
+    }
+
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+
+  <script>
+    const DATA = {
+      packageId: 'pkg-analytics',
+      period: { start: '2026-08-25', end: '2026-08-26' },
+      funnel: { downloads: 4, installs: 3, uninstalls: 1, downloadToInstall: .75, installToUninstall: 1 / 3 },
+      uid: { successes: 2, total: 3, rate: 2 / 3, lower: .2077, upper: .9385 },
+      uuid: { successes: 1, total: 2, rate: .5, lower: .0945, upper: .9055 },
+      failures: [
+        { version: '1.9.0', osType: 'linux', errorCode: 'E002', count: 1 },
+        { version: '1.10.0-beta.1', osType: 'windows', errorCode: 'E004', count: 1 }
+      ],
+      platformTime: { sampleSize: 3, median: 20000, p90: 30000, p95: 30000 },
+      employeeTime: { sampleSize: 3, median: 38000, p90: 66000, p95: 66000, approximate: true },
+      versions: [{ version: '1.9.0', installations: 2 }],
+      upgrades: [{ uid: 'uid-a', currentVersion: '1.9.0', availableVersion: '1.10.0' }],
+      gap: { code: 'MISSING_DOWNLOAD_EVENTS', missingCount: 1, message: '終態事件比下載事件多 1 筆' }
+    };
+
+    const periodControl = () => `
+      <form class="period" data-period-form>
+        <label>開始時間<input name="start" type="date" value="${DATA.period.start}" required></label>
+        <label>結束時間<input name="end" type="date" value="${DATA.period.end}" required></label>
+        <button class="btn primary" type="submit">套用期間</button>
+        <output class="period-status" aria-live="polite"></output>
+      </form>`;
+
+    const pageHeader = (title, description, withPeriod = true) => `
+      <div class="crumb"><b>技能池</b> / <span class="mono">${DATA.packageId}</span> / 作者分析</div>
+      <div class="page-head">
+        <div>
+          <h1>${title}</h1>
+          <p class="subtitle">${description}</p>
+          <span class="assurance">best-effort · 數據僅供參考</span>
+        </div>
+        ${withPeriod ? periodControl() : ''}
+      </div>`;
+
+    const notice = () => `
+      <aside class="notice" role="status">
+        <span class="notice-code">${DATA.gap.code}</span>
+        <div><strong>資料存在缺口</strong><p>${DATA.gap.message}。員工時間為近似值，請勿視為完整採用人數或精確耗時。</p></div>
+      </aside>`;
+
+    const rateRows = () => `
+      <div class="rate-row">
+        <span class="rate-name">uid</span>
+        <div class="rate-track"><div class="rate-fill" style="width:66.7%"></div><div class="rate-ci" style="left:20.8%;width:73.1%"></div></div>
+        <span class="rate-value">66.7%</span>
+        <span class="rate-meta">2 / 3 成功 · Wilson 95%：20.8–93.9%</span>
+      </div>
+      <div class="rate-row">
+        <span class="rate-name">uuid</span>
+        <div class="rate-track"><div class="rate-fill" style="width:50%"></div><div class="rate-ci" style="left:9.5%;width:81%"></div></div>
+        <span class="rate-value">50.0%</span>
+        <span class="rate-meta">1 / 2 成功 · Wilson 95%：9.5–90.6%</span>
+      </div>
+      <div class="legend"><span><i class="swatch"></i>成功率</span><span><i class="swatch ci"></i>Wilson 95% 信賴區間</span></div>`;
+
+    const funnelSvg = () => `
+      <svg class="chart-svg" viewBox="0 0 520 190" role="img" aria-label="4 次下載、3 次安裝、1 次解除安裝的漏斗">
+        <polygon class="chart-soft" points="20,20 500,20 445,65 75,65"></polygon>
+        <polygon class="chart-accent" points="75,72 445,72 390,117 130,117" opacity=".75"></polygon>
+        <polygon class="chart-seal" points="130,124 390,124 335,169 185,169"></polygon>
+        <text class="chart-number" x="260" y="48" text-anchor="middle">下載 4</text>
+        <text class="chart-number" x="260" y="100" text-anchor="middle">安裝 3 · 75%</text>
+        <text class="chart-number" x="260" y="152" text-anchor="middle">解除安裝 1 · 33.3%</text>
+      </svg>`;
+
+    const heatmap = () => `
+      <div class="heatmap-wrap">
+        <table class="heatmap" aria-label="版本、作業系統與錯誤碼失敗熱力圖">
+          <thead><tr><th>版本 × OS</th><th>E002</th><th>E004</th><th>合計</th></tr></thead>
+          <tbody>
+            <tr data-os="linux"><th class="mono">1.9.0 · linux</th><td class="hot">1</td><td class="zero">0</td><td class="warm">1</td></tr>
+            <tr data-os="windows"><th class="mono">1.10.0-beta.1 · windows</th><td class="zero">0</td><td class="hot">1</td><td class="warm">1</td></tr>
+          </tbody>
+        </table>
+      </div>`;
+
+    const upgradeTable = () => `
+      <table class="table"><thead><tr><th>員工 UID</th><th>目前版本</th><th>可用版本</th></tr></thead>
+        <tbody><tr><td class="mono">uid-a</td><td class="mono">1.9.0</td><td><span class="mono">1.9.0</span><span class="arrow">→</span><strong class="mono">1.10.0</strong></td></tr></tbody>
+      </table>`;
+
+    const shell = (content) => `
+      <div class="shell enter">
+        <header class="shell-top"><span class="brand">Agent 技能平台</span><nav class="nav"><span>技能池</span><span>我的安裝</span><span class="active">作者分析</span><span>上架技能</span><span>審核</span></nav></header>
+        <main class="shell-main">${content}</main>
+        <footer class="shell-foot"><span>Agent 技能平台 · 企業內部使用</span><span>隱私聲明</span></footer>
+      </div>`;
+
+    function signalBoard() {
+      return shell(`
+        ${pageHeader('作者分析 · Signal Board', '高密度營運視圖，先回答「現在是否健康、下一步處理誰」。')}
+        ${notice()}
+        <div class="grid four">
+          <section class="card metric"><div class="metric-label">下載</div><div class="metric-value">4</div><div class="metric-note">分析期間事件</div></section>
+          <section class="card metric"><div class="metric-label">安裝</div><div class="metric-value">3</div><div class="metric-note good">下載轉安裝 75%</div></section>
+          <section class="card metric"><div class="metric-label">解除安裝</div><div class="metric-value">1</div><div class="metric-note">安裝後解除 33.3%</div></section>
+          <section class="card metric"><div class="metric-label">待升級 UID</div><div class="metric-value">1</div><div class="metric-note">最新穩定版 1.10.0</div></section>
+        </div>
+        <div class="grid main-side" style="margin-top:16px">
+          <div class="stack">
+            <section class="card"><div class="card-head"><h2>採用漏斗</h2><span>downloads → installs → uninstalls</span></div><div class="card-body">${funnelSvg()}</div></section>
+            <section class="card"><div class="card-head"><h2>失敗熱力圖</h2><div class="filters" data-filter-group><button class="filter" data-os-filter="all" data-active>全部</button><button class="filter" data-os-filter="linux">Linux</button><button class="filter" data-os-filter="windows">Windows</button></div></div><div class="card-body">${heatmap()}</div></section>
+            <section class="card"><div class="card-head"><h2>待升級使用者</h2><span>僅 UID，依 OS／Client 相容性篩選</span></div>${upgradeTable()}</section>
+          </div>
+          <aside class="stack">
+            <section class="card"><div class="card-head"><h2>成功率</h2><span>UID 與 UUID 分開</span></div><div class="card-body">${rateRows()}</div></section>
+            <section class="card"><div class="card-head"><h2>可執行時間</h2><span>sampleSize 3</span></div><div class="card-body">
+              <div class="section-label">平台時間</div><div class="metric-value">20 秒</div><div class="metric-note">P90 30 秒 · P95 30 秒</div>
+              <div class="section-label" style="margin-top:20px">員工時間 · 近似</div><div class="metric-value">38 秒</div><div class="metric-note">P90 66 秒 · P95 66 秒</div>
+            </div></section>
+            <section class="card"><div class="card-head"><h2>版本分布</h2><span>目前安裝</span></div><div class="card-body"><svg class="chart-svg" viewBox="0 0 220 95" role="img" aria-label="1.9.0 有 2 次安裝"><circle cx="52" cy="47" r="36" fill="var(--accent-soft)"></circle><circle cx="52" cy="47" r="22" fill="var(--paper)"></circle><text class="chart-number" x="52" y="51" text-anchor="middle">2</text><text class="chart-label" x="105" y="42">1.9.0</text><text class="chart-label" x="105" y="61">2 次安裝</text></svg></div></section>
+          </aside>
+        </div>`);
+    }
+
+    function narrativeFlow() {
+      return shell(`<div class="story">
+        ${pageHeader('作者分析 · Narrative Flow', '沿著「被下載、能安裝、可執行、是否留下」的路徑閱讀。')}
+        <section class="card story-lead"><span class="assurance">best-effort</span><h2 style="margin:10px 0 0">4 次下載帶來 3 次安裝，其中 1 次後續解除</h2><p>這是一段事件故事，不是完整人數。UID 與匿名 UUID 分開計算，員工可執行時間是由下載至成功事件推導的近似值。</p></section>
+        ${notice()}
+        <div class="journey">
+          <section class="card journey-step" data-step="1"><div class="card-head"><h2>從下載到安裝</h2><span>FunnelMetrics</span></div><div class="card-body"><div><div class="story-number">75%</div><div class="story-caption">4 次下載中的 3 次形成安裝</div></div>${funnelSvg()}</div></section>
+          <section class="card journey-step" data-step="2"><div class="card-head"><h2>安裝是否成功</h2><span>Wilson 95% 信賴區間</span></div><div class="card-body"><div><div class="story-number">2 + 1</div><div class="story-caption">UID 成功 2 次、UUID 成功 1 次</div></div><div class="evidence">${rateRows()}</div></div></section>
+          <section class="card journey-step" data-step="3"><div class="card-head"><h2>多久可以執行</h2><span>TimeToRunnableMetrics</span></div><div class="card-body"><div><div class="story-number">20 秒</div><div class="story-caption">平台時間中位數 · 樣本 3</div></div><svg class="chart-svg" viewBox="0 0 500 130" role="img" aria-label="平台與員工時間比較"><line class="chart-grid" x1="40" y1="28" x2="470" y2="28"></line><line class="chart-grid" x1="40" y1="88" x2="470" y2="88"></line><rect class="chart-accent" x="40" y="16" width="130" height="24" rx="5"></rect><rect class="chart-seal" x="40" y="76" width="247" height="24" rx="5"></rect><text class="chart-label" x="180" y="33">平台 20 秒</text><text class="chart-label" x="297" y="93">員工近似 38 秒</text><text class="chart-label" x="40" y="120">P95：平台 30 秒 · 員工近似 66 秒</text></svg></div></section>
+          <section class="card journey-step" data-step="4"><div class="card-head"><h2>哪裡失敗</h2><span>2 個 failureCells</span></div><div class="card-body"><div><div class="story-number">2</div><div class="story-caption">E002 / E004，各 1 次</div></div>${heatmap()}</div></section>
+          <section class="card journey-step" data-step="5"><div class="card-head"><h2>接下來可採取的行動</h2><span>UpgradeCandidate</span></div><div class="card-body"><div><div class="story-number">1</div><div class="story-caption">相容且可升級的 UID</div></div><div>${upgradeTable()}</div></div></section>
+        </div>
+      </div>`);
+    }
+
+    function diagnosticMatrix() {
+      return shell(`
+        ${pageHeader('作者分析 · Diagnostic Matrix', '把失敗定位放在第一屏，適合維護者處理版本與作業系統差異。', false)}
+        <div class="diagnostic-toolbar">
+          ${periodControl()}
+          <div><div class="section-label">失敗範圍</div><div class="filters" data-filter-group><button class="filter" data-os-filter="all" data-active>全部 OS</button><button class="filter" data-os-filter="linux">Linux</button><button class="filter" data-os-filter="windows">Windows</button></div></div>
+        </div>
+        ${notice()}
+        <div class="diag-layout">
+          <div class="stack">
+            <section class="card"><div class="card-head"><h2>失敗診斷矩陣</h2><span>version × osType × errorCode</span></div><div class="card-body">${heatmap()}<div class="diag-callout" style="margin-top:14px"><div><strong>兩個失敗群集數量相同</strong><br><small>目前樣本不足以判定哪一個版本或 OS 更不穩定。</small></div><span class="mono">n=2</span></div></div></section>
+            <div class="grid two">
+              <section class="card"><div class="card-head"><h2>依錯誤碼</h2><span>failureDistribution.byErrorCode</span></div><div class="card-body breakdown"><div class="break-row"><span class="mono">E002</span><span class="break-bar"><i style="width:100%"></i></span><b>1</b></div><div class="break-row"><span class="mono">E004</span><span class="break-bar"><i style="width:100%"></i></span><b>1</b></div></div></section>
+              <section class="card"><div class="card-head"><h2>依作業系統</h2><span>failureDistribution.byOs</span></div><div class="card-body breakdown"><div class="break-row"><span>linux</span><span class="break-bar"><i style="width:100%"></i></span><b>1</b></div><div class="break-row"><span>windows</span><span class="break-bar"><i style="width:100%"></i></span><b>1</b></div></div></section>
+            </div>
+            <section class="card"><div class="card-head"><h2>待升級的具名使用者</h2><span>修復發布後的觸達名單</span></div>${upgradeTable()}</section>
+          </div>
+          <aside class="stack">
+            <section class="card"><div class="card-head"><h2>上下文</h2><span>同一分析期間</span></div><div class="card-body">
+              <div class="section-label">漏斗</div><div class="metric-value">4 → 3 → 1</div><div class="metric-note">下載 · 安裝 · 解除安裝</div>
+              <div class="section-label" style="margin-top:20px">UID 成功率</div><div class="metric-value">66.7%</div><div class="metric-note">Wilson 20.8–93.9%</div>
+              <div class="section-label" style="margin-top:20px">UUID 成功率</div><div class="metric-value">50.0%</div><div class="metric-note">Wilson 9.5–90.6%</div>
+            </div></section>
+            <section class="card"><div class="card-head"><h2>執行時間</h2><span>中位數 / P95</span></div><div class="card-body"><table class="table"><tbody><tr><td>平台</td><td class="mono">20s / 30s</td></tr><tr><td>員工近似</td><td class="mono">38s / 66s</td></tr></tbody></table></div></section>
+            <section class="card"><div class="card-head"><h2>版本分布</h2><span>versionDistribution</span></div><div class="card-body"><div class="metric-value mono">1.9.0</div><div class="metric-note">2 次目前安裝</div></div></section>
+          </aside>
+        </div>`);
+    }
+
+    const stage = document.getElementById('stage');
+
+    function wireVariantInteractions() {
+      stage.querySelectorAll('[data-period-form]').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          const output = form.querySelector('.period-status');
+          const data = new FormData(form);
+          output.textContent = `${data.get('start')} 至 ${data.get('end')} 已套用`;
+        });
+      });
+      stage.querySelectorAll('[data-filter-group]').forEach((group) => {
+        group.addEventListener('click', (event) => {
+          const button = event.target.closest('[data-os-filter]');
+          if (!button) return;
+          group.querySelectorAll('[data-os-filter]').forEach((item) => item.toggleAttribute('data-active', item === button));
+          const os = button.dataset.osFilter;
+          stage.querySelectorAll('.heatmap tbody tr[data-os]').forEach((row) => {
+            row.hidden = os !== 'all' && row.dataset.os !== os;
+          });
+        });
+      });
+    }
+
+    stage.innerHTML = signalBoard();
+    wireVariantInteractions();
+  </script>
+</body>
+</html>

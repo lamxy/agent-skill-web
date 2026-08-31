@@ -1,0 +1,16 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.sc-list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.sc-list li { display: grid; gap: 4px; padding: var(--space-3); border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--ground); }
+.sc-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.sc-line strong { font-size: 13.5px; }
+.sc-list a { color: var(--accent); font-size: 12.5px; overflow-wrap: anywhere; }
+.sc-plain { color: var(--ink-soft); font-size: 12.5px; overflow-wrap: anywhere; }
+.sc-note { margin: 2px 0 0; color: var(--ink-faint); font-size: 12px; }
+.sc-rule { margin: var(--space-3) 0 0; padding: 10px 11px; border-radius: var(--radius); background: var(--accent-soft); color: var(--ink-soft); font-size: 11.5px; }

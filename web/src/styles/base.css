@@ -1,0 +1,228 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/*
+ * 展開後的選項清單由作業系統繪製，一般 CSS 改不到它；
+ * color-scheme 是唯一能讓那份原生選單跟著深色主題走的宣告，
+ * 否則深色頁面上會彈出一張白底清單，且選項文字近乎不可見。
+ */
+:root {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+  }
+}
+
+/*
+ * 全站下拉的統一外觀。過去每頁各自宣告 select 樣式，
+ * 只要有一頁漏掉就會退回瀏覽器預設的方角灰底（審核詳情頁即如此），
+ * 因此基準樣式集中在這裡，各頁只微調尺寸。
+ */
+select {
+  appearance: none;
+  width: 100%;
+  min-height: 38px;
+  /* 右側留白給自繪箭頭，避免長選項文字壓到箭頭上 */
+  padding: 8px 34px 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background-color: var(--paper);
+  /* 箭頭以 inline SVG 繪製；stroke 用 token 色值，深色主題自動換色 */
+  background-image: var(--select-arrow);
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease-out,
+    box-shadow 140ms ease-out;
+}
+
+select:hover:not(:disabled) {
+  border-color: var(--ink-faint);
+}
+
+select:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/*
+ * 全站輸入框的統一外觀。度量與 focus 表現刻意與自繪下拉的
+ * .ui-select-trigger（components/select.css）逐項對齊：同樣的
+ * 38px 高、8px/12px 內距、--radius 圓角，以及 accent 邊框加
+ * 3px accent-soft 光暈的聚焦狀態，使同一列的輸入框與下拉看起來成套。
+ *
+ * 各頁若只是重述這些值，應直接刪除該覆寫；僅在確實需要不同尺寸
+ * （例如緊湊的篩選列）時才局部微調。
+ */
+input:not([type='checkbox']):not([type='radio']):not([type='range']),
+textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.4;
+  transition:
+    border-color 140ms ease-out,
+    box-shadow 140ms ease-out;
+}
+
+textarea {
+  min-height: 94px;
+  resize: vertical;
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='range']):hover:not(:disabled):not([readonly]),
+textarea:hover:not(:disabled):not([readonly]) {
+  border-color: var(--ink-faint);
+}
+
+/*
+ * 聚焦用邊框加光暈而非 outline。全域 :focus-visible 的 outline 會在
+ * 圓角外描出一圈方框，與下拉的光暈對不上，因此這裡明確關掉再自繪。
+ */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):focus-visible,
+textarea:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+input:disabled,
+textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--ink-faint);
+}
+
+/* 原生選項清單只吃有限的幾個屬性，能設的就設，其餘交給 color-scheme */
+select option {
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+select option:disabled {
+  color: var(--ink-faint);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/*
+ * 頁面主標題的全站基準。各頁過去自行宣告，字級在 21～28px 之間浮動，
+ * 從導覽列切換頁面時標題會忽大忽小；統一到技能池原本的規格。
+ *
+ * 需要不同層級的頁面（例如詳情頁的技能名）可自行覆寫，
+ * 但同屬導覽入口的頁面應一律沿用此基準。
+ */
+.page-h1 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+/* 數字對齊處一律使用等寬數字，避免表格欄位跳動 */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* 僅供螢幕閱讀器使用，視覺上隱藏但仍在無障礙樹中 */
+.sr-only {
+  position: absolute;
+  /* 沒有定位錨點時，元素會停在其行內流位置；放在寬表格裡就會被推到
+     捲動區的右端而撐出整頁橫向捲動，因此固定貼到定位父層左上角。 */
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 寬內容自行捲動，頁面主體永遠不橫向捲動 */
+.scroll-x {
+  overflow-x: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

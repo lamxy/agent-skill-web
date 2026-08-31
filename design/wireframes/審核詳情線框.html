@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>審核詳情線框 · Evidence Desk</title>
+  <style>
+    :root{
+      --ink:#16181d;--ink-soft:#5b616e;--ink-faint:#8b91a0;--line:#dfe2e8;--line-soft:#edeff3;
+      --paper:#fff;--ground:#f6f7f9;--accent:#1f4fd8;--accent-soft:#eef2fe;--accent-ink:#fff;
+      --ok:#1a7f52;--ok-soft:#e8f5ee;--warn:#8a5a00;--warn-soft:#fdf3e0;--stop:#a32020;
+      --stop-soft:#fdeceb;--seal:#6b5bd2;--seal-soft:#efecfd;--code:#101217;--code-ink:#e8eaf0;
+      --code-soft:#8f96a6;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;
+      --mono:ui-monospace,'SF Mono','Cascadia Mono',Menlo,monospace;--radius:8px;--radius-lg:11px;
+      --shadow:0 1px 3px rgba(22,24,29,.06);color-scheme:light dark
+    }
+    @media(prefers-color-scheme:dark){
+      :root:not([data-theme="light"]){
+        --ink:#e8eaf0;--ink-soft:#a2a9b8;--ink-faint:#767d8d;--line:#2f333c;--line-soft:#24272e;
+        --paper:#1a1d23;--ground:#131519;--accent:#7f9fff;--accent-soft:#1c2740;--accent-ink:#0e1014;
+        --ok:#5ec98e;--ok-soft:#14301f;--warn:#e0ab4c;--warn-soft:#33260d;--stop:#f08a80;
+        --stop-soft:#3a1917;--seal:#a99cf0;--seal-soft:#221d3d;--code:#0d0f13;--shadow:0 1px 3px rgba(0,0,0,.3)
+      }
+    }
+    :root[data-theme="dark"]{
+      --ink:#e8eaf0;--ink-soft:#a2a9b8;--ink-faint:#767d8d;--line:#2f333c;--line-soft:#24272e;
+      --paper:#1a1d23;--ground:#131519;--accent:#7f9fff;--accent-soft:#1c2740;--accent-ink:#0e1014;
+      --ok:#5ec98e;--ok-soft:#14301f;--warn:#e0ab4c;--warn-soft:#33260d;--stop:#f08a80;
+      --stop-soft:#3a1917;--seal:#a99cf0;--seal-soft:#221d3d;--code:#0d0f13;--shadow:0 1px 3px rgba(0,0,0,.3)
+    }
+    *{box-sizing:border-box}html{min-width:1120px}
+    body{margin:0;background:var(--ground);color:var(--ink);font:14px/1.55 var(--sans)}
+    button,textarea{font:inherit;color:inherit}button:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}.shell{min-height:100vh;display:flex;flex-direction:column}
+    .shell-top{height:58px;padding:0 max(24px,calc((100vw - 1260px)/2));background:var(--paper);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:42px}
+    .brand{font-weight:750;font-size:16px}.nav{display:flex;gap:28px;color:var(--ink-soft)}.nav .active{color:var(--accent);font-weight:650}
+    .main{width:min(1260px,calc(100% - 48px));margin:0 auto;padding:28px 0 88px;flex:1}
+    .foot{padding:22px max(24px,calc((100vw - 1260px)/2));border-top:1px solid var(--line);background:var(--paper);display:flex;justify-content:space-between;color:var(--ink-soft);font-size:12px}
+    .crumb{display:flex;gap:8px;color:var(--ink-faint);font-size:13px;margin-bottom:14px}.crumb a{color:var(--accent);font-weight:650;text-decoration:none}
+    .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding-bottom:20px;border-bottom:2px solid var(--ink)}
+    h1{font-size:28px;letter-spacing:-.03em;margin:0 0 6px}h2,h3,p{margin-top:0}
+    .subtitle{display:flex;align-items:center;gap:8px;color:var(--ink-soft);margin:0}.head-meta{text-align:right;color:var(--ink-soft);font-size:12px;line-height:1.8}
+    .tag{display:inline-flex;align-items:center;min-height:24px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:12px;white-space:nowrap}
+    .tag.pending{background:var(--warn-soft);color:var(--warn)}.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.seal{background:var(--seal-soft);color:var(--seal)}.tag.stop{background:var(--stop-soft);color:var(--stop)}
+    .context-strip{display:grid;grid-template-columns:1.2fr .8fr .8fr 1fr;margin:16px 0;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--paper);box-shadow:var(--shadow);overflow:hidden}
+    .context-item{padding:12px 14px;border-right:1px solid var(--line-soft)}.context-item:last-child{border-right:0}.context-item span{display:block;color:var(--ink-faint);font-size:10.5px;text-transform:uppercase;letter-spacing:.055em;margin-bottom:4px}.context-item strong{font-size:12.5px}
+    .desk{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:18px;align-items:start}.stack{display:grid;gap:14px}
+    .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+    .section-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 17px;border-bottom:1px solid var(--line)}
+    .section-head h2{font-size:15px;margin:0}.section-head p{font-size:11.5px;color:var(--ink-faint);margin:2px 0 0}.section-body{padding:17px}
+    .matrix-summary{display:flex;align-items:center;gap:10px}.matrix-summary strong{color:var(--ok);font-size:18px}.matrix-summary span{color:var(--ink-soft);font-size:12px}
+    .matrix{width:100%;border-collapse:collapse}.matrix th,.matrix td{padding:10px 11px;border-bottom:1px solid var(--line-soft);text-align:left;font-size:12px}.matrix th{color:var(--ink-faint);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}.matrix tr:last-child td{border-bottom:0}.status-pass{color:var(--ok);font-weight:650}
+    .bool-yes{display:inline-flex;align-items:center;gap:5px;color:var(--ok)}.bool-yes:before{content:'✓';display:grid;place-items:center;width:17px;height:17px;background:var(--ok-soft);border-radius:50%}
+    .code-card{overflow:hidden}.code-meta{display:flex;align-items:center;gap:8px}.copy-btn{height:30px;border:1px solid var(--line);border-radius:5px;padding:0 10px;background:var(--paper);cursor:pointer;font-size:11.5px}.copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+    pre{margin:0;padding:17px 18px;background:var(--code);color:var(--code-ink);font:12.5px/1.7 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere}pre .comment{color:var(--code-soft)}
+    .risk-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.risk-box{padding:14px;border:1px solid var(--line-soft);border-radius:var(--radius);background:var(--ground)}.risk-box span{display:block;color:var(--ink-faint);font-size:11px;margin-bottom:5px}.risk-box strong{font-size:12.5px}.risk-box.warn{border-color:var(--warn);background:var(--warn-soft)}.risk-box.warn strong{color:var(--warn)}
+    .attempt{display:grid;grid-template-columns:54px 1fr auto;gap:12px;align-items:center;padding:13px 0 0}.attempt small{color:var(--ink-faint)}
+    .decision{position:sticky;top:18px;overflow:hidden}.decision-mark{height:5px;background:var(--ok)}.decision-head{padding:17px;border-bottom:1px solid var(--line)}.decision-head h2{margin:0 0 5px;font-size:16px}.decision-head p{margin:0;color:var(--ink-soft);font-size:12px}
+    .readiness{padding:15px 17px;border-bottom:1px solid var(--line)}.readiness-row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:12px}.readiness-row span{color:var(--ink-soft)}.readiness-row .ok{color:var(--ok)}.readiness-row .warn{color:var(--warn)}
+    .policy{margin:14px 17px 0;padding:11px 12px;background:var(--accent-soft);border-radius:var(--radius);color:var(--ink-soft);font-size:11.5px}.policy b{color:var(--accent)}
+    .decision-form{padding:15px 17px 17px}.decision-form label{display:block;font-size:12px;font-weight:650;margin-bottom:7px}.decision-form label span{font-weight:400;color:var(--ink-faint)}
+    textarea{width:100%;min-height:108px;resize:vertical;padding:10px 11px;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);font-size:12px;line-height:1.5}
+    .field-help{display:flex;justify-content:space-between;margin-top:5px;color:var(--ink-faint);font-size:10.5px}.field-error{min-height:18px;margin:6px 0 0;color:var(--stop);font-size:11px}
+    .actions{display:grid;grid-template-columns:1fr 1.3fr;gap:8px;margin-top:10px}.btn{min-height:38px;border:1px solid var(--line);border-radius:var(--radius);padding:0 13px;background:var(--paper);cursor:pointer;font-weight:620}.btn.reject{border-color:var(--stop);color:var(--stop)}.btn.approve{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}.btn:hover{filter:brightness(.97)}
+    .decision-result{display:none;padding:20px 17px 22px}.decision-result[data-show]{display:block}.decision-result strong{display:block;margin-bottom:5px}.decision-result p{color:var(--ink-soft);margin-bottom:14px}.decision-result .btn{width:100%}
+    .toast{position:fixed;right:24px;bottom:24px;padding:11px 14px;border-radius:var(--radius);background:var(--ink);color:var(--paper);box-shadow:0 8px 24px rgba(0,0,0,.2);font-size:12px;opacity:0;transform:translateY(5px);pointer-events:none}.toast[data-show]{animation:toast 2.2s ease-out both}@keyframes toast{0%{opacity:0;transform:translateY(5px)}10%,82%{opacity:1;transform:none}100%{opacity:0;transform:none}}
+    dialog{width:420px;padding:0;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--paper);color:var(--ink);box-shadow:0 24px 64px rgba(0,0,0,.28)}dialog::backdrop{background:rgba(15,17,22,.42)}.dialog-body{padding:20px}.dialog-body h2{margin-bottom:8px;font-size:18px}.dialog-body p{color:var(--ink-soft);margin-bottom:18px}.dialog-actions{display:flex;justify-content:flex-end;gap:8px}.dialog-actions .approve{min-width:120px}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="shell-top"><span class="brand">Agent 技能平台</span><nav class="nav" aria-label="主導覽"><span>技能池</span><span>我的安裝</span><span>上架技能</span><span class="active">審核</span></nav></header>
+    <main class="main">
+      <div class="crumb"><a href="審核工作台列表線框.html">審核</a><span>/</span><a href="審核工作台列表線框.html">待審列表</a><span>/</span><span>治理 API 技能 1.0.0</span></div>
+      <header class="page-head">
+        <div><h1>治理 API 技能 <span class="mono">1.0.0</span></h1><p class="subtitle"><span class="tag pending" data-status>待審</span><span>統一發布審核與生命週期決議</span></p></div>
+        <div class="head-meta"><div>提交者 <strong class="mono">author-1</strong> · 2026-08-27 09:40</div><div>資料來源：<span class="mono">ReviewWorkbench</span></div></div>
+      </header>
+      <section class="context-strip" aria-label="審核上下文">
+        <div class="context-item"><span>Package ID</span><strong class="mono">review-api-skill</strong></div>
+        <div class="context-item"><span>Owner team</span><strong>team-a</strong></div>
+        <div class="context-item"><span>類型／分類</span><strong>Skill · frontend</strong></div>
+        <div class="context-item"><span>Script digest</span><strong class="mono">sha256:review-api</strong></div>
+      </section>
+      <div class="desk">
+        <div class="stack">
+          <section class="card">
+            <div class="section-head"><div><h2>驗證矩陣</h2><p>每一個預期 OS × Client 都必須有完整證據。</p></div><div class="matrix-summary"><strong>2 / 2</strong><span>全部通過</span></div></div>
+            <div class="section-body"><table class="matrix"><thead><tr><th>目標</th><th>Runner</th><th>安裝</th><th>遙測</th><th>解除安裝</th><th>清理</th><th>結果</th></tr></thead><tbody>
+              <tr><td class="mono">linux × codex</td><td class="mono">docker-linux/1.0.0</td><td class="mono">exit 0</td><td><span class="bool-yes">已觀測</span></td><td class="mono">exit 0</td><td><span class="bool-yes">成功</span></td><td class="status-pass">通過</td></tr>
+              <tr><td class="mono">windows × codex</td><td class="mono">powershell-wsl/1.0.0</td><td class="mono">exit 0</td><td><span class="bool-yes">已觀測</span></td><td class="mono">exit 0</td><td><span class="bool-yes">成功</span></td><td class="status-pass">通過</td></tr>
+            </tbody></table></div>
+          </section>
+          <section class="card code-card">
+            <div class="section-head"><div class="code-meta"><h2>安裝命令全文</h2><span class="tag seal">發布者命令</span></div><button class="copy-btn" type="button" data-copy="install">複製</button></div>
+            <pre id="install"><span class="comment"># 發布者提供；驗證 runner 於隔離環境執行</span>
+printf install</pre>
+          </section>
+          <section class="card code-card">
+            <div class="section-head"><div class="code-meta"><h2>解除安裝命令全文</h2><span class="tag seal">發布者命令</span></div><button class="copy-btn" type="button" data-copy="uninstall">複製</button></div>
+            <pre id="uninstall"><span class="comment"># 發布者提供；不得依賴資料庫 cascade 或隱式清理</span>
+printf uninstall</pre>
+          </section>
+          <section class="card">
+            <div class="section-head"><div><h2>殘留與驗證歷程</h2><p>發布者聲明與 runner 證據分開呈現，不互相推導。</p></div></div>
+            <div class="section-body">
+              <div class="risk-grid"><div class="risk-box warn"><span>殘留影響</span><strong>保留快取</strong></div><div class="risk-box"><span>手動清理</span><strong>刪除快取目錄</strong></div><div class="risk-box"><span>驗證開始</span><strong class="mono">2026-08-27 09:35</strong></div><div class="risk-box"><span>Runner version</span><strong class="mono">deterministic/1.0.0</strong></div></div>
+              <div class="attempt"><span class="tag ok">#1</span><div><strong>初次驗證通過</strong><br><small>矩陣 2 組，沒有缺失證據</small></div><span class="mono">09:35 → 09:39</span></div>
+            </div>
+          </section>
+        </div>
+        <aside class="card decision" aria-label="審核決議">
+          <div class="decision-mark"></div><div class="decision-head"><h2>發布決議</h2><p>完成證據閱讀後，在同一位置作出單筆決議。</p></div>
+          <div class="readiness"><div class="readiness-row"><span>驗證矩陣</span><strong class="ok">2 / 2 通過</strong></div><div class="readiness-row"><span>遙測證據</span><strong class="ok">完整</strong></div><div class="readiness-row"><span>清理驗證</span><strong class="ok">成功</strong></div><div class="readiness-row"><span>殘留聲明</span><strong class="warn">有殘留</strong></div></div>
+          <div class="policy"><b>審核迴避由伺服器強制執行。</b><br>作者、同團隊或未指派人員無法讀取或決議此審核。</div>
+          <form class="decision-form" data-form>
+            <label for="reason">決議理由 <span>核准可選填；駁回必填</span></label><textarea id="reason" maxlength="5000" placeholder="記錄證據判斷或需要作者修正的項目"></textarea>
+            <div class="field-help"><span>最多 5,000 字</span><span data-count>0 / 5,000</span></div><p class="field-error" role="alert" data-error></p>
+            <div class="actions"><button class="btn reject" type="button" data-reject>駁回</button><button class="btn approve" type="button" data-approve>核准發布</button></div>
+          </form>
+          <div class="decision-result" data-result><strong data-result-title>已核准發布</strong><p data-result-copy>決議已記錄，版本生命週期將更新為 published。</p><button class="btn" type="button" data-reset>重播決議互動</button></div>
+        </aside>
+      </div>
+    </main>
+    <footer class="foot"><span>Agent 技能平台 · 企業內部使用</span><span>第一期 PC 端線框 · ReviewWorkbench</span></footer>
+  </div>
+  <dialog data-dialog><div class="dialog-body"><h2>核准治理 API 技能 1.0.0？</h2><p>核准後版本會發布，員工即可下載。這個動作會保留你填寫的決議理由。</p><div class="dialog-actions"><button class="btn" type="button" data-cancel>返回檢查</button><button class="btn approve" type="button" data-confirm>確認核准</button></div></div></dialog>
+  <div class="toast" role="status" data-toast>已複製命令</div>
+  <script>
+    const form=document.querySelector('[data-form]'),reason=document.querySelector('#reason'),error=document.querySelector('[data-error]'),count=document.querySelector('[data-count]');
+    const dialog=document.querySelector('[data-dialog]'),result=document.querySelector('[data-result]'),status=document.querySelector('[data-status]'),toast=document.querySelector('[data-toast]');
+    reason.addEventListener('input',function(){count.textContent=reason.value.length.toLocaleString()+' / 5,000';error.textContent=''});
+    document.querySelector('[data-reject]').addEventListener('click',function(){if(!reason.value.trim()){error.textContent='駁回必須填寫理由。';reason.focus();return}finish('rejected')});
+    document.querySelector('[data-approve]').addEventListener('click',function(){dialog.showModal()});
+    document.querySelector('[data-cancel]').addEventListener('click',function(){dialog.close()});
+    document.querySelector('[data-confirm]').addEventListener('click',function(){dialog.close();finish('approved')});
+    document.querySelector('[data-reset]').addEventListener('click',function(){result.removeAttribute('data-show');form.hidden=false;status.textContent='待審';status.className='tag pending';reason.value='';count.textContent='0 / 5,000';error.textContent=''});
+    document.querySelectorAll('[data-copy]').forEach(function(button){button.addEventListener('click',async function(){const source=document.getElementById(button.dataset.copy).innerText;try{await navigator.clipboard.writeText(source)}catch{}toast.removeAttribute('data-show');void toast.offsetWidth;toast.setAttribute('data-show','');button.textContent='已複製';setTimeout(function(){button.textContent='複製'},1600)})});
+    function finish(decision){form.hidden=true;result.setAttribute('data-show','');const approved=decision==='approved';status.textContent=approved?'已核准':'已駁回';status.className='tag '+(approved?'ok':'stop');document.querySelector('[data-result-title]').textContent=approved?'已核准發布':'已駁回此版本';document.querySelector('[data-result-copy]').textContent=approved?'決議已記錄，版本生命週期將更新為 published。':'決議已記錄，版本退回 draft。理由：'+reason.value.trim()}
+  </script>
+</body>
+</html>
+

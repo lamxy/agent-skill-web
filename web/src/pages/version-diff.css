@@ -1,0 +1,89 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.vd { display: grid; gap: var(--space-4); }
+.vd-head { display: flex; align-items: end; justify-content: space-between; gap: var(--space-5); padding-bottom: var(--space-4); border-bottom: 2px solid var(--ink); }
+/* 字級沿用 base.css 的 .page-h1 全站基準 */
+.vd-head h1 { margin: 0; font-size: 21px; font-weight: 650; letter-spacing: -.01em; }
+.vd-head p { margin: 5px 0 0; color: var(--ink-soft); font-size: 13px; }
+
+.vd-body { display: grid; gap: var(--space-4); }
+.vd-shift { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); box-shadow: var(--shadow-card); }
+.vd-ver { display: grid; gap: 3px; }
+.vd-ver span { color: var(--ink-faint); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; }
+.vd-ver b { font-size: 17px; }
+.vd-arrow { color: var(--accent); font-size: 19px; }
+.vd-dir { margin-left: auto; padding: 5px 11px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 650; }
+
+.vd-banner { padding: var(--space-4); border: 1px solid var(--warn); border-radius: var(--radius-lg); background: var(--warn-soft); }
+.vd-banner h2 { margin: 0 0 5px; color: var(--warn); font-size: 14.5px; }
+.vd-banner p { margin: 0; color: var(--ink-soft); font-size: 13px; }
+.vd-banner ul { margin: var(--space-2) 0 0; padding-left: 18px; color: var(--ink-soft); font-size: 13px; }
+.vd-banner li { margin-bottom: 3px; }
+.vd-banner-calm { border-color: var(--ok); background: var(--ok-soft); }
+.vd-banner-calm h2 { color: var(--ok); }
+
+.vd-grid { display: grid; grid-template-columns: minmax(0, 1fr) 316px; align-items: start; gap: var(--space-4); }
+.vd-panel { overflow: hidden; margin-bottom: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); box-shadow: var(--shadow-card); }
+.vd-grid > .vd-panel { margin-bottom: 0; }
+.vd-panel-h { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0; padding: 13px var(--space-4); border-bottom: 1px solid var(--line-soft); font-size: 13px; }
+.vd-panel-h small { color: var(--ink-faint); font-size: 11.5px; font-weight: 400; }
+
+.vd-target { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--line-soft); }
+.vd-target:last-of-type { border-bottom: 0; }
+.vd-target-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.vd-target-head b { font-size: 13.5px; }
+
+.vd-flags { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.vd-flags li { padding: 4px 9px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--ground); color: var(--ink-soft); font-size: 11.5px; }
+.vd-flags li[data-changed] { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); font-weight: 620; }
+
+.vd-digest { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: var(--space-2); margin-top: var(--space-3); padding: 10px 12px; border-radius: var(--radius); background: var(--ground); }
+.vd-side span { display: block; color: var(--ink-faint); font-size: 10px; letter-spacing: .05em; text-transform: uppercase; }
+.vd-side b { display: block; margin-top: 3px; font-size: 11.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.vd-absent { color: var(--ink-faint); font-weight: 500; }
+
+.vd-opts { overflow: hidden; margin-top: var(--space-3); border: 1px solid var(--line-soft); border-radius: var(--radius); }
+.vd-opt { display: flex; gap: var(--space-2); padding: 9px 11px; border-bottom: 1px solid var(--line-soft); font-size: 12.5px; }
+.vd-opt:last-child { border-bottom: 0; }
+.vd-opt-mark { flex: none; width: 19px; text-align: center; font-weight: 700; }
+.vd-opt-add { color: var(--ok); }
+.vd-opt-del { color: var(--stop); }
+.vd-opt-mod { color: var(--warn); }
+.vd-opt-body { display: grid; gap: 2px; min-width: 0; }
+.vd-opt-body code { font-size: 12px; }
+.vd-opt-body small { color: var(--ink-faint); }
+
+.vd-rule { margin: 0 var(--space-4) var(--space-4); padding: 10px 11px; border-radius: var(--radius); background: var(--accent-soft); color: var(--ink-soft); font-size: 11.5px; }
+.vd-rule strong { display: block; margin-bottom: 3px; color: var(--accent); }
+.vd-none { padding: var(--space-6) var(--space-4); margin: 0; color: var(--ink-soft); text-align: center; }
+
+/* top 須避開 sticky 頂欄，見 tokens.css 的 --sticky-top */
+.vd-side-col { display: grid; gap: var(--space-4); position: sticky; top: var(--sticky-top); }
+.vd-side-col .vd-panel { margin-bottom: 0; }
+.vd-notes { padding: var(--space-3) var(--space-4); color: var(--ink-soft); font-size: 13px; white-space: pre-wrap; }
+.vd-notes p { margin: 0; }
+.vd-notes strong { color: var(--warn); }
+
+.vd-act { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); }
+.vd-act a, .vd-act button { width: 100%; text-align: center; text-decoration: none; }
+.vd-ack { display: flex; gap: var(--space-2); padding: 12px 13px; border: 1px solid var(--warn); border-radius: var(--radius); background: var(--warn-soft); color: var(--ink-soft); font-size: 12.5px; }
+.vd-ack input { margin: 2px 0 0; }
+
+@media (max-width: 900px) {
+  .vd-grid { grid-template-columns: minmax(0, 1fr); }
+  .vd-side-col { position: static; }
+}
+
+@media (max-width: 640px) {
+  .vd-head { display: block; }
+  .vd-shift { flex-wrap: wrap; }
+  .vd-dir { margin-left: 0; }
+  .vd-digest { grid-template-columns: minmax(0, 1fr); }
+  .vd-digest .vd-arrow { display: none; }
+}

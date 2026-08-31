@@ -1,0 +1,118 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+/*
+ * 解除 .adm-panel 的 overflow: hidden。反饋明細的篩選下拉位於面板底部，
+ * 會向上展開並溢出面板上緣，裁切會把選項切掉一半（見 .sa-filters）。
+ *
+ * 只放寬這一頁：.adm-panel 另有 15 處使用，那些面板靠裁切維持圓角，
+ * 統一改動的風險遠大於收益。圓角改由首尾子元素各自負責。
+ */
+.sa-panel { margin-bottom: var(--space-4); overflow: visible; }
+
+.sa-panel > *:first-child {
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+}
+
+.sa-panel > *:last-child {
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+/*
+ * 面板本身不帶內距（.adm-panel 只負責外框），原本靠各子區塊自行處理，
+ * 但這頁 head 之後的內容直接掛在面板上，於是整片貼著邊框。
+ * 統一給 head 以外的直接子元素左右與下方留白。
+ */
+.sa-panel > *:not(.adm-panel-head) {
+  margin-left: var(--space-4);
+  margin-right: var(--space-4);
+}
+
+.sa-panel > *:not(.adm-panel-head):first-of-type,
+.sa-panel > .adm-panel-head + * {
+  margin-top: var(--space-4);
+}
+
+.sa-panel > *:last-child {
+  margin-bottom: var(--space-4);
+}
+
+/* 分隔線需貼齊面板兩側，退回內距 */
+.sa-panel > .sa-bar {
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+.sa-warn { margin: 0 0 var(--space-3); padding: 11px 12px; border: 1px solid var(--warn); border-radius: var(--radius); background: var(--warn-soft); color: var(--ink-soft); font-size: 12.5px; }
+.sa-warn strong { display: block; margin-bottom: 3px; color: var(--warn); }
+.sa-error { border-color: var(--stop); background: var(--stop-soft); color: var(--stop); }
+
+.sa-rows { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.sa-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) minmax(0, 1fr) 34px; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--ground); }
+.sa-row label { display: grid; gap: 4px; color: var(--ink-faint); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; }
+/* 尺寸與聚焦樣式沿用 base.css；label 的 uppercase 與字距會被繼承，需在此還原 */
+.sa-row input, .sa-row textarea { text-transform: none; letter-spacing: normal; }
+/* label 設了 uppercase 與字距，select 需自行還原，否則選項文字會被繼承影響 */
+.sa-row select { text-transform: none; letter-spacing: normal; }
+/* 這裡的多行欄位比全站基準矮，一列可容納更多設定 */
+.sa-row textarea { min-height: 54px; }
+.sa-wide { grid-column: 1 / -1; }
+.sa-del { align-self: end; width: 34px; height: 38px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); color: var(--stop); cursor: pointer; }
+
+.sa-bar { display: flex; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--line-soft); }
+
+.sa-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4); }
+.sa-metric { display: grid; gap: 3px; padding: var(--space-3) var(--space-4); }
+.sa-metric b { font-size: 22px; }
+.sa-metric span { color: var(--ink-faint); font-size: 10.5px; }
+
+.sa-bars { display: grid; gap: var(--space-2); }
+.sa-brow { display: grid; grid-template-columns: 104px minmax(0, 1fr) 34px; align-items: center; gap: var(--space-3); font-size: 12.5px; }
+.sa-brow span { color: var(--ink-soft); }
+.sa-track { height: 8px; overflow: hidden; border-radius: 999px; background: var(--line-soft); }
+.sa-fill { height: 100%; border-radius: 999px; background: var(--accent); }
+.sa-brow b { color: var(--ink-soft); font-weight: 560; text-align: right; }
+.sa-brow[data-zero] .sa-fill { background: var(--line); }
+.sa-brow[data-zero] b { color: var(--ink-faint); }
+.sa-sep { margin: var(--space-4) 0; border: 0; border-top: 1px solid var(--line-soft); }
+.sa-rule { margin: var(--space-3) 0 0; padding: 10px 11px; border-radius: var(--radius); background: var(--accent-soft); color: var(--ink-soft); font-size: 11.5px; }
+
+/* 三個篩選等寬平分整行：flex 下它們只佔各自內容寬度，右側會留一大片空白 */
+.sa-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin-bottom: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--line-soft); }
+.sa-filters label { display: grid; gap: 4px; color: var(--ink-faint); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; }
+.sa-filters select { min-width: 160px; min-height: 38px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--ground); color: var(--ink); font: inherit; letter-spacing: normal; text-transform: none; }
+
+.sa-fb { padding: var(--space-3) 0; border-bottom: 1px solid var(--line-soft); }
+.sa-fb:last-of-type { border-bottom: 0; }
+.sa-fb-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: 7px; }
+.sa-fb-detail { margin: 0 0 var(--space-2); color: var(--ink-soft); font-size: 13px; }
+.sa-fb-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.sa-fb-foot small { color: var(--ink-faint); font-size: 11.5px; overflow-wrap: anywhere; }
+.sa-fb-actions { display: flex; gap: var(--space-2); }
+
+@media (max-width: 860px) {
+  .sa-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .sa-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .sa-del { grid-column: 2; justify-self: end; }
+}
+
+@media (max-width: 640px) {
+  .sa-row { grid-template-columns: minmax(0, 1fr); }
+  .sa-del { grid-column: 1; justify-self: start; width: 100%; }
+  .sa-bar { flex-direction: column; }
+  .sa-brow { grid-template-columns: 84px minmax(0, 1fr) 30px; }
+  .sa-filters { grid-template-columns: minmax(0, 1fr); }
+  .sa-filters select { width: 100%; min-width: 0; }
+  .sa-fb-actions { width: 100%; }
+}

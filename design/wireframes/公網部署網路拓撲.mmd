@@ -1,0 +1,32 @@
+graph LR
+  subgraph 使用者端
+    B["同事的瀏覽器"]
+  end
+
+  subgraph 網際網路
+    DNS["DNS<br/>platform.example.com"]
+    GH["GitHub OAuth<br/>github.com / api.github.com"]
+    LE["Let's Encrypt<br/>憑證簽發"]
+  end
+
+  subgraph 雲主機 ["雲主機 (非中國大陸節點)"]
+    subgraph DMZ ["對外開放 80 / 443"]
+      CADDY["Caddy<br/>反向代理 + TLS 終止"]
+    end
+    subgraph NET ["compose 內部網路 (不對外)"]
+      APP["app<br/>Fastify :3000"]
+      PG[("postgres :5432<br/>具名 volume")]
+      MIG["migrate<br/>一次性"]
+    end
+    VOL[("caddy-data<br/>憑證持久化")]
+  end
+
+  B -->|"1 解析網域"| DNS
+  B -->|"2 HTTPS 443"| CADDY
+  CADDY -->|"3 反代 HTTP"| APP
+  APP -->|"4 SQL"| PG
+  MIG -.->|"啟動前套用"| PG
+  CADDY <-->|"ACME HTTP-01 :80"| LE
+  CADDY -.->|"存取憑證"| VOL
+  B -->|"5 授權跳轉 (瀏覽器直連)"| GH
+  APP -->|"6 token / userinfo (伺服器直連)"| GH

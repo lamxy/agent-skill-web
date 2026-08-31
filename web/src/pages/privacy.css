@@ -1,0 +1,104 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.pv {
+  max-width: 68ch;
+}
+
+/* 字級沿用 base.css 的 .page-h1 全站基準 */
+.pv-h1 {
+  margin: 0 0 var(--space-3);
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.pv-lead {
+  margin: 0 0 var(--space-6);
+  color: var(--ink-soft);
+  font-size: 15px;
+}
+
+.pv-sec {
+  margin-bottom: var(--space-6);
+}
+
+.pv-h2 {
+  margin: 0 0 var(--space-3);
+  font-size: 15px;
+  font-weight: 620;
+}
+
+.pv-sec p {
+  margin: 0 0 var(--space-3);
+  color: var(--ink-soft);
+}
+
+.pv-sec p:last-child {
+  margin-bottom: 0;
+}
+
+.pv-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.pv-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 620;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.pv-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  vertical-align: top;
+}
+
+.pv-table td:first-child {
+  color: var(--ink);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.pv-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.pv-note {
+  margin: var(--space-3) 0 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.pv-list {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--ink-soft);
+}
+
+.pv-list li {
+  margin-bottom: var(--space-1);
+}
+
+.pv-list code {
+  font-size: 12.5px;
+  color: var(--ink);
+}

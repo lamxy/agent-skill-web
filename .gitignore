@@ -1,0 +1,46 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+
+# Dependency directories
+node_modules/
+dist/
+coverage/
+
+# 就地編譯產物。原始碼一律是 .ts/.tsx；同名 .js 落在 src/、web/src/、test/
+# 或 scripts/ 時必為 tsc 就地輸出的殘留，不得進版控。
+# 這類殘留會被 vitest 當成重複測試檔收集，讓測試數量憑空翻倍。
+/src/**/*.js
+/web/src/**/*.js
+/test/**/*.js
+/scripts/*.js
+/vitest.config.js
+/vite.config.js
+
+# Environment variables
+# .env.deploy 含資料庫密碼與 OAuth secret，務必排除；
+# 但 .env*.example 是範本，必須進版本控制。
+.env
+.env.*
+!.env*.example
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS specific
+.DS_Store
+
+# gstack browser runtime credentials and process state
+.gstack/terminal-*
+.gstack/browse.json
+.gstack/

@@ -1,0 +1,183 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.mp-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 2px solid var(--ink);
+  flex-wrap: wrap;
+}
+
+.mp-h1 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.mp-lede {
+  margin: 6px 0 0;
+  max-width: 62ch;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.mp-create {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 13px;
+  font-weight: 550;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 150ms ease-out;
+}
+
+.mp-create:hover {
+  opacity: 0.85;
+}
+
+/* 範圍 tab。樣式對齊管理後台的 .adm-tabs，讓兩處的分頁看起來是同一個東西。 */
+.mp-tabs {
+  display: flex;
+  gap: 2px;
+  margin-top: var(--space-4);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+}
+
+.mp-tab {
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mp-tab:hover {
+  color: var(--ink);
+}
+
+.mp-tab[aria-selected='true'] {
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 620;
+}
+
+.mp-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.mp-scope-hint {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-faint);
+  font-size: 12.5px;
+}
+
+.mp-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--space-4);
+}
+
+/* 表頭規格與技能池一致，見 catalog.css 的同名規則 */
+.mp-table thead th {
+  padding: 14px 10px 9px;
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.mp-table tbody tr {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.mp-table tbody tr:hover {
+  background: var(--paper);
+}
+
+.mp-table td {
+  padding: 13px 10px;
+  vertical-align: top;
+}
+
+.mp-name {
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+}
+
+.mp-name:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.mp-sub {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+/* thead th 的 text-align: left 特異度相同但在前，這裡需明確涵蓋表頭 */
+.mp-act,
+.mp-table thead th.mp-act {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.mp-link {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.mp-link:hover {
+  text-decoration: underline;
+}
+
+.mp-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-5);
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+/* 翻頁鍵成組靠右，與技能池的分頁列一致 */
+.mp-pager {
+  display: flex;
+  gap: var(--space-2);
+}
+
+@media (max-width: 860px) {
+  .mp-table {
+    min-width: 620px;
+  }
+}

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent 技能交付控制面｜粗線框</title>
+  <style>
+    /* Intentionally rough: hierarchy and states matter here, not visual polish. */
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f7f7f5; color: #171717; font: 14px/1.45 system-ui, sans-serif; }
+    button, input, select { font: inherit; }
+    .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    aside { border-right: 1px solid #999; padding: 20px 14px; background: #efefec; }
+    aside h1 { margin: 0 0 24px; font-size: 17px; }
+    nav a { display: block; padding: 9px 10px; margin: 3px 0; color: inherit; text-decoration: none; }
+    nav a.active { border: 1px solid #444; background: white; }
+    .aside-note { margin-top: 28px; padding: 10px; border: 1px dashed #888; font-size: 12px; }
+    main { padding: 24px 30px 60px; max-width: 1400px; }
+    .topline, .row { display: flex; align-items: center; gap: 12px; }
+    .topline { justify-content: space-between; margin-bottom: 18px; }
+    h2 { margin: 0; font-size: 22px; }
+    h3 { margin: 0 0 12px; font-size: 16px; }
+    .muted { color: #666; }
+    .screen { border: 1px solid #555; background: white; padding: 18px; margin: 0 0 28px; }
+    .screen-label { display: inline-block; margin: -30px 0 14px -8px; padding: 2px 8px; border: 1px solid #555; background: #f7f7f5; font-size: 12px; }
+    .filters { display: grid; grid-template-columns: 1.8fr repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+    input, select { width: 100%; padding: 9px; border: 1px solid #888; background: white; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 11px 8px; border-top: 1px solid #bbb; text-align: left; vertical-align: top; }
+    th { font-size: 12px; color: #555; }
+    .tag { display: inline-block; padding: 2px 6px; margin: 1px 3px 1px 0; border: 1px solid #888; font-size: 12px; }
+    .tag.strong { border-color: #222; font-weight: 700; }
+    .button { padding: 8px 13px; border: 1px solid #222; background: #222; color: white; cursor: default; }
+    .button.secondary { background: white; color: #222; }
+    .split { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(360px, .7fr); gap: 18px; }
+    .panel { border: 1px solid #999; padding: 14px; }
+    .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .fact { padding: 10px; border: 1px solid #bbb; }
+    .fact b { display: block; font-size: 18px; }
+    .check { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; padding: 9px 0; border-top: 1px solid #ccc; }
+    .ok, .warn, .fail { width: 18px; height: 18px; border: 1px solid #333; text-align: center; font-size: 12px; }
+    .warn { border-style: dashed; }
+    .fail { border-width: 2px; }
+    .permission { margin: 10px 0; padding: 10px; border: 1px dashed #555; }
+    .callout { padding: 12px; border: 2px solid #333; margin-top: 12px; }
+    .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .metric { border: 1px solid #888; padding: 12px; }
+    .metric b { display: block; font-size: 23px; }
+    .bars { display: grid; gap: 8px; }
+    .bar { display: grid; grid-template-columns: 130px 1fr 40px; gap: 10px; align-items: center; }
+    .bar-track { height: 15px; border: 1px solid #777; background: repeating-linear-gradient(90deg, #bbb 0, #bbb 8px, white 8px, white 11px); }
+    .bar-track.w70 { width: 70%; }
+    .bar-track.w45 { width: 45%; }
+    .bar-track.w25 { width: 25%; }
+    .bar-track.w15 { width: 15%; }
+    .footer-note { padding: 12px; border: 1px dashed #888; }
+    @media (max-width: 900px) {
+      .shell { grid-template-columns: 1fr; }
+      aside { display: none; }
+      .split, .filters, .facts, .metric-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <h1>Agent 技能平台</h1>
+      <nav>
+        <a class="active" href="#">技能池</a>
+        <a href="#">我的安裝</a>
+        <a href="#">發布技能</a>
+        <a href="#">推廣與治理</a>
+        <a href="#">採用分析</a>
+      </nav>
+      <div class="aside-note">
+        身份：技術賦能工程師<br>
+        環境：生產內網<br>
+        Agent：Claude Code 1.8
+      </div>
+    </aside>
+
+    <main>
+      <!-- Screen 1 prioritizes trusted discovery and install readiness over social popularity. -->
+      <section class="screen">
+        <span class="screen-label">畫面 1：找到可信且可安裝的技能</span>
+        <div class="topline">
+          <div>
+            <h2>技能池</h2>
+            <div class="muted">先回答「能否安全運行」，再回答「是否熱門」。</div>
+          </div>
+          <button class="button secondary">＋ 上架技能</button>
+        </div>
+        <div class="filters">
+          <input value="搜尋技能、用途或所有者">
+          <select><option>全部類別</option><option>通用</option><option>前端</option><option>後端</option><option>DBA</option></select>
+          <select><option>全部可信等級</option><option>公司推廣</option><option>精品</option><option>已驗證</option></select>
+          <select><option>與我的環境相容</option></select>
+        </div>
+        <table>
+          <thead>
+            <tr><th>技能／工具包</th><th>類型</th><th>可信狀態</th><th>我的環境</th><th>採用</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>superpowers</b><br><span class="muted">工作樹、SDD 與 TDD 驅動開發</span><br><span class="tag">公共架構</span><span class="tag">v3.2.1</span></td>
+              <td>Plugin</td><td><span class="tag strong">公司推廣</span></td><td>✓ 可安裝<br><span class="muted">2 項預檢</span></td><td>186 次<br>78% 成功</td><td><button class="button">查看並安裝</button></td>
+            </tr>
+            <tr>
+              <td><b>mysql-mcp</b><br><span class="muted">只讀排障與 Schema 分析</span><br><span class="tag">DBA</span><span class="tag">v1.4.0</span></td>
+              <td>MCP</td><td><span class="tag">已驗證</span></td><td>△ 需要權限<br><span class="muted">DBA 審批</span></td><td>64 次<br>69% 成功</td><td><button class="button secondary">查看</button></td>
+            </tr>
+            <tr>
+              <td><b>pm-skill</b><br><span class="muted">需求拆解與驗收標準生成</span><br><span class="tag">產品</span><span class="tag">v0.8.3</span></td>
+              <td>Skill</td><td><span class="tag">團隊專用</span></td><td>✓ 可安裝</td><td>43 次<br>91% 成功</td><td><button class="button secondary">查看</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Screen 2 turns installation into an observable transaction with explicit permissions. -->
+      <section class="screen">
+        <span class="screen-label">畫面 2：安裝前預檢與可解釋失敗</span>
+        <div class="split">
+          <div>
+            <div class="topline">
+              <div><h2>superpowers <span class="tag strong">公司推廣</span></h2><div class="muted">公共架構技術賦能團隊 · v3.2.1</div></div>
+              <button class="button">安裝到 Claude Code</button>
+            </div>
+            <div class="panel">
+              <h3>這個工具包會做什麼</h3>
+              <p>提供工作樹隔離、規格驅動開發、測試驅動開發和任務分派工作流。</p>
+              <div class="facts">
+                <div class="fact"><span>最近更新</span><b>2 天前</b></div>
+                <div class="fact"><span>當前採用</span><b>132 人</b></div>
+                <div class="fact"><span>支援渠道</span><b>#agent-help</b></div>
+              </div>
+              <h3 style="margin-top:16px">版本與變更</h3>
+              <p><b>3.2.1</b> 修正 Windows 工作樹路徑；升級不會覆蓋個人自定義技能。</p>
+              <div class="footer-note">評論與討論入口保留，但第一階段不作為核心決策依據。</div>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>安裝預檢</h3>
+            <div class="check"><span class="ok">✓</span><div><b>Git 2.45</b><br><span class="muted">符合最低版本 2.40</span></div><span>通過</span></div>
+            <div class="check"><span class="ok">✓</span><div><b>Claude Code 1.8</b><br><span class="muted">支援此客戶端</span></div><span>通過</span></div>
+            <div class="check"><span class="warn">!</span><div><b>本機存在 v2.9</b><br><span class="muted">將保留設定並升級</span></div><button class="button secondary">查看差異</button></div>
+            <div class="check"><span class="fail">×</span><div><b>工作樹目錄不可寫</b><br><span class="muted">~/workspace 權限不足</span></div><button class="button secondary">自動修復</button></div>
+            <div class="permission">
+              <b>所需權限</b>
+              <p>讀寫專案工作樹；執行 Git 命令。無外部網絡、無公司憑證。</p>
+            </div>
+            <div class="callout">
+              <b>尚未開始安裝</b><br>
+              先修復 1 個阻塞問題。失敗會回滾到目前版本。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 3 gives the publisher evidence and an actionable failure queue. -->
+      <section class="screen">
+        <span class="screen-label">畫面 3：作者看見採用與失敗原因</span>
+        <div class="topline">
+          <div><h2>superpowers 推廣成效</h2><div class="muted">統計區間：最近 30 天 · 僅聚合技術數據</div></div>
+          <button class="button secondary">導出報告</button>
+        </div>
+        <div class="metric-grid">
+          <div class="metric"><span>嘗試安裝</span><b>186</b><small>142 位員工</small></div>
+          <div class="metric"><span>一次成功率</span><b>78%</b><small>目標 ≥ 90%</small></div>
+          <div class="metric"><span>首次可運行時間</span><b>6m 24s</b><small>中位數</small></div>
+          <div class="metric"><span>需要人工協助</span><b>17%</b><small>較上版下降 9%</small></div>
+        </div>
+        <div class="split">
+          <div class="panel">
+            <h3>失敗原因</h3>
+            <div class="bars">
+              <div class="bar"><span>依賴版本衝突</span><div class="bar-track w70"></div><b>21</b></div>
+              <div class="bar"><span>目錄／權限</span><div class="bar-track w45"></div><b>13</b></div>
+              <div class="bar"><span>舊版本殘留</span><div class="bar-track w25"></div><b>8</b></div>
+              <div class="bar"><span>網絡／代理</span><div class="bar-track w15"></div><b>5</b></div>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>優先修復建議</h3>
+            <ol>
+              <li><b>增加 Git 版本自動修復</b><br><span class="muted">預計消除 15 次求助／月</span></li>
+              <li><b>發布 Windows 安裝適配器</b><br><span class="muted">覆蓋 9 名尚未成功員工</span></li>
+              <li><b>提醒 27 人升級至 v3.2.1</b><br><span class="muted">可由管理員推送，允許延期</span></li>
+            </ol>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

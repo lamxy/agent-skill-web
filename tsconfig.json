@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    /*
+     * 此設定檔只用於型別檢查；建置走 tsconfig.build.json 輸出到 dist。
+     * 沒有 noEmit 時，任何一次裸 tsc 都會把 .js 就地輸出到 src/、test/ 旁邊，
+     * 而 vitest 會把那些殘留當成重複測試檔收集：測試數量翻倍，且同一個
+     * PowerShell 測試被平行執行兩次而互相搶佔，造成偽逾時。
+     */
+    "noEmit": true,
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "vitest.config.ts"],
+  "exclude": ["web", "dist"]
+}

@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SSO 登入與身份體系線框 · Scope Registry</title>
+  <style>
+    :root {
+      --ink: #16181d; --ink-soft: #5b616e; --ink-faint: #8b91a0;
+      --line: #dfe2e8; --line-soft: #edeff3;
+      --paper: #ffffff; --ground: #f6f7f9;
+      --accent: #1f4fd8; --accent-soft: #eef2fe; --accent-ink: #ffffff;
+      --ok: #1a7f52; --ok-soft: #e8f5ee;
+      --warn: #8a5a00; --warn-soft: #fdf3e0;
+      --stop: #a32020; --stop-soft: #fdeceb;
+      --seal: #6b5bd2; --seal-soft: #efecfd;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+      --radius: 8px; --radius-lg: 11px; --shadow: 0 1px 3px rgba(22, 24, 29, .06);
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --ink: #e8eaf0; --ink-soft: #a2a9b8; --ink-faint: #767d8d;
+        --line: #2f333c; --line-soft: #24272e;
+        --paper: #1a1d23; --ground: #131519;
+        --accent: #7f9fff; --accent-soft: #1c2740; --accent-ink: #0e1014;
+        --ok: #5ec98e; --ok-soft: #14301f;
+        --warn: #e0ab4c; --warn-soft: #33260d;
+        --stop: #f08a80; --stop-soft: #3a1917;
+        --seal: #a99cf0; --seal-soft: #221d3d;
+        --shadow: 0 1px 3px rgba(0, 0, 0, .3);
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.5 var(--sans); }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+    .shell-top { min-height: 58px; padding: 0 max(24px, calc((100vw - 1180px) / 2)); background: var(--paper); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 42px; }
+    .brand { font-size: 16px; font-weight: 750; white-space: nowrap; }
+    .nav { display: flex; gap: 28px; color: var(--ink-soft); white-space: nowrap; }
+    .nav span { padding: 18px 0 16px; border-bottom: 2px solid transparent; }
+    .nav .active { color: var(--accent); border-color: var(--accent); font-weight: 650; }
+    .main { width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 28px 0 70px; }
+    h1 { margin: 0; font-size: 26px; line-height: 1.2; letter-spacing: -.028em; }
+    h2 { margin: 0 0 12px; font-size: 17px; letter-spacing: -.02em; }
+    h3 { margin: 0 0 8px; font-size: 13.5px; color: var(--ink-soft); font-weight: 650; }
+    p { margin-top: 0; }
+    .subtitle { max-width: 74ch; margin: 8px 0 0; color: var(--ink-soft); }
+    .sec { margin-top: 34px; }
+    .sec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; padding-bottom: 9px; border-bottom: 1px solid var(--line); }
+    .sec-head .n { font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: 20px; }
+    .sec-head p { margin: 0; color: var(--ink-soft); font-size: 12.5px; }
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 18px; box-shadow: var(--shadow); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .tag { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 20px; font-size: 11.5px; font-weight: 620; white-space: nowrap; }
+    .t-ok { background: var(--ok-soft); color: var(--ok); }
+    .t-warn { background: var(--warn-soft); color: var(--warn); }
+    .t-stop { background: var(--stop-soft); color: var(--stop); }
+    .t-acc { background: var(--accent-soft); color: var(--accent); }
+    .t-seal { background: var(--seal-soft); color: var(--seal); }
+    .t-mute { background: var(--line-soft); color: var(--ink-soft); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-faint); font-weight: 650; padding: 0 10px 8px; border-bottom: 1px solid var(--line); }
+    td { padding: 9px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+    tr:last-child td { border-bottom: 0; }
+    .scroll { overflow-x: auto; }
+    code { font-family: var(--mono); font-size: 12.2px; background: var(--line-soft); padding: 1px 5px; border-radius: 4px; }
+    .note { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 10px 13px; border-radius: 0 var(--radius) var(--radius) 0; font-size: 13px; }
+    .note.warn { border-color: var(--warn); background: var(--warn-soft); }
+    .note.gap { border-color: var(--stop); background: var(--stop-soft); }
+    ul { margin: 0; padding-left: 18px; }
+    li { margin-bottom: 5px; }
+    /* flow */
+    .flow { display: flex; align-items: stretch; gap: 0; overflow-x: auto; padding-bottom: 4px; }
+    .step { flex: 1 0 150px; border: 1px solid var(--line); background: var(--paper); border-radius: var(--radius); padding: 11px 12px; position: relative; }
+    .step + .step { margin-left: 22px; }
+    .step + .step::before { content: "→"; position: absolute; left: -19px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); font-size: 15px; }
+    .step .who { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint); font-weight: 650; margin-bottom: 4px; }
+    .step .what { font-size: 12.6px; font-weight: 620; line-height: 1.35; }
+    .step .det { margin-top: 5px; font-size: 11.5px; color: var(--ink-soft); line-height: 1.4; }
+    .step[data-new]::after { content: "待實作"; position: absolute; top: -8px; right: 8px; background: var(--stop); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 20px; }
+    .step[data-has]::after { content: "已就緒"; position: absolute; top: -8px; right: 8px; background: var(--ok); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 20px; }
+    /* mock UI */
+    .mock { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); overflow: hidden; }
+    .mock-bar { display: flex; align-items: center; gap: 8px; padding: 7px 11px; background: var(--line-soft); border-bottom: 1px solid var(--line); font-size: 11.5px; color: var(--ink-soft); }
+    .mock-bar .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-faint); opacity: .4; }
+    .mock-body { padding: 18px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0 15px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); font-size: 13px; font-weight: 600; }
+    .btn.pri { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+    .center-box { max-width: 340px; margin: 0 auto; text-align: center; }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+    .userchip { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px 4px 4px; border: 1px solid var(--line); border-radius: 20px; }
+    .menu { width: 250px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: 0 6px 20px rgba(22,24,29,.1); overflow: hidden; }
+    .menu-head { padding: 12px 13px; border-bottom: 1px solid var(--line-soft); }
+    .menu-row { padding: 8px 13px; font-size: 12.8px; border-bottom: 1px solid var(--line-soft); display: flex; justify-content: space-between; gap: 8px; }
+    .menu-row:last-child { border-bottom: 0; }
+    .kv { display: grid; grid-template-columns: 108px 1fr; gap: 4px 10px; font-size: 12.6px; }
+    .kv dt { color: var(--ink-faint); }
+    .kv dd { margin: 0; }
+    .foot { padding: 20px max(24px, calc((100vw - 1180px) / 2)); border-top: 1px solid var(--line); background: var(--paper); color: var(--ink-faint); font-size: 12px; display: flex; justify-content: space-between; gap: 16px; }
+    @media (max-width: 900px) { .grid2, .grid3, .grid4 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="shell-top">
+    <div class="brand">Scope Registry</div>
+    <nav class="nav">
+      <span>技能池</span><span>我的安裝</span><span>審核工作台</span><span class="active">身份與權限</span>
+    </nav>
+  </header>
+
+  <main class="main">
+    <h1>SSO 登入與身份體系</h1>
+    <p class="subtitle">
+      Task 10.6 線框。說明企業 OAuth2 資訊如何落到平台資料庫、平台自身的使用者體系長什麼樣，
+      以及登入態在介面上如何呈現。標「待實作」者為取得 IdP 憑證後需要新寫的部分。
+    </p>
+
+    <!-- 1 -->
+    <section class="sec">
+      <div class="sec-head"><span class="n">1</span><h2>核心設計：企業 IdP 不進資料庫</h2><p>平台只存「映射後的最小身份」</p></div>
+      <div class="note">
+        <strong>關鍵結論：</strong>企業的 OAuth2 資訊（endpoint、client id/secret、access token、refresh token）
+        <strong>一律不寫入資料庫</strong>。client 憑證由環境變數提供（第一期規則：秘密由環境變數提供）；
+        access token 只在 callback 當下用一次，換到 uid／姓名／團隊後就丟棄。
+        資料庫只保留平台自己的身份記錄與自己簽發的 session。
+      </div>
+      <div class="grid3" style="margin-top:14px">
+        <div class="card">
+          <h3>企業 IdP 持有</h3>
+          <ul style="font-size:12.8px;color:var(--ink-soft)">
+            <li>員工帳號與密碼</li>
+            <li>組織架構、團隊歸屬</li>
+            <li>OAuth2 授權與 token 簽發</li>
+          </ul>
+          <div style="margin-top:9px"><span class="tag t-mute">平台不儲存</span></div>
+        </div>
+        <div class="card">
+          <h3>環境變數持有</h3>
+          <ul style="font-size:12.8px;color:var(--ink-soft)">
+            <li><code>OIDC_AUTHORIZE_URL</code></li>
+            <li><code>OIDC_TOKEN_URL</code></li>
+            <li><code>OIDC_USERINFO_URL</code></li>
+            <li><code>OIDC_CLIENT_ID / SECRET</code></li>
+            <li><code>OIDC_REDIRECT_URI</code></li>
+          </ul>
+          <div style="margin-top:9px"><span class="tag t-stop">待新增至 config.ts</span></div>
+        </div>
+        <div class="card">
+          <h3>平台資料庫持有</h3>
+          <ul style="font-size:12.8px;color:var(--ink-soft)">
+            <li><code>identities</code>：uid、姓名、團隊</li>
+            <li><code>identity_sessions</code>：自簽 session</li>
+            <li><code>role_assignments</code>：平台角色</li>
+            <li><code>reviewer_assignments</code>：審核範圍</li>
+          </ul>
+          <div style="margin-top:9px"><span class="tag t-ok">四張表皆已存在</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="sec">
+      <div class="sec-head"><span class="n">2</span><h2>登入流程：企業帳號如何變成平台身份</h2><p>兩個既有端點 <code>/api/auth/login</code> 與 <code>/api/auth/callback</code> 不變，只換 provider 實作</p></div>
+      <div class="flow">
+        <div class="step" data-has>
+          <div class="who">瀏覽器</div>
+          <div class="what">點「使用公司帳號登入」</div>
+          <div class="det">導向 <code>GET /api/auth/login</code></div>
+        </div>
+        <div class="step" data-new>
+          <div class="who">平台 · beginLogin</div>
+          <div class="what">組出 IdP 授權 URL</div>
+          <div class="det">帶 client_id、redirect_uri、scope、state；state 綁 returnTo 防轉址竄改</div>
+        </div>
+        <div class="step" data-has>
+          <div class="who">企業 IdP</div>
+          <div class="what">員工在公司頁面登入</div>
+          <div class="det">平台看不到密碼</div>
+        </div>
+        <div class="step" data-new>
+          <div class="who">平台 · completeLogin</div>
+          <div class="what">code 換 token 換 userinfo</div>
+          <div class="det">回傳 <code>ProviderIdentity</code>：uid／displayName／teamIds。token 用完即棄</div>
+        </div>
+        <div class="step" data-has>
+          <div class="who">平台 · callback</div>
+          <div class="what">upsert 身份 + 發 session</div>
+          <div class="det">寫 <code>identities</code>，簽 <code>asp_session</code> HttpOnly Cookie</div>
+        </div>
+      </div>
+      <div class="grid2" style="margin-top:16px">
+        <div class="card">
+          <h3>需要新寫的只有一個類別</h3>
+          <p style="font-size:12.8px;color:var(--ink-soft);margin-bottom:9px">
+            <code>OAuth2IdentityProvider implements IdentityProvider</code>，兩個方法，落在
+            <code>src/modules/identity/identity-provider.ts</code>。介面早已定義，<code>kind: 'oidc'</code> 也已在型別中預留。
+          </p>
+          <div class="scroll"><table>
+            <tr><th>方法</th><th>輸入</th><th>輸出</th></tr>
+            <tr><td class="mono">beginLogin</td><td>returnTo</td><td>redirectUrl（IdP 授權頁）</td></tr>
+            <tr><td class="mono">completeLogin</td><td>code</td><td>ProviderIdentity</td></tr>
+          </table></div>
+        </div>
+        <div class="card">
+          <h3>已就緒、無需改動的部分</h3>
+          <ul style="font-size:12.8px;color:var(--ink-soft)">
+            <li>callback 路由的 upsert 與發 session 邏輯</li>
+            <li>session 以 SHA-256 摘要入庫，明文只在 Cookie</li>
+            <li>Cookie 為 HttpOnly，production 自動加 secure</li>
+            <li>8 小時有效期、登出即撤銷</li>
+            <li>非開發環境缺配置時 fail-closed 回 503</li>
+            <li>正式/staging 環境禁用開發身份提供者</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="sec">
+      <div class="sec-head"><span class="n">3</span><h2>資料庫如何承接</h2><p>四張表、零外鍵，跨表以業務 ID 關聯</p></div>
+      <div class="scroll"><table>
+        <tr><th style="width:170px">資料表</th><th>承接的內容</th><th style="width:210px">關鍵欄位</th><th style="width:92px">狀態</th></tr>
+        <tr>
+          <td class="mono">identities</td>
+          <td>IdP 回傳身份的落地。<code>provider_type</code> 區分 <code>development</code> 與 <code>oidc</code>，同一份程式碼可切換來源。團隊以 <code>jsonb</code> 陣列冗餘保存，避免查詢時跨表。</td>
+          <td class="mono" style="font-size:11.8px">uid (PK)、display_name、team_ids、provider_type、active</td>
+          <td><span class="tag t-ok">已存在</span></td>
+        </tr>
+        <tr>
+          <td class="mono">identity_sessions</td>
+          <td>平台自簽 session，與 IdP token 無關。存的是 token 的 SHA-256 摘要，資料庫外洩也無法反推 Cookie。</td>
+          <td class="mono" style="font-size:11.8px">session_digest (PK)、uid、expires_at、revoked_at</td>
+          <td><span class="tag t-ok">已存在</span></td>
+        </tr>
+        <tr>
+          <td class="mono">role_assignments</td>
+          <td>平台角色，<strong>與 IdP 無關、由平台管理員授予</strong>。支援五種範圍，同一人可持多筆。</td>
+          <td class="mono" style="font-size:11.8px">uid、role、scope_type、scope_value、active</td>
+          <td><span class="tag t-ok">已存在</span></td>
+        </tr>
+        <tr>
+          <td class="mono">reviewer_assignments</td>
+          <td>審核人的可審範圍（package_type × category），獨立於角色表，供審核工作台派單。</td>
+          <td class="mono" style="font-size:11.8px">reviewer_uid、package_type、category、active</td>
+          <td><span class="tag t-ok">已存在</span></td>
+        </tr>
+      </table></div>
+      <div class="note" style="margin-top:14px">
+        <strong>因此 10.6 不需要任何 migration。</strong>schema 在 Task 2 已按 OIDC 形狀設計完成，
+        <code>provider_type</code> 的 CHECK 約束已含 <code>'oidc'</code>。取得憑證後只補程式碼與環境變數。
+      </div>
+      <div class="note warn" style="margin-top:10px">
+        <strong>一個需要決策的點：</strong>IdP 的 uid 若與現有開發身份的 uid 撞號，
+        upsert 會直接覆寫既有記錄連同其角色關聯。建議正式環境上線前確認 IdP uid 的命名空間，
+        或在 upsert 時加上 <code>provider_type</code> 一致性檢查。
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="sec">
+      <div class="sec-head"><span class="n">4</span><h2>使用者體系：三層</h2><p>身份來自 IdP，角色來自平台，審核範圍再獨立一層</p></div>
+      <div class="grid3">
+        <div class="card">
+          <h3>第一層 · 身份（誰）</h3>
+          <p style="font-size:12.8px;color:var(--ink-soft)">由企業 IdP 決定，平台不可編輯。</p>
+          <dl class="kv">
+            <dt>uid</dt><dd class="mono">員工唯一識別</dd>
+            <dt>displayName</dt><dd>顯示姓名</dd>
+            <dt>teamIds</dt><dd>所屬團隊陣列</dd>
+          </dl>
+          <p style="font-size:12px;color:var(--ink-faint);margin:9px 0 0">
+            teamIds 同時是利益迴避的依據：審核人不得審自己團隊的套件。
+          </p>
+        </div>
+        <div class="card">
+          <h3>第二層 · 角色（能做什麼）</h3>
+          <p style="font-size:12.8px;color:var(--ink-soft)">平台管理員授予，可帶範圍。</p>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:12.6px">
+            <div><span class="tag t-mute">employee</span> 一般員工，瀏覽與安裝</div>
+            <div><span class="tag t-acc">maintainer</span> 套件維護者，發版</div>
+            <div><span class="tag t-seal">reviewer</span> 審核人，審上架申請</div>
+            <div><span class="tag t-stop">platform_admin</span> 平台管理員，授權他人</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>第三層 · 審核範圍（管哪些）</h3>
+          <p style="font-size:12.8px;color:var(--ink-soft)">reviewer 角色之上再切範圍。</p>
+          <dl class="kv">
+            <dt>packageType</dt><dd class="mono">skill / agent …</dd>
+            <dt>category</dt><dd class="mono">frontend / infra …</dd>
+          </dl>
+          <p style="font-size:12px;color:var(--ink-faint);margin:9px 0 0">
+            由「審核者管理」頁維護，已有線框與實作。
+          </p>
+        </div>
+      </div>
+
+      <h3 style="margin:20px 0 8px">角色範圍（scope）的五種形態</h3>
+      <div class="grid4">
+        <div class="card" style="padding:12px"><div class="mono" style="font-size:12.5px;font-weight:650">global</div><div style="font-size:12px;color:var(--ink-soft);margin-top:4px">全平台。scope_value 必須為空</div></div>
+        <div class="card" style="padding:12px"><div class="mono" style="font-size:12.5px;font-weight:650">team</div><div style="font-size:12px;color:var(--ink-soft);margin-top:4px">限某團隊</div></div>
+        <div class="card" style="padding:12px"><div class="mono" style="font-size:12.5px;font-weight:650">package_type</div><div style="font-size:12px;color:var(--ink-soft);margin-top:4px">限某套件類型</div></div>
+        <div class="card" style="padding:12px"><div class="mono" style="font-size:12.5px;font-weight:650">category / package</div><div style="font-size:12px;color:var(--ink-soft);margin-top:4px">限某分類或單一套件</div></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:10px 0 0">
+        判定規則：<code>global</code> 範圍命中任何請求；其餘需 type 與 value 皆相符。
+        資料庫以 partial unique index 保證同一組合只有一筆 active。
+      </p>
+    </section>
+
+    <!-- 5 -->
+    <section class="sec">
+      <div class="sec-head"><span class="n">5</span><h2>第四種身份：匿名訪客</h2><p>不是登入失敗，是一等公民</p></div>
+      <div class="grid2">
+        <div class="card">
+          <h3>設計意圖</h3>
+          <p style="font-size:12.8px;color:var(--ink-soft)">
+            未登入者拿到一個 <code>asp_anonymous</code> UUID Cookie（一年有效），
+            可瀏覽技能池、看詳情、被遙測記錄，但不能安裝、發布或審核。
+            登入後 session Cookie 優先，匿名 Cookie 保留但不再作為身份依據。
+          </p>
+          <div class="note" style="margin-top:10px;font-size:12.5px">
+            介面上不該把匿名狀態畫成「錯誤」或攔截牆。多數頁面應正常渲染，
+            只有需要身份的動作按鈕轉為「登入後可用」。
+          </div>
+        </div>
+        <div class="card">
+          <h3><code>GET /api/auth/me</code> 的兩種回應</h3>
+          <div style="font-size:12.2px" class="mono">
+            <div style="padding:9px;background:var(--line-soft);border-radius:6px;margin-bottom:8px">
+              { kind: "anonymous",<br>&nbsp;&nbsp;anonymousId: "8f3c-…" }
+            </div>
+            <div style="padding:9px;background:var(--line-soft);border-radius:6px">
+              { kind: "authenticated",<br>&nbsp;&nbsp;uid: "e12345",<br>&nbsp;&nbsp;displayName: "陳彥廷",<br>&nbsp;&nbsp;teamIds: ["platform"],<br>&nbsp;&nbsp;roles: [{ role, scopeType, scopeValue }] }
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="sec">
+      <div class="sec-head"><span class="n">6</span><h2>介面呈現</h2><p>三個狀態的頂欄 + 登入頁 + 身份選單</p></div>
+
+      <div class="grid3">
+        <div>
+          <h3>A · 匿名訪客</h3>
+          <div class="mock">
+            <div class="mock-bar"><span class="dot"></span><span>技能池</span></div>
+            <div class="mock-body" style="padding:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <div style="font-weight:750;font-size:14px">Scope Registry</div>
+                <button class="btn pri" style="min-height:30px;font-size:12.5px">使用公司帳號登入</button>
+              </div>
+              <div style="margin-top:12px;padding:9px;border:1px dashed var(--line);border-radius:6px;font-size:11.8px;color:var(--ink-faint)">
+                目錄內容正常顯示<br>安裝鍵顯示為「登入後可安裝」
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3>B · 已登入</h3>
+          <div class="mock">
+            <div class="mock-bar"><span class="dot"></span><span>技能池</span></div>
+            <div class="mock-body" style="padding:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <div style="font-weight:750;font-size:14px">Scope Registry</div>
+                <div class="userchip">
+                  <span class="avatar">陳</span>
+                  <span style="font-size:12.5px">陳彥廷</span>
+                  <span style="color:var(--ink-faint);font-size:10px">▾</span>
+                </div>
+              </div>
+              <div style="margin-top:12px;padding:9px;border:1px dashed var(--line);border-radius:6px;font-size:11.8px;color:var(--ink-faint)">
+                導覽依角色增減：<br>有 reviewer 才出現「審核工作台」
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3>C · IdP 不可用</h3>
+          <div class="mock">
+            <div class="mock-bar"><span class="dot"></span><span>登入</span></div>
+            <div class="mock-body" style="padding:12px">
+              <div style="border-left:3px solid var(--stop);background:var(--stop-soft);padding:10px;border-radius:0 6px 6px 0">
+                <div style="font-weight:650;font-size:12.8px;color:var(--stop)">目前無法登入</div>
+                <div style="font-size:11.8px;color:var(--ink-soft);margin-top:4px">
+                  正式身份提供者尚未配置，請聯絡平台管理員。
+                </div>
+              </div>
+              <div style="margin-top:10px;font-size:11.5px;color:var(--ink-faint)">
+                對應 <code>AUTH_PROVIDER_UNAVAILABLE</code> 503。<br>不洩露內部配置細節。
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:18px">
+        <div>
+          <h3>登入頁（新增）</h3>
+          <div class="mock">
+            <div class="mock-bar"><span class="dot"></span><span class="mono">/login</span></div>
+            <div class="mock-body" style="padding:30px 18px">
+              <div class="center-box">
+                <div style="font-size:17px;font-weight:750;letter-spacing:-.02em">Scope Registry</div>
+                <p style="font-size:12.8px;color:var(--ink-soft);margin:7px 0 18px">企業內部 Agent 技能平台</p>
+                <button class="btn pri" style="width:100%">使用公司帳號登入</button>
+                <p style="font-size:11.5px;color:var(--ink-faint);margin:12px 0 0">
+                  將轉導至公司單一登入頁完成驗證
+                </p>
+              </div>
+            </div>
+          </div>
+          <p style="font-size:12.2px;color:var(--ink-soft);margin:8px 0 0">
+            單一按鈕，不做帳密輸入框——平台從不接觸密碼。
+          </p>
+        </div>
+
+        <div>
+          <h3>身份選單（新增）</h3>
+          <div class="menu">
+            <div class="menu-head">
+              <div style="display:flex;align-items:center;gap:9px">
+                <span class="avatar">陳</span>
+                <div>
+                  <div style="font-size:13px;font-weight:650">陳彥廷</div>
+                  <div class="mono" style="font-size:11.2px;color:var(--ink-faint)">e12345</div>
+                </div>
+              </div>
+            </div>
+            <div class="menu-row"><span style="color:var(--ink-faint)">團隊</span><span class="mono" style="font-size:11.8px">platform</span></div>
+            <div class="menu-row"><span style="color:var(--ink-faint)">角色</span><span style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end"><span class="tag t-seal">reviewer</span><span class="tag t-mute">employee</span></span></div>
+            <div class="menu-row"><span style="color:var(--ink-faint)">審核範圍</span><span class="mono" style="font-size:11.5px;text-align:right">skill × frontend</span></div>
+            <div class="menu-row"><span>我的安裝</span><span style="color:var(--ink-faint)">›</span></div>
+            <div class="menu-row"><span style="color:var(--stop)">登出</span><span></span></div>
+          </div>
+          <p style="font-size:12.2px;color:var(--ink-soft);margin:8px 0 0">
+            角色與範圍直接可見，讓使用者理解「為何看不到某個入口」。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section class="sec">
+      <div class="sec-head"><span class="n">7</span><h2>現況落差</h2><p>取得憑證後的實際工作清單</p></div>
+      <div class="note gap">
+        <strong>前端目前完全沒有登入 UI。</strong>全專案搜尋確認：<code>web/src</code> 下沒有任何一處呼叫
+        <code>/api/auth/me</code> 或 <code>/api/auth/login</code>。後端身份體系完整，前端尚未接上。
+        這代表 10.6 的工作量比「等一組憑證」要大。
+      </div>
+      <div class="scroll" style="margin-top:14px"><table>
+        <tr><th style="width:52px">#</th><th style="width:270px">工作項</th><th>內容</th><th style="width:110px">是否需憑證</th></tr>
+        <tr><td class="mono">1</td><td>config.ts 加入 OIDC 配置</td><td>五個環境變數與 zod 驗證；非開發環境缺配置即 fail-closed</td><td><span class="tag t-mute">否</span></td></tr>
+        <tr><td class="mono">2</td><td class="mono">OAuth2IdentityProvider</td><td>beginLogin 組授權 URL、completeLogin 走 code→token→userinfo；state 防護</td><td><span class="tag t-warn">實作否／測試是</span></td></tr>
+        <tr><td class="mono">3</td><td>userinfo 欄位映射</td><td>IdP 回傳欄位名對應到 uid／displayName／teamIds，需對方提供欄位規格</td><td><span class="tag t-stop">是</span></td></tr>
+        <tr><td class="mono">4</td><td>provider 注入點</td><td><code>createIdentityModule</code> 依環境選 provider 的分支加入 oidc 分支</td><td><span class="tag t-mute">否</span></td></tr>
+        <tr><td class="mono">5</td><td>前端登入頁與身份選單</td><td>本線框第 6 節；含匿名／已登入／不可用三態</td><td><span class="tag t-mute">否</span></td></tr>
+        <tr><td class="mono">6</td><td>前端角色導覽控制</td><td>依 <code>/api/auth/me</code> 的 roles 決定導覽項與動作鍵可用性</td><td><span class="tag t-mute">否</span></td></tr>
+        <tr><td class="mono">7</td><td>首位 platform_admin 授予</td><td>開發環境靠 dev-admin 自動授予；正式環境需要一條 bootstrap 路徑，否則無人能授權他人</td><td><span class="tag t-warn">需決策</span></td></tr>
+        <tr><td class="mono">8</td><td>整合測試</td><td>登入／登出流程、角色映射；需 IdP 測試租戶或 mock server</td><td><span class="tag t-stop">是</span></td></tr>
+      </table></div>
+      <div class="note warn" style="margin-top:14px">
+        <strong>第 7 項是容易被漏掉的阻塞點。</strong>正式環境沒有 <code>dev-admin</code>，
+        而授予角色本身需要 <code>platform_admin</code>。上線前必須先決定首位管理員如何產生
+        （環境變數指定 uid、一次性 CLI，或 migration 種子資料）。
+      </div>
+    </section>
+
+    <div class="note" style="margin-top:30px">
+      <strong>可以先做的：</strong>第 1、4、5、6 項不需要任何外部憑證，佔清單過半。
+      憑證到位後只剩第 2、3 項的實作細節與第 8 項驗證。
+    </div>
+  </main>
+
+  <footer class="foot">
+    <span>SSO 登入與身份體系線框 · Task 10.6</span>
+    <span>審核通過後將結構決策寫入 docs/前端實作指導.md</span>
+  </footer>
+</body>
+</html>

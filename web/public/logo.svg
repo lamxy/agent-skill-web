@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <!--
+    與頂欄 BrandMark 同一組形狀：底部平台承載兩塊技能模組，
+    右上虛線塊表示尚可再安裝。favicon 需要獨立色值（無法繼承 currentColor），
+    因此淺色用品牌藍，深色由 media query 換成深色主題的強調色。
+  -->
+  <style>
+    .mark { fill: #1f4fd8; stroke: #1f4fd8; }
+    @media (prefers-color-scheme: dark) {
+      .mark { fill: #7f9fff; stroke: #7f9fff; }
+    }
+  </style>
+  <rect class="mark" x="3" y="16" width="22" height="9" rx="2.5" />
+  <rect class="mark" x="3" y="3" width="9" height="9" rx="2.5" />
+  <rect class="mark" x="16" y="3" width="9" height="9" rx="2.5" fill="none" stroke-width="1.8" stroke-dasharray="3.2 2.4" />
+</svg>

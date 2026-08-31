@@ -1,0 +1,329 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.cat-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 2px solid var(--ink);
+  flex-wrap: wrap;
+}
+
+.cat-h1 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.cat-sub {
+  margin: 5px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.cat-publish {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 13px;
+  font-weight: 550;
+  text-decoration: none;
+  transition: opacity 150ms ease-out;
+}
+
+.cat-publish:hover {
+  opacity: 0.85;
+}
+
+/*
+ * 一列七個控制項：搜尋框、五個下拉、送出鍵。原本只宣告五欄，
+ * 多出的兩個被擠到第二列，且 2fr 讓搜尋框過寬、下拉窄到選項被截斷。
+ *
+ * 改為下拉各佔一等份、搜尋框佔一份半，並給每欄最小寬度，
+ * 讓「全部分級」這類標籤在任何斷點都不會被壓到省略。
+ */
+.cat-filters {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(5, minmax(120px, 1fr)) auto;
+  gap: var(--space-2);
+  align-items: center;
+  margin: var(--space-4) 0;
+}
+
+/* grid 子項預設 min-width:auto，內容較寬時會把軌道撐破 */
+.cat-filters > * {
+  min-width: 0;
+}
+
+.cat-filters select:disabled {
+  color: var(--ink-faint);
+  background: var(--ground);
+  cursor: not-allowed;
+}
+
+/* 輸入框與下拉的外觀、聚焦樣式一律沿用 base.css 的全站基準，此處不覆寫 */
+
+.cat-search-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 150ms ease-out;
+}
+
+.cat-search-btn:hover {
+  border-color: var(--ink-faint);
+}
+
+/* 圖標預設等於字級，在 13px 下略顯細小，放大到與文字視覺等重 */
+.cat-search-icon {
+  width: 1.15em;
+  height: 1.15em;
+}
+
+.cat-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/*
+ * 表頭取正文與弱化文字之間的中間調。原本是 11px 淺灰全大寫，
+ * 中文沒有大小寫之分，uppercase 只放大字距而讓標籤更難讀；
+ * 但表頭是欄位標籤而非內容，用足黑加粗會蓋過資料本身。
+ */
+.cat-table thead th {
+  padding: 14px 10px 9px;
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.cat-table tbody tr {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.cat-table tbody tr:hover {
+  background: var(--paper);
+}
+
+.cat-table td {
+  padding: 13px 10px;
+  vertical-align: top;
+}
+
+.cat-name {
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+}
+
+.cat-name:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.cat-purpose {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  max-width: 42ch;
+}
+
+.cat-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.cat-owner {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.cat-heat {
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.cat-heat-sub {
+  margin-top: 3px;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
+.cat-ver {
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.cat-os {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+.cat-clients {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+/* thead th 的 text-align: left 特異度相同但在前，這裡需明確涵蓋表頭 */
+.cat-act,
+.cat-table thead th.cat-act {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cat-link {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.cat-link:hover {
+  text-decoration: underline;
+}
+
+.cat-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+/* 翻頁鍵成組靠右，與稽核日誌的分頁列一致 */
+.cat-pager {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* 殘留提示緊跟在「有殘留」標籤下，字級壓到輔助層級不與主資訊爭焦點 */
+.cat-residual-note {
+  margin: 5px 0 0;
+  max-width: 26ch;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+/* 卡片列表只在 H5 顯示，桌面維持表格 */
+.cat-mobile {
+  display: none;
+}
+
+.cat-card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+}
+
+.cat-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.cat-card .cat-purpose,
+.cat-card .cat-owner,
+.cat-card .cat-tags {
+  margin: 0;
+}
+
+.cat-card-kv {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 5px var(--space-3);
+  margin: 0;
+  font-size: 12.5px;
+}
+
+.cat-card-kv dt {
+  color: var(--ink-faint);
+}
+
+.cat-card-kv dd {
+  margin: 0;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.cat-card-kv .cat-heat-sub {
+  margin: 0 0 0 6px;
+  display: inline;
+}
+
+.cat-card .cat-link {
+  justify-self: start;
+}
+
+@media (max-width: 860px) {
+  .cat-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* 搜尋框與送出鍵各自佔滿一列，五個下拉兩兩並排 */
+  .cat-filters > input,
+  .cat-filters > button {
+    grid-column: 1 / -1;
+  }
+
+  .cat-table {
+    min-width: 720px;
+  }
+}
+
+@media (max-width: 720px) {
+  .cat-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .cat-desktop {
+    display: none;
+  }
+
+  .cat-mobile {
+    display: grid;
+    gap: var(--space-3);
+  }
+}

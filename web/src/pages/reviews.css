@@ -1,0 +1,247 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.rv-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 2px solid var(--ink);
+}
+
+/* 字級沿用 base.css 的 .page-h1 全站基準 */
+.rv-head h1 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.rv-head p {
+  margin: var(--space-1) 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+/*
+ * 三個篩選等寬平分整行，按鈕靠右自適應。原本是 flex，欄位只佔
+ * 各自內容寬度，右側會留下一大片空白。
+ */
+.rv-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto auto;
+  align-items: end;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+
+.rv-filters > * {
+  min-width: 0;
+}
+
+.rv-filters label {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+}
+
+/* select 走 base.css 的全站基準，這裡只保留按鈕外觀 */
+.rv-filters button,
+.rv-pagination button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+}
+
+.rv-filters select:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.rv-filters button,
+.rv-pagination button {
+  cursor: pointer;
+}
+
+.rv-apply {
+  border-color: var(--accent) !important;
+  background: var(--accent) !important;
+  color: var(--accent-ink);
+  font-weight: 570;
+}
+
+.rv-clear {
+  border-color: transparent !important;
+  color: var(--accent);
+}
+
+.rv-summary,
+.rv-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+.rv-summary {
+  margin-bottom: var(--space-2);
+}
+
+.rv-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+}
+
+.rv-table {
+  width: 100%;
+  min-width: 1080px;
+  border-collapse: collapse;
+}
+
+/* 表頭規格與技能池一致，見 catalog.css 的同名規則 */
+.rv-table th {
+  padding: 14px 10px 9px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.rv-table tbody tr {
+  border-bottom: 1px solid var(--line-soft);
+  content-visibility: auto;
+}
+
+.rv-table tbody tr:hover {
+  background: var(--ground);
+}
+
+.rv-table td {
+  padding: 12px 10px;
+  font-size: 12.5px;
+  vertical-align: middle;
+}
+
+.rv-package strong,
+.rv-package span,
+.rv-submission span,
+.rv-submission time {
+  display: block;
+}
+
+.rv-package strong {
+  font-size: 13.5px;
+  font-weight: 620;
+}
+
+.rv-package span,
+.rv-submission time {
+  margin-top: 2px;
+  color: var(--ink-faint);
+  font-size: 11px;
+}
+
+.rv-tags {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.rv-matrix {
+  display: grid;
+  gap: 1px;
+}
+
+.rv-matrix strong {
+  color: var(--ok);
+}
+
+.rv-matrix span {
+  color: var(--ink-faint);
+  font-size: 10.5px;
+}
+
+/* .rv-table th 的 text-align: left 特異度相同但在前，這裡需明確涵蓋表頭 */
+.rv-action,
+.rv-table th.rv-action {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.rv-action a {
+  display: inline-block;
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.rv-action a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.rv-pagination {
+  padding: var(--space-3) var(--space-4);
+}
+
+.rv-pagination div {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.rv-pagination button:hover:not(:disabled) {
+  border-color: var(--ink-faint);
+}
+
+.rv-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+@media (max-width: 720px) {
+  .rv-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .rv-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rv-filters label:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .rv-filters label {
+    min-width: 0;
+  }
+
+  .rv-apply,
+  .rv-clear {
+    width: 100%;
+  }
+}

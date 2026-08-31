@@ -1,0 +1,473 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.pub {
+  width: min(1120px, 100%);
+  min-width: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.pub-head {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.pub-head h1,
+.pub-head p,
+.pub-panel-head h2,
+.pub-panel-head p,
+.pub-message,
+.pub-empty-note,
+.pub-copy-panel p {
+  margin: 0;
+}
+
+/* 字級沿用 base.css 的 .page-h1 全站基準 */
+.pub-head h1 {
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+/* 唯讀欄位：技能由網址決定，視覺上須與可編輯欄位有別 */
+.pub-panel input[readonly] {
+  background: var(--ground);
+  color: var(--ink-soft);
+  cursor: default;
+}
+
+.pub-head p,
+.pub-panel-head p,
+.pub-empty-note,
+.pub-copy-panel p,
+.pub-inline-action span,
+.pub-target-row span,
+.pub-target-row em,
+.pub label + small,
+.pub-telemetry-note {
+  color: var(--ink-faint);
+  font-size: 12.5px;
+}
+
+/*
+ * 不能用 overflow: hidden 來裁圓角。面板裡有自繪下拉（新增組合的
+ * 作業系統／Client），其展開清單必須能溢出面板；一旦裁切，清單就會
+ * 在面板邊界被切掉一半。改為讓帶背景色的首尾子元素各自帶圓角。
+ */
+.pub-panel {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+}
+
+/* 取代 overflow 裁切：貼齊面板下緣的區塊自己收下方兩角 */
+.pub-panel > *:last-child {
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+.pub-panel > *:first-child {
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+}
+
+.pub-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--line);
+}
+
+.pub-panel-head h2 {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pub-panel-head p {
+  margin-top: 3px;
+}
+
+.pub-panel-head a {
+  flex: 0 0 auto;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.pub-grid-two,
+.pub-command-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.pub-panel > .pub-grid-two,
+.pub-panel > .pub-command-grid,
+.pub-panel > label,
+.pub-panel > input,
+.pub-panel > textarea,
+.pub-panel > small,
+.pub-switch,
+.pub-inline-action,
+.pub-copy-panel,
+.pub-options,
+.pub-empty-note,
+.pub-telemetry,
+.pub-telemetry-note,
+.pub-history {
+  margin-left: var(--space-5);
+  margin-right: var(--space-5);
+}
+
+.pub-panel > .pub-grid-two,
+.pub-panel > .pub-command-grid,
+.pub-panel > label:first-of-type,
+.pub-options,
+.pub-history {
+  margin-top: var(--space-4);
+}
+
+.pub-panel > textarea,
+.pub-panel > input,
+.pub-panel > small:last-child,
+.pub-inline-action,
+.pub-copy-panel,
+.pub-empty-note,
+.pub-telemetry-note,
+.pub-history {
+  margin-bottom: var(--space-4);
+}
+
+/*
+ * 面板最後一個子元素一律留下方間距，避免內容貼齊面板下緣。
+ * 逐一列舉容易漏掉新增的元素——欄位組（.pub-grid-two）正是漏掉的一個。
+ */
+.pub-panel > *:last-child {
+  margin-bottom: var(--space-5);
+}
+
+/* 自帶內距、需要貼齊面板邊緣的區塊不套用 */
+.pub-panel > .pub-add-target:last-child,
+.pub-panel > .pub-target-list:last-child,
+.pub-panel > .pub-panel-head:last-child {
+  margin-bottom: 0;
+}
+
+.pub label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+/* 尺寸、圓角與聚焦樣式沿用 base.css；此處只對齊本頁的凹陷底色 */
+.pub input,
+.pub textarea {
+  min-width: 0;
+  background: var(--ground);
+  font-weight: 400;
+}
+
+/* select 的外框、圓角與箭頭由 base.css 統一，此處只對齊本頁的底色 */
+.pub select {
+  background-color: var(--ground);
+  font-weight: 400;
+}
+
+/* 直接掛在面板上的輸入框帶左右 margin，width: 100% 會連同 margin 一起溢出面板，
+   必須扣掉兩側 margin 才不會在窄屏被切掉右緣。 */
+.pub-panel > input,
+.pub-panel > textarea {
+  display: block;
+  width: calc(100% - var(--space-5) * 2);
+}
+
+.pub-command-grid textarea {
+  min-height: 230px;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+/* 輸入框、下拉的聚焦光暈由 base.css 統一；這裡只管連結與按鈕 */
+.pub a:focus-visible,
+.pub button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.pub input[aria-invalid='true'],
+.pub select[aria-invalid='true'],
+.pub textarea[aria-invalid='true'] {
+  border-color: var(--stop);
+}
+
+.pub-field-error {
+  display: block;
+  margin-top: 5px;
+  color: var(--stop) !important;
+  font-weight: 650;
+}
+
+.pub-inline-action,
+.pub-add-target {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pub-inline-action {
+  justify-content: flex-end;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line-soft);
+}
+
+.pub-inline-action span {
+  margin-right: auto;
+}
+
+.pub-target-list {
+  display: grid;
+}
+
+.pub-target-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.pub-target-row.is-selected {
+  background: var(--seal-soft);
+  box-shadow: inset 3px 0 var(--seal);
+}
+
+.pub-target-row > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.pub-target-row strong {
+  font-size: 14px;
+}
+
+.pub-target-row code,
+.pub-target-row em {
+  overflow-wrap: anywhere;
+  font-size: 11.5px;
+}
+
+.pub-target-row em {
+  color: var(--seal);
+  font-style: normal;
+}
+
+.pub-row-actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.pub-add-target {
+  display: grid;
+  grid-template-columns: auto minmax(150px, 1fr) auto minmax(150px, 1fr) auto;
+  padding: var(--space-4) var(--space-5);
+  background: var(--ground);
+}
+
+.pub-add-target label {
+  margin: 0;
+}
+
+.pub-command-rule {
+  margin: var(--space-3) var(--space-5) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--seal);
+  background: var(--seal-soft);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+}
+
+.pub-copy-panel {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--ground);
+}
+
+.pub-copy-panel pre {
+  max-height: 190px;
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--code-ink);
+  font: 12px/1.55 var(--font-mono);
+}
+
+.pub-copy-panel .btn {
+  justify-self: end;
+}
+
+.pub-options {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pub-option-row {
+  display: grid;
+  grid-template-columns: 1.1fr 0.8fr 1.5fr 1fr auto;
+  gap: var(--space-3);
+  align-items: end;
+  padding: var(--space-3);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--ground);
+}
+
+.pub-option-row label {
+  margin: 0;
+}
+
+.pub-option-row code {
+  grid-column: 1 / -2;
+  overflow-wrap: anywhere;
+  color: var(--seal);
+  font-size: 12px;
+}
+
+.pub-switch {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
+  cursor: pointer;
+}
+
+.pub-switch input {
+  width: auto;
+  margin-top: 3px;
+}
+
+.pub-switch span {
+  display: grid;
+  gap: 3px;
+}
+
+.pub-telemetry {
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.pub-telemetry li {
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--ground);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+.pub-telemetry li.is-added {
+  border-color: var(--seal);
+  background: var(--seal-soft);
+  color: var(--seal);
+}
+
+.pub-history {
+  padding-left: 22px;
+}
+
+.pub-history li {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 13px;
+}
+
+.pub-history time {
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 本頁的保存與送審動作改由全站頁腳渲染，樣式見 app.css 的 .shell-foot-action */
+
+.pub-message {
+  margin-top: 4px !important;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .pub-target-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pub-row-actions {
+    justify-content: flex-start;
+  }
+
+  .pub-option-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pub-option-row code {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .pub-grid-two,
+  .pub-command-grid,
+  .pub-add-target,
+  .pub-option-row {
+    grid-template-columns: 1fr;
+  }
+
+  .pub-add-target label {
+    margin-top: var(--space-2);
+  }
+
+  .pub-inline-action {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pub-inline-action span {
+    margin-right: 0;
+  }
+
+  .pub-history li {
+    grid-template-columns: 1fr;
+  }
+}

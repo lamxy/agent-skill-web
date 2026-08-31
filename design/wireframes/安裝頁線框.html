@@ -1,0 +1,490 @@
+<title>安裝頁執行前預覽線框</title>
+<style>
+  :root {
+    --ink: #16181d; --ink-soft: #5b616e; --ink-faint: #8b91a0;
+    --line: #dfe2e8; --line-soft: #edeff3;
+    --paper: #ffffff; --ground: #f6f7f9;
+    --accent: #1f4fd8; --accent-soft: #eef2fe; --accent-ink: #fff;
+    --ok: #1a7f52; --ok-soft: #e8f5ee;
+    --warn: #8a5a00; --warn-soft: #fdf3e0;
+    --stop: #a32020; --stop-soft: #fdeceb;
+    --code-bg: #14161b; --code-ink: #dfe3ec;
+    --seal: #6b5bd2; --seal-soft: #efecfd;
+    --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC',
+            'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --ink: #e8eaf0; --ink-soft: #a2a9b8; --ink-faint: #767d8d;
+      --line: #2f333c; --line-soft: #24272e;
+      --paper: #1a1d23; --ground: #131519;
+      --accent: #7f9fff; --accent-soft: #1c2740; --accent-ink: #0e1014;
+      --ok: #5ec98e; --ok-soft: #14301f;
+      --warn: #e0ab4c; --warn-soft: #33260d;
+      --stop: #f08a80; --stop-soft: #3a1917;
+      --code-bg: #0e1014; --code-ink: #d3d8e3;
+      --seal: #a99cf0; --seal-soft: #221d3d;
+    }
+  }
+  :root[data-theme='dark'] {
+    --ink: #e8eaf0; --ink-soft: #a2a9b8; --ink-faint: #767d8d;
+    --line: #2f333c; --line-soft: #24272e;
+    --paper: #1a1d23; --ground: #131519;
+    --accent: #7f9fff; --accent-soft: #1c2740; --accent-ink: #0e1014;
+    --ok: #5ec98e; --ok-soft: #14301f;
+    --warn: #e0ab4c; --warn-soft: #33260d;
+    --stop: #f08a80; --stop-soft: #3a1917;
+    --code-bg: #0e1014; --code-ink: #d3d8e3;
+    --seal: #a99cf0; --seal-soft: #221d3d;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink);
+         font-family: var(--sans); font-size: 14px; line-height: 1.55;
+         -webkit-font-smoothing: antialiased; }
+  #stage { min-height: 100vh; padding-bottom: 92px; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration: .01ms !important; } }
+
+  .wrap { max-width: 940px; margin: 0 auto; padding: 30px 26px; }
+  .tag { display: inline-block; margin-bottom: 16px; padding: 3px 10px;
+         border-radius: 999px; background: var(--accent-soft); color: var(--accent);
+         font-size: 11.5px; font-weight: 600; letter-spacing: .04em; }
+  .crumb { margin: 0 0 var(--s3, 12px); font-size: 13px; color: var(--ink-faint); }
+  .crumb a { color: var(--accent); text-decoration: none; }
+  .crumb a:hover { text-decoration: underline; }
+
+  .h1 { margin: 0; font-size: 23px; font-weight: 680; letter-spacing: -.02em; }
+  .sub { margin: 7px 0 0; color: var(--ink-soft); max-width: 62ch; }
+  .target { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 24px; }
+  .chip { display: inline-block; padding: 3px 9px; border-radius: 5px;
+          font-size: 11.5px; font-weight: 550; }
+  .chip.n { background: var(--line-soft); color: var(--ink-soft); }
+  .chip.m { background: var(--line-soft); color: var(--ink-soft); font-family: var(--mono); }
+  .chip.s { background: var(--seal-soft); color: var(--seal); font-family: var(--mono); }
+
+  .card { border: 1px solid var(--line); border-radius: 11px; background: var(--paper);
+          margin-bottom: 16px; overflow: hidden; }
+  .card-h { display: flex; align-items: baseline; gap: 10px; padding: 15px 20px;
+            border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .card-h h2 { margin: 0; font-size: 14px; font-weight: 620; }
+  .card-h span { font-size: 12.5px; color: var(--ink-faint); }
+  .card-h .grow { margin-left: auto; }
+  .card-b { padding: 18px 20px; }
+
+  /* script viewer with three-part markers */
+  .seg-bar { display: flex; gap: 3px; padding: 3px; border-radius: 8px;
+             background: var(--line-soft); width: fit-content; margin-bottom: 12px; }
+  .seg-bar button { padding: 6px 13px; border: 0; border-radius: 6px; background: transparent;
+                    font-size: 12.5px; font-weight: 550; color: var(--ink-soft); cursor: pointer; }
+  .seg-bar button[data-on] { background: var(--paper); color: var(--ink);
+                             box-shadow: 0 1px 3px rgba(0,0,0,.07); }
+  .code-wrap { border-radius: 9px; overflow: hidden; border: 1px solid var(--line); }
+  .code-top { display: flex; justify-content: space-between; align-items: center;
+              padding: 8px 13px; background: var(--ground);
+              border-bottom: 1px solid var(--line); font-size: 12px;
+              color: var(--ink-soft); gap: 12px; flex-wrap: wrap; }
+  .code-top b { color: var(--ink); }
+  .btn-sm { padding: 5px 11px; border: 1px solid var(--line); border-radius: 6px;
+            background: var(--paper); font-size: 12px; cursor: pointer; }
+  .btn-sm:hover { border-color: var(--ink-faint); }
+  .code { max-height: 380px; overflow: auto; background: var(--code-bg);
+          color: var(--code-ink); font-family: var(--mono); font-size: 12px;
+          line-height: 1.65; }
+  .code table { border-collapse: collapse; width: 100%; }
+  .code td { padding: 0 0 0 10px; vertical-align: top; white-space: pre; }
+  .code td.ln { padding: 0 10px; text-align: right; color: #5b6270;
+                user-select: none; width: 1%; white-space: nowrap;
+                position: sticky; left: 0; background: var(--code-bg); }
+  .code tr.mid td { background: rgba(107,91,210,.16); }
+  .code tr.mid td.ln { background: rgba(107,91,210,.16); }
+  .code tr.marker td { color: #8b93a5; font-style: italic; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 11px;
+            font-size: 12.5px; color: var(--ink-soft); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; }
+  .swatch.plat { background: var(--line); }
+  .swatch.mid { background: var(--seal); }
+
+  .kv { display: grid; grid-template-columns: 132px 1fr; gap: 10px 18px; }
+  .kv dt { color: var(--ink-faint); font-size: 13px; }
+  .kv dd { margin: 0; font-size: 13.5px; }
+  .kv dd.mono { font-family: var(--mono); font-size: 12.5px; word-break: break-all; }
+
+  .rows { display: grid; gap: 11px; }
+  .row { display: grid; grid-template-columns: 16px 1fr; gap: 11px; font-size: 13.5px; }
+  .row p { margin: 3px 0 0; color: var(--ink-soft); font-size: 13px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 7px; }
+  .dot.ok { background: var(--ok); }
+  .dot.warn { background: var(--warn); }
+  .dot.info { background: var(--accent); }
+
+  .tele { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tele span { padding: 3px 8px; border-radius: 5px; background: var(--line-soft);
+               font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+  .note { margin: 11px 0 0; font-size: 12.5px; color: var(--ink-faint); }
+  .note a { color: var(--accent); }
+
+  .empty-box { padding: 18px 20px; border: 1px dashed var(--line); border-radius: 9px;
+               background: var(--ground); }
+  .empty-t { margin: 0 0 7px; font-size: 13.5px; font-weight: 570; color: var(--ink-soft); }
+  .empty-d { margin: 0 0 6px; font-size: 13px; color: var(--ink-faint); max-width: 58ch; }
+  .empty-d:last-child { margin-bottom: 0; }
+  .todo-tag { padding: 2px 8px; border-radius: 999px; background: var(--line-soft);
+              color: var(--ink-faint); font-size: 11px; font-weight: 550; }
+  .seg-bar[data-todo] button { cursor: not-allowed; opacity: .7; }
+
+  .warnbox { padding: 13px 15px; border-radius: 9px; background: var(--warn-soft); }
+  .warnbox b { color: var(--warn); }
+  .warnbox p { margin: 6px 0 0; color: var(--ink-soft); font-size: 13px; }
+
+  .actbar { display: flex; justify-content: space-between; align-items: center;
+            gap: 16px; padding: 17px 20px; border: 1px solid var(--line);
+            border-radius: 11px; background: var(--paper); flex-wrap: wrap;
+            position: sticky; bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+  .actbar-l { font-size: 13px; color: var(--ink-soft); max-width: 52ch; }
+  .btn-primary { padding: 10px 20px; border: 0; border-radius: 8px;
+                 background: var(--accent); color: var(--accent-ink);
+                 font-size: 13.5px; font-weight: 570; cursor: pointer; }
+  .btn-primary:hover { opacity: .88; }
+  .btn-ghost { padding: 10px 16px; border: 1px solid var(--line); border-radius: 8px;
+               background: var(--paper); font-size: 13.5px; cursor: pointer; }
+  .btn-ghost:hover { border-color: var(--ink-faint); }
+
+  @media (max-width: 720px) {
+    .kv { grid-template-columns: 1fr; gap: 4px 0; }
+    .kv dt { margin-top: 8px; }
+  }
+
+  /* PICKER — verbatim from PICKER.md */
+  .proto-picker { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    z-index: 2147483647; display: flex; align-items: center; gap: 2px; padding: 4px;
+    border-radius: 999px; background: rgba(10,10,10,.82);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4); backdrop-filter: blur(12px) saturate(1.4);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset, 0 8px 24px rgba(0,0,0,.24),
+                0 2px 6px rgba(0,0,0,.12);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px; line-height: 1; -webkit-font-smoothing: antialiased;
+    user-select: none; -webkit-user-select: none; }
+  .proto-picker-highlight { position: absolute; top: 4px; left: 0; height: 28px;
+    border-radius: 999px; background: rgba(255,255,255,.12); will-change: transform; }
+  .proto-picker[data-ready] .proto-picker-highlight {
+    transition: transform 250ms cubic-bezier(.23,1,.32,1), width 250ms cubic-bezier(.23,1,.32,1); }
+  @media (prefers-reduced-motion: reduce) {
+    .proto-picker[data-ready] .proto-picker-highlight { transition: none; } }
+  .proto-picker-item { position: relative; display: flex; align-items: center; height: 28px;
+    padding: 0 12px; border: 0; border-radius: 999px; background: transparent;
+    color: rgba(255,255,255,.55); font: inherit; cursor: pointer;
+    transition: color 150ms ease-out; }
+  .proto-picker-item:hover { color: rgba(255,255,255,.85); }
+  .proto-picker-item:active { transform: scale(.97); }
+  .proto-picker-item:focus-visible { outline: 2px solid rgba(255,255,255,.4); outline-offset: 2px; }
+  .proto-picker-item[data-active] { color: #fff; }
+</style>
+
+<div id="stage"></div>
+
+<nav class="proto-picker" aria-label="線框變體">
+  <span class="proto-picker-highlight" aria-hidden="true"></span>
+  <button class="proto-picker-item" data-active aria-current="true">Inspect 已選定</button>
+  <button class="proto-picker-item">Confirm 未採用</button>
+</nav>
+
+<script>
+/* 真實生成腳本的節錄。取自本機 POST /scripts 回傳，
+   行號與三段邊界與實際輸出一致：1-144 上部、145-153 中部、154-163 尾部。 */
+const HEAD = [
+  [1, "#!/usr/bin/env bash"],
+  [2, "set -uo pipefail"],
+  [3, "umask 077"],
+  [4, ""],
+  [5, "# 平台頭部：發布者不可修改"],
+  [6, "_ASP_SCRIPT_VERSION='1.0.0'"],
+  [7, "_ASP_PACKAGE_ID='superpowers'"],
+  [8, "_ASP_PACKAGE_VERSION='3.2.1'"],
+  [9, "_ASP_IDEMPOTENCY_KEY=\"$(< /proc/sys/kernel/random/uuid)\""],
+  [10, "_ASP_START_TIME=\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\""],
+  [11, "_ASP_USER_REF_TYPE='uuid'"],
+  [12, "_ASP_OS_TYPE='linux'"],
+  [13, "_ASP_CLIENT_RUNTIME='Claude Code'"],
+  [14, "_ASP_TELEMETRY_ENDPOINT='https://skills.internal'"],
+  [15, "_ASP_INSTALL_STATUS='pending'"],
+  [16, "_ASP_ERROR_CODE=''"],
+  [17, "mkdir -p \"$HOME/.agent-platform\""],
+  [18, "_ASP_UUID_FILE=\"$HOME/.agent-platform/uuid\""],
+  [19, "if [[ -s \"$_ASP_UUID_FILE\" ]]; then"],
+  [20, "  _ASP_USER_REF=\"$(<\"$_ASP_UUID_FILE\")\""],
+  [21, "else"],
+  [22, "  _ASP_USER_REF=\"$(< /proc/sys/kernel/random/uuid)\""],
+  [23, "  printf '%s' \"$_ASP_USER_REF\" > \"$_ASP_UUID_FILE\""],
+  [24, "fi"]
+];
+const HEAD_TAIL = [
+  [141, "readonly _ASP_TELEMETRY_ENDPOINT _ASP_PACKAGE_ID _ASP_PACKAGE_VERSION"],
+  [142, ""],
+  [143, "trap '_asp_on_exit $?' EXIT"],
+  [144, ""]
+];
+const MID = [
+  [145, "# 維護者安裝命令：只在隔離子程序執行"],
+  [146, "set +e"],
+  [147, "("],
+  [148, "  set -euo pipefail"],
+  [149, "  SKILL_HOME=\"${HOME}/.superpowers\""],
+  [150, "  mkdir -p \"${SKILL_HOME}/worktrees\""],
+  [151, "  echo \"superpowers 已就緒\""],
+  [152, ")"],
+  [153, "_asp_exit_code=$?"]
+];
+const FOOT = [
+  [154, "set -e"],
+  [155, "if [[ \"$_asp_exit_code\" -eq 0 ]]; then"],
+  [156, "  _ASP_INSTALL_STATUS='succeeded'"],
+  [157, "else"],
+  [158, "  _ASP_INSTALL_STATUS='failed'"],
+  [159, "  _ASP_ERROR_CODE='E999'"],
+  [160, "fi"],
+  [161, "exit \"$_asp_exit_code\""]
+];
+
+const TELE = ['idempotency_key','package_id','version','user_ref','user_ref_type',
+              'os_type','client_runtime','status','error_code','start_time','end_time'];
+
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function lines(rows, cls) {
+  return rows.map(([n, text]) =>
+    `<tr class="${cls}"><td class="ln">${n}</td><td>${esc(text) || ' '}</td></tr>`
+  ).join('');
+}
+
+function elision(from, to) {
+  return `<tr class="marker"><td class="ln">⋯</td><td>省略 ${to - from + 1} 行平台頭部：遙測送出、離線佇列與 EXIT trap 定義</td></tr>`;
+}
+
+function scriptTable() {
+  return `<div class="code"><table>
+    ${lines(HEAD, '')}
+    ${elision(25, 140)}
+    ${lines(HEAD_TAIL, '')}
+    ${lines(MID, 'mid')}
+    ${lines(FOOT, '')}
+  </table></div>`;
+}
+
+/* 影響資源與所需權限屬套件專屬資訊，後端尚無對應欄位。
+   第一期顯示空狀態，不以靜態分析推導，見第二期需求 P2-3。 */
+const IMPACT = `
+  <div class="empty-box">
+    <p class="empty-t">發布者未提供此資訊</p>
+    <p class="empty-d">這份腳本會寫入哪些路徑、需要什麼權限，需由發布者在上架時聲明。
+    平台不從命令內容推測，避免給出不準確的結論。</p>
+    <p class="empty-d">你可以展開上方的完整腳本自行檢視，或聯繫
+    <b>公共架構技術賦能</b> 詢問。</p>
+  </div>`;
+
+const TELEBOX = `
+  <div class="tele">${TELE.map(f=>`<span>${f}</span>`).join('')}</div>
+  <p class="note">固定十一欄，不可增減。不收集命令輸出、檔案內容、環境變數、機器名稱或 IP。
+  完整說明見<a href="#">隱私聲明</a>。</p>`;
+
+const RESIDUAL = `
+  <div class="warnbox">
+    <b>解除安裝後會留下內容</b>
+    <p>設定檔保留於 ~/.superpowers/config，供重新安裝時沿用。
+    若要完全移除，執行 <span class="mono">rm -rf ~/.superpowers</span>。</p>
+  </div>`;
+
+/* ---------- 變體 1：Confirm（腳本在前，逐項確認在後）---------- */
+function confirmView() { return `
+<div class="wrap">
+  <span class="tag">安裝頁 · Confirm</span>
+  <p class="crumb"><a href="#">技能池</a> ／ <a href="#">superpowers</a> ／ 執行前預覽</p>
+
+  <h1 class="h1">執行前預覽</h1>
+  <p class="sub">這是你即將在自己機器上執行的完整腳本。確認內容後再下載。</p>
+  <div class="target">
+    <span class="chip n">superpowers</span>
+    <span class="chip m">3.2.1</span>
+    <span class="chip n">Linux / macOS</span>
+    <span class="chip n">Claude Code</span>
+    <span class="chip s">v1</span>
+  </div>
+
+  <section class="card">
+    <div class="card-h">
+      <h2>完整腳本</h2>
+      <span>163 行</span>
+      <span class="grow"><button class="btn-sm">複製全文</button></span>
+    </div>
+    <div class="card-b">
+      ${scriptTable()}
+      <div class="legend">
+        <span><i class="swatch plat"></i>平台生成的上部與尾部，發布者不可修改</span>
+        <span><i class="swatch mid"></i>發布者的安裝命令，在隔離子程序執行</span>
+      </div>
+      <p class="note">腳本摘要
+        <span class="mono">sha256:04d9295fd456…ad02d</span>，下載後可自行比對。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><h2>影響資源與所需權限</h2></div>
+    <div class="card-b">${IMPACT}</div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><h2>將上報的欄位</h2><span>執行結束時送出</span></div>
+    <div class="card-b">${TELEBOX}</div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><h2>殘留副作用</h2></div>
+    <div class="card-b">${RESIDUAL}</div>
+  </section>
+
+  <div class="actbar">
+    <span class="actbar-l">下載後由你自行執行。平台不代為安裝，也不會在你的機器上保留連線。</span>
+    <div style="display:flex;gap:9px">
+      <button class="btn-ghost">返回詳情</button>
+      <button class="btn-primary">下載腳本</button>
+    </div>
+  </div>
+</div>`; }
+
+/* ---------- 變體 2：Inspect（先給結論，腳本可切分段檢視）---------- */
+function inspectView() { return `
+<div class="wrap">
+  <span class="tag">安裝頁 · Inspect</span>
+  <p class="crumb"><a href="#">技能池</a> ／ <a href="#">superpowers</a> ／ 執行前預覽</p>
+
+  <h1 class="h1">執行前預覽</h1>
+  <p class="sub">先看這份腳本會做什麼，需要時再展開完整內容逐行檢視。</p>
+  <div class="target">
+    <span class="chip n">superpowers</span>
+    <span class="chip m">3.2.1</span>
+    <span class="chip n">Linux / macOS</span>
+    <span class="chip n">Claude Code</span>
+    <span class="chip s">v1</span>
+  </div>
+
+  <section class="card">
+    <div class="card-h"><h2>這份腳本會做什麼</h2></div>
+    <div class="card-b">
+      <!-- 只列出有確定來源的項目：前兩條是平台固定行為，
+           第三條來自 preview.residualDescription。
+           套件專屬的寫入路徑與權限需求後端尚無欄位，不在此編造。 -->
+      <div class="rows">
+        <div class="row">
+          <span class="dot info"></span>
+          <div><b>在本機保存一組 UUID</b>
+            <p>未登入時會寫入 ~/.agent-platform/uuid，用於回報安裝結果。
+            同一台機器沿用同一組，平台無法由此反查真實身份。</p></div>
+        </div>
+        <div class="row">
+          <span class="dot info"></span>
+          <div><b>執行結束時回報結果</b>
+            <p>回報時間、系統環境與成功或失敗。離線時排入本機佇列，下次執行補交。
+            不收集命令輸出與檔案內容。</p></div>
+        </div>
+        <div class="row">
+          <span class="dot warn"></span>
+          <div><b>解除安裝後保留設定檔</b>
+            <p>保留於 ~/.superpowers/config。完全移除需執行 rm -rf ~/.superpowers。</p></div>
+        </div>
+      </div>
+      <p class="note">發布者的安裝命令會做什麼，需展開下方完整腳本的中部自行檢視。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-h">
+      <h2>完整腳本</h2>
+      <span>163 行 · sha256:04d9295f…</span>
+      <span class="grow"><button class="btn-sm">複製全文</button></span>
+    </div>
+    <div class="card-b">
+      <div class="seg-bar" data-todo>
+        <button data-on>全部</button>
+        <button>上部</button>
+        <button>中部</button>
+        <button>尾部</button>
+      </div>
+      <p class="note" style="margin:-4px 0 12px">
+        <span class="todo-tag">尚待實現</span>
+        分段切換目前為視覺佔位，第一期先以完整腳本呈現。
+      </p>
+      ${scriptTable()}
+      <div class="legend">
+        <span><i class="swatch plat"></i>平台生成，發布者不可修改</span>
+        <span><i class="swatch mid"></i>發布者的安裝命令</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><h2>影響資源與所需權限</h2></div>
+    <div class="card-b">${IMPACT}</div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><h2>將上報的欄位</h2><span>執行結束時送出</span></div>
+    <div class="card-b">${TELEBOX}</div>
+  </section>
+
+  <div class="actbar">
+    <span class="actbar-l">下載後由你自行執行。平台不代為安裝，也不會在你的機器上保留連線。</span>
+    <div style="display:flex;gap:9px">
+      <button class="btn-ghost">返回詳情</button>
+      <button class="btn-primary">下載腳本</button>
+    </div>
+  </div>
+</div>`; }
+
+/* Confirm 變體保留供追溯，實作依 Inspect（2026-08-26 使用者選定） */
+const variants = [inspectView, confirmView];
+
+const stage = document.getElementById('stage');
+const picker = document.querySelector('.proto-picker');
+const highlight = picker.querySelector('.proto-picker-highlight');
+const items = [...picker.querySelectorAll('.proto-picker-item')];
+let current = 0;
+
+function moveHighlight() {
+  const el = items[current];
+  highlight.style.width = el.offsetWidth + 'px';
+  highlight.style.transform = `translateX(${el.offsetLeft}px)`;
+}
+function mount(i) {
+  stage.innerHTML = '';
+  requestAnimationFrame(() => { stage.innerHTML = variants[i](); });
+}
+function setActive(i) {
+  if (i < 0 || i >= variants.length) return;
+  current = i;
+  items.forEach((el, j) => {
+    el.toggleAttribute('data-active', j === i);
+    if (j === i) el.setAttribute('aria-current', 'true');
+    else el.removeAttribute('aria-current');
+  });
+  moveHighlight();
+  const url = new URL(location);
+  url.searchParams.set('v', i + 1);
+  history.replaceState(null, '', url);
+  mount(i);
+}
+items.forEach((el, i) => el.addEventListener('click', () => setActive(i)));
+window.addEventListener('resize', moveHighlight);
+document.addEventListener('keydown', (e) => {
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const num = parseInt(e.key, 10);
+  if (num >= 1 && num <= variants.length) setActive(num - 1);
+  else if (e.key === 'ArrowRight') setActive((current + 1) % variants.length);
+  else if (e.key === 'ArrowLeft') setActive((current - 1 + variants.length) % variants.length);
+});
+setActive((parseInt(new URLSearchParams(location.search).get('v'), 10) || 1) - 1);
+requestAnimationFrame(() => requestAnimationFrame(() => picker.setAttribute('data-ready', '')));
+</script>

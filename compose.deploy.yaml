@@ -1,0 +1,83 @@
+name: agent-skill-platform
+
+# 單機部署（MVP）。與開發用 compose.yaml 的差別：
+# 平台本身也在容器內執行，資料庫使用具名 volume 而非 tmpfs，
+# 因此重啟不會遺失資料。見 docs/待決策與延後事項.md 的 D-5。
+#
+#   docker compose -f compose.deploy.yaml up -d --build
+#
+# 環境變數由 .env.deploy 提供，該檔不進版本控制。
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-agent_skill_platform}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必須設定}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-agent_skill_platform}"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    # 不對外開放 port：只有同一 compose 網路內的平台服務需要存取。
+
+  # migration 與平台分離：平台啟動時不自動 migrate，
+  # 避免多次重啟或未來多副本時併發執行同一批 migration。
+  migrate:
+    build:
+      context: .
+    image: agent-skill-platform:local
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+    # 使用編譯後的進入點：runtime 階段已 prune 掉 tsx，無法執行 .ts。
+    command: ["node", "dist/migrate.js"]
+
+  app:
+    build:
+      context: .
+    image: agent-skill-platform:local
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "${BIND_HOST:-127.0.0.1}:${BIND_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: ${DATABASE_URL}
+      TELEMETRY_ENDPOINT: ${TELEMETRY_ENDPOINT}
+      PLATFORM_BASE_URL: ${PLATFORM_BASE_URL}
+      BOOTSTRAP_ADMIN_UID: ${BOOTSTRAP_ADMIN_UID}
+      # SSO：六個變數全有或全無，未配置時登入 fail-closed。
+      OIDC_AUTHORIZE_URL: ${OIDC_AUTHORIZE_URL}
+      OIDC_TOKEN_URL: ${OIDC_TOKEN_URL}
+      OIDC_USERINFO_URL: ${OIDC_USERINFO_URL}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
+      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI}
+      OIDC_SCOPE: ${OIDC_SCOPE}
+      OIDC_CLAIM_UID: ${OIDC_CLAIM_UID}
+      OIDC_CLAIM_DISPLAY_NAME: ${OIDC_CLAIM_DISPLAY_NAME}
+      OIDC_CLAIM_TEAMS: ${OIDC_CLAIM_TEAMS}
+      # 通知渠道：未配置時站內通知照常，只是不外送。
+      NOTIFY_SLACK_WEBHOOK_URL: ${NOTIFY_SLACK_WEBHOOK_URL}
+      NOTIFY_TEAMS_WEBHOOK_URL: ${NOTIFY_TEAMS_WEBHOOK_URL}
+      NOTIFY_LARK_WEBHOOK_URL: ${NOTIFY_LARK_WEBHOOK_URL}
+
+volumes:
+  postgres-data:

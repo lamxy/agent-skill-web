@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>技能平台試駕手冊</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  /* Artifact 平台預設提供的最小 reset，本地版自帶以確保呈現一致 */
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  img, svg, video { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<style>
+  :root {
+    --ink: #191c22;
+    --ink-2: #4a515e;
+    --ink-3: #79808f;
+    --line: #e2e5ec;
+    --line-2: #eef0f5;
+    --paper: #fcfcfd;
+    --raise: #ffffff;
+    --ground: #f4f5f9;
+
+    --accent: #3a4fcb;
+    --accent-soft: #eaedfc;
+
+    --employee: #5b6472;
+    --employee-soft: #eef0f4;
+    --maintainer: #0f7a6b;
+    --maintainer-soft: #e4f4f1;
+    --reviewer: #6b4fd6;
+    --reviewer-soft: #efebfd;
+    --admin: #9a6410;
+    --admin-soft: #fbf1e0;
+
+    --term-bg: #1b1f28;
+    --term-ink: #dfe4ee;
+    --term-dim: #7c8598;
+    --term-accent: #8fa6ff;
+
+    --warn: #9a3412;
+    --warn-soft: #fdeee7;
+
+    --serif: 'Newsreader', Georgia, 'Songti TC', serif;
+    --sans: 'Inter Tight', -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e7eaf1;
+      --ink-2: #a8b0be;
+      --ink-3: #79818f;
+      --line: #2d323d;
+      --line-2: #242832;
+      --paper: #14171d;
+      --raise: #1b1f27;
+      --ground: #0f1116;
+
+      --accent: #90a3ff;
+      --accent-soft: #1e2540;
+
+      --employee: #9aa4b4;
+      --employee-soft: #242830;
+      --maintainer: #4fc4b0;
+      --maintainer-soft: #12302c;
+      --reviewer: #a795f5;
+      --reviewer-soft: #241f3d;
+      --admin: #dda54f;
+      --admin-soft: #33260f;
+
+      --term-bg: #0b0d12;
+      --term-ink: #d5dbe6;
+
+      --warn: #f0a58a;
+      --warn-soft: #33190f;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ink: #e7eaf1;
+    --ink-2: #a8b0be;
+    --ink-3: #79818f;
+    --line: #2d323d;
+    --line-2: #242832;
+    --paper: #14171d;
+    --raise: #1b1f27;
+    --ground: #0f1116;
+
+    --accent: #90a3ff;
+    --accent-soft: #1e2540;
+
+    --employee: #9aa4b4;
+    --employee-soft: #242830;
+    --maintainer: #4fc4b0;
+    --maintainer-soft: #12302c;
+    --reviewer: #a795f5;
+    --reviewer-soft: #241f3d;
+    --admin: #dda54f;
+    --admin-soft: #33260f;
+
+    --term-bg: #0b0d12;
+    --term-ink: #d5dbe6;
+
+    --warn: #f0a58a;
+    --warn-soft: #33190f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 400 16px/1.65 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  /* ── 開場 ── */
+  .top {
+    padding: 72px 0 40px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 48px;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 16px;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(38px, 6vw, 56px);
+    font-weight: 500;
+    line-height: 1.08;
+    letter-spacing: -0.022em;
+    margin: 0 0 20px;
+    text-wrap: balance;
+  }
+
+  .lede {
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0;
+  }
+
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  /* ── 區塊 ── */
+  section { margin-bottom: 64px; }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    margin: 0 0 8px;
+    text-wrap: balance;
+  }
+
+  .sec-note {
+    color: var(--ink-2);
+    font-size: 15px;
+    margin: 0 0 28px;
+    max-width: 62ch;
+  }
+
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    margin: 0 0 10px;
+  }
+
+  p { margin: 0 0 14px; max-width: 64ch; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── 終端機 ── */
+  .term {
+    background: var(--term-bg);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 0 0 18px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--term-ink);
+  }
+
+  .term div { white-space: pre; }
+  .term .c { color: var(--term-dim); }
+  .term .p { color: var(--term-accent); user-select: none; }
+  .term .o { color: var(--term-dim); }
+
+  /* ── 步驟序列（真實順序才用編號）── */
+  .steps {
+    list-style: none;
+    counter-reset: s;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+
+  .steps > li {
+    counter-increment: s;
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .steps > li::before {
+    content: counter(s);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    background: var(--accent-soft);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+  }
+
+  /* ── 角色卡 ── */
+  .persona {
+    background: var(--raise);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--role);
+    border-radius: 4px 10px 10px 4px;
+    padding: 24px 26px;
+    margin-bottom: 20px;
+  }
+
+  .persona-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+
+  .persona-head h3 {
+    font-family: var(--serif);
+    font-size: 21px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .uid {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--role);
+    background: var(--role-soft);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .persona-sub {
+    color: var(--ink-2);
+    font-size: 14.5px;
+    margin: 0 0 18px;
+  }
+
+  .can {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 0 0 18px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .can li {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 9px;
+    font-size: 14.5px;
+    line-height: 1.55;
+    align-items: start;
+  }
+
+  .can li::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--role);
+    margin: 8px 0 0 5px;
+  }
+
+  .can li.no { color: var(--ink-3); }
+  .can li.no::before {
+    background: none;
+    border: 1px solid var(--ink-3);
+    width: 6px;
+    height: 6px;
+  }
+
+  /* ── 表格 ── */
+  .tw { overflow-x: auto; margin-bottom: 18px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    min-width: 460px;
+  }
+
+  th {
+    text-align: left;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 0 12px 9px 0;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 11px 12px 11px 0;
+    border-bottom: 1px solid var(--line-2);
+    vertical-align: top;
+    color: var(--ink-2);
+  }
+
+  td:first-child { color: var(--ink); font-weight: 500; }
+  tr:last-child td { border-bottom: 0; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.875em;
+    background: var(--ground);
+    border: 1px solid var(--line-2);
+    padding: 1px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  /* ── 提示 ── */
+  .note {
+    border-left: 2px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    font-size: 14.5px;
+    margin: 0 0 18px;
+  }
+
+  .note.warn {
+    border-color: var(--warn);
+    background: var(--warn-soft);
+  }
+
+  .note strong { font-weight: 600; }
+  .note p { max-width: none; }
+
+  .grid2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .box {
+    background: var(--raise);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+
+  .box h3 { margin-bottom: 6px; }
+  .box p { font-size: 14px; color: var(--ink-2); margin: 0; }
+
+  .foot {
+    border-top: 1px solid var(--line);
+    padding-top: 26px;
+    color: var(--ink-3);
+    font-size: 13.5px;
+  }
+
+  .foot p { max-width: none; }
+
+  a { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .top { padding-top: 48px; }
+    .persona { padding: 20px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <p class="eyebrow">MVP 試駕 · 單機環境</p>
+    <h1>技能平台試駕手冊</h1>
+    <p class="lede">
+      三十分鐘走完平台的完整生命週期：<strong>發布 → 審核 → 上架 → 安裝 → 下架 → 通知</strong>。
+      重點在四種身份看到的畫面各自不同——同一個頁面，換個人登入就換一組入口。
+      本手冊的每個指令與端點都對應目前程式碼的實際行為。
+    </p>
+  </header>
+
+  <section>
+    <h2>啟動環境</h2>
+    <p class="sec-note">開兩個終端。模擬 IdP 是開發期的企業登入替身，跑的是與正式環境相同的 OAuth2 協議。</p>
+
+    <ol class="steps">
+      <li>
+        <div>
+          <h3>重建演示環境</h3>
+          <p>清空資料庫、套用 migration、載入示範套件。此指令在 <code>NODE_ENV</code> 非 development 時會拒絕執行。</p>
+          <div class="term"><div><span class="p">$</span> npm run demo:reset</div></div>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>啟動模擬 IdP（獨立終端）</h3>
+          <p>監聽 <code>127.0.0.1:4780</code>，提供三個可選身份。保持它執行中。</p>
+          <div class="term"><div><span class="p">$</span> npm run dev:idp</div></div>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>啟動平台</h3>
+          <div class="term"><div><span class="p">$</span> npm run dev</div><div class="o">→ http://127.0.0.1:3000</div></div>
+          <p>若尚未設定 SSO 環境變數，請先依 <code>docs/運維指南.md</code> 的 SSO 章節填入六個 <code>OIDC_*</code> 與 <code>BOOTSTRAP_ADMIN_UID</code>。</p>
+        </div>
+      </li>
+    </ol>
+
+    <div class="note">
+      <strong>先設定 BOOTSTRAP_ADMIN_UID＝<code>mock-admin</code>。</strong>
+      <p style="margin:6px 0 0">授予角色本身需要管理員權限，所以平台需要一條產生「第一位管理員」的路徑。沒設這個值，登入會成功但沒有人能指派審核人，整條審核流程動不了。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>四種身份，四種畫面</h2>
+    <p class="sec-note">
+      模擬 IdP 提供三個帳號。角色不是 IdP 給的，而是登入後由平台管理員授予——這是刻意的分離：
+      企業目錄決定「你是誰」，平台決定「你能做什麼」。
+    </p>
+
+    <div class="persona" style="--role: var(--employee); --role-soft: var(--employee-soft)">
+      <div class="persona-head">
+        <h3>匿名訪客</h3>
+        <span class="uid">未登入</span>
+      </div>
+      <p class="persona-sub">不是錯誤狀態，是設計上的一等公民。</p>
+      <ul class="can">
+        <li>瀏覽技能池、開啟套件詳情、查看支援管道</li>
+        <li>行為被遙測記錄（以匿名 UUID，非個人身分）</li>
+        <li class="no">無法安裝、發布、審核</li>
+      </ul>
+      <p style="font-size:14.5px;color:var(--ink-2)">
+        直接開 <code>http://127.0.0.1:3000</code> 就是這個視角。注意頂欄只有「技能池」一個入口，
+        右上角是登入按鈕。頁面內容完整呈現，不會被攔截牆擋住。
+      </p>
+    </div>
+
+    <div class="persona" style="--role: var(--employee); --role-soft: var(--employee-soft)">
+      <div class="persona-head">
+        <h3>一般員工</h3>
+        <span class="uid">mock-user</span>
+      </div>
+      <p class="persona-sub">登入後的預設狀態——沒有任何角色，這是正常的。</p>
+      <ul class="can">
+        <li>安裝技能、取得一鍵安裝腳本</li>
+        <li>查看「我的安裝」與「通知」</li>
+        <li>提交使用反饋</li>
+        <li class="no">看不到審核與管理入口</li>
+      </ul>
+      <p style="font-size:14.5px;color:var(--ink-2)">
+        點右上角登入，在模擬 IdP 選「模擬使用者」。回到平台後頂欄多出「我的安裝」「通知」「發布技能」。
+        點頭像展開選單，可以看到自己的 uid、團隊與角色——角色欄會顯示「一般員工權限」。
+      </p>
+    </div>
+
+    <div class="persona" style="--role: var(--admin); --role-soft: var(--admin-soft)">
+      <div class="persona-head">
+        <h3>平台管理員</h3>
+        <span class="uid">mock-admin</span>
+      </div>
+      <p class="persona-sub">唯一能授予他人角色的身份，由環境變數指定產生。</p>
+      <ul class="can">
+        <li>指派與撤銷審核人，設定其可審範圍</li>
+        <li>版本治理：撤下、緊急停用</li>
+        <li>稽核日誌、支援與反饋後台</li>
+        <li>可審核所有範圍的送審申請</li>
+      </ul>
+      <p style="font-size:14.5px;color:var(--ink-2)">
+        登出後改選「模擬管理員」。頂欄出現「管理」入口。
+        身份選單的角色欄會顯示 <em>平台管理員 · 全平台</em>。
+      </p>
+    </div>
+
+    <div class="persona" style="--role: var(--reviewer); --role-soft: var(--reviewer-soft)">
+      <div class="persona-head">
+        <h3>審核人</h3>
+        <span class="uid">mock-reviewer</span>
+      </div>
+      <p class="persona-sub">角色帶範圍——只能審自己被指派的「套件類型 × 分類」。</p>
+      <ul class="can">
+        <li>審核工作台，通過或退回送審申請</li>
+        <li>檢視完整安裝命令與殘留聲明</li>
+        <li class="no">不得審核自己團隊的套件（利益迴避，後端強制）</li>
+        <li class="no">無法指派其他審核人</li>
+      </ul>
+      <p style="font-size:14.5px;color:var(--ink-2)">
+        這個角色需要管理員先指派，見下一節。
+      </p>
+    </div>
+
+    <div class="note">
+      <strong>導覽隱藏入口不是安全機制。</strong>
+      <p style="margin:6px 0 0">前端依角色增減入口只是為了不讓人點進必然被拒的頁面。真正的授權判定全在後端按範圍執行——直接打 API 一樣會被擋。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>完整流程試駕</h2>
+    <p class="sec-note">依序操作，會走完一個版本從送審到撤下的完整生命週期，並在最後看到通知回到員工手上。</p>
+
+    <ol class="steps">
+      <li>
+        <div>
+          <h3>管理員指派審核人</h3>
+          <p>以 <code>mock-admin</code> 登入後，先讓 <code>mock-reviewer</code> 登入過一次以建立身份記錄，再回到管理員身份進入<strong>管理 → 審核者管理</strong>。</p>
+          <p>指派時選擇套件類型與分類，例如 <code>tool</code> × <code>部署</code>。範圍是必填的——審核權限從來不是全域的，除非你是管理員。</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>以員工身份瀏覽與安裝</h3>
+          <p>切到 <code>mock-user</code>。技能池會看到三個示範套件：</p>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr><th>套件</th><th>類型</th><th>擁有團隊</th><th>狀態</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>pm-skill</td><td>skill</td><td>產品效能</td><td>已發布 0.8.3</td></tr>
+                <tr><td>trace-lens</td><td>skill</td><td>可觀測性</td><td>已發布 1.1.2</td></tr>
+                <tr><td>deploy-runner</td><td>tool</td><td>SRE</td><td>待審核 2.0.0-rc.1</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>開啟 <code>pm-skill</code> 詳情 → 安裝。安裝頁會顯示這份腳本會做什麼、是否有殘留，並提供一鍵安裝腳本下載。</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>觀察待審核的版本</h3>
+          <p><code>deploy-runner</code> 的 <code>2.0.0-rc.1</code> 處於 <em>review_required</em>，一般員工看得到套件但拿不到這個版本的腳本——未通過審核的版本不提供下載。</p>
+          <p>它也是唯一宣告了殘留影響的示範套件：會寫入 <code>/etc/deploy-runner</code> 與 systemd unit，並附有手動清理步驟。</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>以審核人身份決議</h3>
+          <p>切到 <code>mock-reviewer</code>，進入<strong>審核</strong>工作台。開啟 <code>deploy-runner</code> 的送審詳情，可以看到完整安裝命令、殘留聲明與腳本目標矩陣。</p>
+          <p>通過或退回都需要填寫理由。退回時理由會回到維護者手上。</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>管理員撤下版本，觸發通知</h3>
+          <p>切回 <code>mock-admin</code>，進入<strong>管理 → 版本治理</strong>，對已發布的版本執行撤下或緊急停用，填寫原因代碼與說明。</p>
+          <p>這一步會為所有安裝過該版本的員工建立站內通知。</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>回到員工視角收通知</h3>
+          <p>切到 <code>mock-user</code>，開啟<strong>通知</strong>。撤下與緊急停用會出現在「撤下與停用」分頁，新版本發布則在「新版本」分頁並可直接跳到版本差異頁。</p>
+          <p>若已設定 <code>NOTIFY_*_WEBHOOK_URL</code>，同一則通知也會送到 Slack、Teams 或 Lark。未設定時站內通知照常，只是不外送。</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>值得順手一看的地方</h2>
+    <p class="sec-note">這些細節體現了平台的幾個設計立場，容易在快速瀏覽時錯過。</p>
+
+    <div class="grid2">
+      <div class="box">
+        <h3>稽核日誌</h3>
+        <p>管理 → 稽核日誌。每一次審核決議、撤下、角色異動都留痕。bootstrap 授予的管理員會標示為 <code>bootstrap</code> 而非人名。</p>
+      </div>
+      <div class="box">
+        <h3>隱私聲明</h3>
+        <p>頁尾入口。逐欄說明遙測上報哪些欄位、不收集什麼。內容與後端的白名單保持一致。</p>
+      </div>
+      <div class="box">
+        <h3>作者分析頁</h3>
+        <p>套件詳情 → 分析。安裝成功率、版本分布。示範資料已含成功與失敗數，圖表不是空的。</p>
+      </div>
+      <div class="box">
+        <h3>版本差異頁</h3>
+        <p>只顯示每個目標組合的變更旗標與摘要對照，<em>不顯示命令全文</em>——與詳情頁同一條規則。</p>
+      </div>
+      <div class="box">
+        <h3>健康告警</h3>
+        <p>設定任一通知渠道後，平台每 60 秒檢查一次資料庫。連續三次失敗才告警，且只在狀態轉換時發送。</p>
+      </div>
+      <div class="box">
+        <h3>API 文件</h3>
+        <p><code>/docs</code> 提供 Swagger UI，可直接看到所有端點的請求與回應結構。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>單機部署</h2>
+    <p class="sec-note">上面走的是開發模式。要以容器完整跑起來（含前端與 migration）：</p>
+
+    <div class="term">
+      <div><span class="c"># 複製運維指南的範本為 .env.deploy 並填寫後</span></div>
+      <div><span class="p">$</span> npm run deploy:up</div>
+      <div><span class="p">$</span> npm run deploy:logs</div>
+      <div><span class="p">$</span> npm run deploy:down<span class="o">    # 保留資料 volume</span></div>
+    </div>
+
+    <p>三個服務依序啟動：<code>postgres</code> 就緒 → <code>migrate</code> 執行完畢 → <code>app</code> 啟動。migration 與平台分離，避免重啟時併發套用。</p>
+
+    <div class="note warn">
+      <strong>平台本身不處理 TLS。</strong>
+      <p style="margin:6px 0 0">預設只綁 <code>127.0.0.1</code>。要對外開放請在前面架反向代理，不要只是把 <code>BIND_HOST</code> 改成 <code>0.0.0.0</code>。</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p style="margin-bottom:8px"><strong style="color:var(--ink)">目前尚未驗證的部分</strong></p>
+    <p style="margin-bottom:14px">
+      腳本執行只在 Linux／macOS 與 WSL 上實測過。Windows 原生與 macOS 原生的生成腳本可以下載，但平台端沒有實際執行過——文件與介面都不會聲稱它們已驗證。
+    </p>
+    <p>
+      SSO 目前連的是本機模擬 IdP；通知渠道需要真實 webhook 憑證才會實際送出。
+      兩者的程式碼路徑與正式環境相同，取得憑證後只需替換環境變數。
+    </p>
+  </footer>
+
+</div>
+
+</body>
+</html>

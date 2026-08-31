@@ -1,0 +1,583 @@
+<title>技能池變體 Ledger Dossier Console</title>
+<style>
+  /* ---- Shared foundation: real product tokens, not picker chrome ----
+     Neutrals carry a slight cool bias toward the accent, so greys read as
+     chosen rather than inherited. Semantic colors (ok/warn/stop) are kept
+     separate from the accent hue. ---- */
+  :root {
+    --ink: #16181d;
+    --ink-soft: #5b616e;
+    --ink-faint: #8b91a0;
+    --line: #dfe2e8;
+    --line-soft: #edeff3;
+    --paper: #ffffff;
+    --ground: #f6f7f9;
+    --accent: #1f4fd8;
+    --accent-soft: #eef2fe;
+    --ok: #1a7f52;
+    --ok-soft: #e8f5ee;
+    --warn: #8a5a00;
+    --warn-soft: #fdf3e0;
+    --stop: #a32020;
+    --stop-soft: #fdeceb;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC",
+            "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  }
+
+  /* Dark theme: tokens only, never component rules. Guarded so an explicit
+     light choice still beats a dark OS preference. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e8eaf0;
+      --ink-soft: #a2a9b8;
+      --ink-faint: #767d8d;
+      --line: #2f333c;
+      --line-soft: #24272e;
+      --paper: #1a1d23;
+      --ground: #131519;
+      --accent: #7f9fff;
+      --accent-soft: #1c2740;
+      --ok: #5ec98e;
+      --ok-soft: #14301f;
+      --warn: #e0ab4c;
+      --warn-soft: #33260d;
+      --stop: #f08a80;
+      --stop-soft: #3a1917;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ink: #e8eaf0;
+    --ink-soft: #a2a9b8;
+    --ink-faint: #767d8d;
+    --line: #2f333c;
+    --line-soft: #24272e;
+    --paper: #1a1d23;
+    --ground: #131519;
+    --accent: #7f9fff;
+    --accent-soft: #1c2740;
+    --ok: #5ec98e;
+    --ok-soft: #14301f;
+    --warn: #e0ab4c;
+    --warn-soft: #33260d;
+    --stop: #f08a80;
+    --stop-soft: #3a1917;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  #stage { min-height: 100vh; padding-bottom: 88px; }
+  button, input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  }
+
+  /* ============ VARIANT 1 — Ledger ============ */
+  .lg-shell { max-width: 1240px; margin: 0 auto; padding: 32px 28px; }
+  .lg-head { display: flex; justify-content: space-between; align-items: flex-end;
+             gap: 20px; padding-bottom: 18px; border-bottom: 2px solid var(--ink); }
+  .lg-title { margin: 0; font-size: 21px; font-weight: 650; letter-spacing: -.01em; }
+  .lg-sub { margin: 5px 0 0; color: var(--ink-soft); font-size: 13px; }
+  .lg-count { font-variant-numeric: tabular-nums; font-weight: 650; }
+  .lg-btn { padding: 8px 14px; border: 1px solid var(--ink); border-radius: 6px;
+            background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 550;
+            cursor: pointer; transition: opacity 150ms ease-out; }
+  .lg-btn:hover { opacity: .85; }
+  .lg-filters { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 8px; margin: 16px 0 0; }
+  .lg-filters input, .lg-filters select {
+    padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper);
+    transition: border-color 150ms ease-out; }
+  .lg-filters input:focus, .lg-filters select:focus { outline: none; border-color: var(--accent); }
+  .lg-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .lg-table thead th {
+    padding: 14px 10px 8px; text-align: left; font-size: 11px; font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint);
+    border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .lg-table tbody tr { border-bottom: 1px solid var(--line-soft); }
+  .lg-table tbody tr:hover { background: var(--paper); }
+  .lg-table td { padding: 13px 10px; vertical-align: top; }
+  .lg-name { font-weight: 600; letter-spacing: -.005em; }
+  .lg-purpose { color: var(--ink-soft); font-size: 13px; margin-top: 2px;
+                max-width: 42ch; }
+  .lg-meta { margin-top: 5px; font-size: 12px; color: var(--ink-faint); }
+  .lg-ver { font-family: var(--mono); font-size: 12px; }
+  .lg-chip { display: inline-block; padding: 2px 7px; border-radius: 4px;
+             font-size: 11.5px; font-weight: 550; white-space: nowrap; }
+  .lg-chip.pub { background: var(--ok-soft); color: var(--ok); }
+  .lg-chip.rev { background: var(--warn-soft); color: var(--warn); }
+  .lg-chip.dep { background: var(--stop-soft); color: var(--stop); }
+  .lg-chip.type { background: var(--line-soft); color: var(--ink-soft); }
+  .lg-os { font-family: var(--mono); font-size: 11.5px; color: var(--ink-soft); }
+  .lg-num { font-variant-numeric: tabular-nums; }
+  .lg-rate { font-weight: 600; }
+  .lg-rate.none { color: var(--ink-faint); font-weight: 400; font-style: italic; }
+  .lg-act { text-align: right; white-space: nowrap; }
+  .lg-link { color: var(--accent); text-decoration: none; font-weight: 550; font-size: 13px; }
+  .lg-link:hover { text-decoration: underline; }
+  .lg-foot { margin-top: 18px; display: flex; justify-content: space-between;
+             align-items: center; color: var(--ink-faint); font-size: 13px; }
+  .lg-more { padding: 7px 13px; border: 1px solid var(--line); border-radius: 6px;
+             background: var(--paper); font-size: 13px; cursor: pointer; }
+  .lg-more:hover { border-color: var(--ink-soft); }
+
+  /* ============ VARIANT 2 — Dossier ============ */
+  .ds-shell { max-width: 1100px; margin: 0 auto; padding: 40px 28px; }
+  .ds-head { margin-bottom: 26px; }
+  .ds-title { margin: 0; font-size: 27px; font-weight: 680; letter-spacing: -.022em; }
+  .ds-sub { margin: 7px 0 0; color: var(--ink-soft); max-width: 56ch; }
+  .ds-bar { display: flex; gap: 8px; flex-wrap: wrap; margin: 22px 0 24px; }
+  .ds-bar input { flex: 1 1 280px; padding: 10px 13px; border: 1px solid var(--line);
+                  border-radius: 8px; background: var(--paper); }
+  .ds-bar input:focus { outline: none; border-color: var(--accent); }
+  .ds-pill { padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px;
+             background: var(--paper); font-size: 13px; cursor: pointer;
+             transition: border-color 150ms ease-out, background 150ms ease-out; }
+  .ds-pill:hover { border-color: var(--ink-faint); }
+  .ds-pill[data-on] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .ds-grid { display: grid; gap: 14px; }
+  .ds-card { border: 1px solid var(--line); border-radius: 12px; background: var(--paper);
+             padding: 20px 22px; transition: border-color 160ms ease-out, box-shadow 160ms ease-out; }
+  .ds-card:hover { border-color: var(--ink-faint);
+                   box-shadow: 0 2px 12px rgba(22,24,29,.06); }
+  .ds-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .ds-nm { margin: 0; font-size: 17px; font-weight: 640; letter-spacing: -.01em; }
+  .ds-owner { margin: 3px 0 0; font-size: 13px; color: var(--ink-faint); }
+  .ds-purpose { margin: 11px 0 0; color: var(--ink-soft); max-width: 62ch; }
+  .ds-verdict { display: flex; align-items: center; gap: 7px; padding: 7px 13px;
+                border-radius: 8px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .ds-verdict.go { background: var(--ok-soft); color: var(--ok); }
+  .ds-verdict.hold { background: var(--warn-soft); color: var(--warn); }
+  .ds-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .ds-facts { display: flex; flex-wrap: wrap; gap: 8px 26px; margin: 16px 0 0;
+              padding-top: 15px; border-top: 1px solid var(--line-soft); }
+  .ds-fact-k { font-size: 11px; letter-spacing: .05em; text-transform: uppercase;
+               color: var(--ink-faint); }
+  .ds-fact-v { margin-top: 2px; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .ds-fact-v.mono { font-family: var(--mono); font-size: 12.5px; }
+  .ds-fact-v.none { color: var(--ink-faint); font-style: italic; }
+  .ds-residual { margin-top: 13px; padding: 10px 13px; border-radius: 8px;
+                 background: var(--warn-soft); color: var(--warn); font-size: 13px; }
+  .ds-acts { display: flex; gap: 9px; margin-top: 17px; }
+  .ds-primary { padding: 9px 16px; border: 0; border-radius: 8px; background: var(--accent);
+                color: #fff; font-size: 13px; font-weight: 570; cursor: pointer;
+                transition: opacity 150ms ease-out; }
+  .ds-primary:hover { opacity: .88; }
+  .ds-ghost { padding: 9px 16px; border: 1px solid var(--line); border-radius: 8px;
+              background: var(--paper); font-size: 13px; cursor: pointer; }
+  .ds-ghost:hover { border-color: var(--ink-faint); }
+
+  /* ============ VARIANT 3 — Console ============ */
+  .cs-wrap { display: grid; grid-template-columns: 244px 1fr; min-height: 100vh; }
+  .cs-side { border-right: 1px solid var(--line); background: var(--paper); padding: 26px 20px; }
+  .cs-side h2 { margin: 0 0 3px; font-size: 15px; font-weight: 640; }
+  .cs-side-note { margin: 0 0 22px; font-size: 12px; color: var(--ink-faint); }
+  .cs-group { margin-bottom: 20px; }
+  .cs-legend { font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+               color: var(--ink-faint); margin-bottom: 8px; }
+  .cs-opt { display: flex; align-items: center; gap: 8px; padding: 5px 0;
+            font-size: 13px; cursor: pointer; }
+  .cs-box { width: 15px; height: 15px; border: 1px solid var(--line); border-radius: 4px;
+            display: grid; place-items: center; font-size: 10px; color: #fff;
+            transition: background 140ms ease-out, border-color 140ms ease-out; }
+  .cs-opt[data-on] .cs-box { background: var(--accent); border-color: var(--accent); }
+  .cs-tail { margin-left: auto; font-size: 12px; color: var(--ink-faint);
+             font-variant-numeric: tabular-nums; }
+  .cs-main { padding: 26px 30px; overflow: hidden; }
+  .cs-search { position: relative; margin-bottom: 6px; }
+  .cs-search input { width: 100%; padding: 11px 14px 11px 38px; border: 1px solid var(--line);
+                     border-radius: 9px; background: var(--paper); font-size: 14.5px; }
+  .cs-search input:focus { outline: none; border-color: var(--accent); }
+  .cs-search svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+                   color: var(--ink-faint); }
+  .cs-kbd { position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            font-family: var(--mono); font-size: 11px; color: var(--ink-faint);
+            border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px; }
+  .cs-status { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 10px;
+               font-size: 13px; color: var(--ink-soft); }
+  .cs-status b { font-variant-numeric: tabular-nums; color: var(--ink); }
+  .cs-rows { border: 1px solid var(--line); border-radius: 10px; background: var(--paper);
+             overflow: hidden; }
+  .cs-row { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: center;
+            padding: 14px 17px; border-bottom: 1px solid var(--line-soft); cursor: pointer;
+            transition: background 130ms ease-out; }
+  .cs-row:last-child { border-bottom: 0; }
+  .cs-row:hover { background: var(--ground); }
+  .cs-row[data-sel] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+  .cs-r-name { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+  .cs-r-name b { font-weight: 620; letter-spacing: -.005em; }
+  .cs-r-ver { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
+  .cs-r-purpose { margin-top: 3px; font-size: 13px; color: var(--ink-soft);
+                  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60ch; }
+  .cs-r-right { display: flex; align-items: center; gap: 20px; }
+  .cs-r-stat { text-align: right; }
+  .cs-r-stat-v { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .cs-r-stat-v.none { color: var(--ink-faint); font-weight: 400; font-style: italic; font-size: 13px; }
+  .cs-r-stat-k { font-size: 11px; color: var(--ink-faint); margin-top: 1px; }
+  .cs-tag { padding: 3px 8px; border-radius: 5px; font-size: 11.5px; font-weight: 550; }
+  .cs-tag.pub { background: var(--ok-soft); color: var(--ok); }
+  .cs-tag.rev { background: var(--warn-soft); color: var(--warn); }
+  .cs-hint { margin-top: 13px; font-size: 12.5px; color: var(--ink-faint); }
+  .cs-hint kbd { font-family: var(--mono); font-size: 11px; border: 1px solid var(--line);
+                 border-radius: 3px; padding: 1px 4px; }
+
+  @media (max-width: 900px) {
+    .cs-wrap { grid-template-columns: 1fr; }
+    .cs-side { display: none; }
+    .lg-filters { grid-template-columns: 1fr; }
+    .lg-table thead { display: none; }
+    .lg-table td { display: block; padding: 4px 0; }
+    .lg-table tbody tr { display: block; padding: 14px 0; }
+  }
+
+  /* ============ PICKER (verbatim from PICKER.md) ============ */
+  .proto-picker {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(10, 10, 10, 0.82);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    backdrop-filter: blur(12px) saturate(1.4);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+      0 8px 24px rgba(0, 0, 0, 0.24),
+      0 2px 6px rgba(0, 0, 0, 0.12);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13px;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .proto-picker-highlight {
+    position: absolute;
+    top: 4px;
+    left: 0;
+    height: 28px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    will-change: transform;
+  }
+  .proto-picker[data-ready] .proto-picker-highlight {
+    transition:
+      transform 250ms cubic-bezier(0.23, 1, 0.32, 1),
+      width 250ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .proto-picker[data-ready] .proto-picker-highlight { transition: none; }
+  }
+  .proto-picker-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.55);
+    font: inherit;
+    cursor: pointer;
+    transition: color 150ms ease-out;
+  }
+  .proto-picker-item:hover { color: rgba(255, 255, 255, 0.85); }
+  .proto-picker-item:active { transform: scale(0.97); }
+  .proto-picker-item:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.4);
+    outline-offset: 2px;
+  }
+  .proto-picker-item[data-active] { color: #fff; }
+  .proto-picker-divider {
+    width: 1px;
+    height: 16px;
+    margin: 0 4px;
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .proto-picker-replay { padding: 0 10px; font-size: 14px; }
+  .proto-picker[data-position="top"] { bottom: auto; top: 24px; }
+</style>
+
+
+<div id="stage"></div>
+
+<nav class="proto-picker" aria-label="Prototype variants">
+  <span class="proto-picker-highlight" aria-hidden="true"></span>
+  <button class="proto-picker-item" data-active aria-current="true">Ledger</button>
+  <button class="proto-picker-item">Dossier</button>
+  <button class="proto-picker-item">Console</button>
+</nav>
+
+<script>
+/* Real product data shape: PackageRecord + latestVersion + AdoptionSummary.
+   successRate is intentionally null on one row — the contract forbids rendering 0%. */
+const pkgs = [
+  { id:'superpowers', name:'superpowers', type:'skill', purpose:'工作樹隔離、規格驅動與測試驅動開發工作流',
+    owner:'公共架構技術賦能', cat:'通用', ver:'3.2.1', life:'published',
+    os:['linux','macos','wsl'], clients:'Claude Code 1.8',
+    installs:186, ok:145, rate:0.78, residual:true,
+    residualText:'保留 ~/.superpowers 設定與工作樹快取', updated:'2 天前' },
+  { id:'mysql-mcp', name:'mysql-mcp', type:'tool', purpose:'只讀排障與 Schema 分析，不開放寫入操作',
+    owner:'資料庫平台', cat:'DBA', ver:'1.4.0', life:'published',
+    os:['linux','macos'], clients:'Claude Code 1.8、Codex CLI',
+    installs:64, ok:44, rate:0.69, residual:false, updated:'6 天前' },
+  { id:'pm-skill', name:'pm-skill', type:'skill', purpose:'需求拆解與驗收標準生成',
+    owner:'產品效能', cat:'產品', ver:'0.8.3', life:'published',
+    os:['linux','macos','windows','wsl'], clients:'Claude Code 1.8',
+    installs:43, ok:39, rate:0.91, residual:false, updated:'11 天前' },
+  { id:'deploy-runner', name:'deploy-runner', type:'tool', purpose:'灰度部署與回滾編排，需 DBA 與 SRE 雙簽',
+    owner:'SRE', cat:'部署', ver:'2.0.0-rc.1', life:'review_required',
+    os:['linux'], clients:'Codex CLI',
+    installs:0, ok:0, rate:null, residual:true,
+    residualText:'寫入 /etc/deploy-runner 與 systemd unit', updated:'今天' },
+  { id:'trace-lens', name:'trace-lens', type:'skill', purpose:'分散式追蹤取樣與熱點歸因',
+    owner:'可觀測性', cat:'後端', ver:'1.1.2', life:'published',
+    os:['linux','macos'], clients:'Claude Code 1.8',
+    installs:27, ok:19, rate:0.70, residual:false, updated:'3 週前' },
+];
+
+const pct = r => r === null ? '尚無數據' : Math.round(r * 100) + '%';
+const lifeLabel = { published:'已發布', review_required:'待審核', deprecated:'已淘汰' };
+
+/* ---------- Variant 1: Ledger ---------- */
+function ledger() {
+  const rows = pkgs.map(p => `
+    <tr>
+      <td>
+        <div class="lg-name">${p.name}</div>
+        <div class="lg-purpose">${p.purpose}</div>
+        <div class="lg-meta">${p.owner}</div>
+      </td>
+      <td><span class="lg-chip type">${p.type === 'skill' ? 'Skill' : 'Tool'}</span></td>
+      <td>
+        <span class="lg-chip ${p.life === 'published' ? 'pub' : 'rev'}">${lifeLabel[p.life]}</span>
+        <div class="lg-ver" style="margin-top:5px">${p.ver}</div>
+      </td>
+      <td><div class="lg-os">${p.os.join(' · ')}</div>
+          <div class="lg-meta" style="margin-top:4px">${p.clients}</div></td>
+      <td>${p.residual
+            ? '<span class="lg-chip rev">有殘留</span>'
+            : '<span class="lg-chip type">無殘留</span>'}</td>
+      <td class="lg-num">${p.installs}</td>
+      <td class="lg-num"><span class="lg-rate ${p.rate === null ? 'none' : ''}">${pct(p.rate)}</span></td>
+      <td class="lg-act"><a class="lg-link" href="#">查看</a></td>
+    </tr>`).join('');
+
+  return `
+  <div class="lg-shell">
+    <div class="lg-head">
+      <div>
+        <h1 class="lg-title">技能池</h1>
+        <p class="lg-sub">先確認能否安全運行，再看採用熱度。共 <span class="lg-count">5</span> 個符合條件的套件。</p>
+      </div>
+      <button class="lg-btn">上架技能</button>
+    </div>
+    <div class="lg-filters">
+      <input placeholder="搜尋名稱、用途或所有團隊">
+      <select><option>全部類別</option><option>通用</option><option>DBA</option><option>產品</option></select>
+      <select><option>全部 Client</option><option>Claude Code</option><option>Codex CLI</option></select>
+      <select><option>全部系統</option><option>linux</option><option>macos</option><option>windows</option></select>
+    </div>
+    <table class="lg-table">
+      <thead><tr>
+        <th>套件</th><th>類型</th><th>狀態</th><th>支援範圍</th>
+        <th>殘留</th><th>安裝</th><th>成功率</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="lg-foot">
+      <span>顯示 5 筆，依名稱排序</span>
+      <button class="lg-more">載入更多</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- Variant 2: Dossier ---------- */
+function dossier() {
+  const cards = pkgs.map(p => {
+    const go = p.life === 'published';
+    return `
+    <article class="ds-card">
+      <div class="ds-card-top">
+        <div>
+          <h2 class="ds-nm">${p.name}</h2>
+          <p class="ds-owner">${p.owner} · ${p.type === 'skill' ? 'Skill' : 'Tool'} · ${p.cat}</p>
+        </div>
+        <span class="ds-verdict ${go ? 'go' : 'hold'}">
+          <span class="ds-dot"></span>${go ? '可安裝' : '待審核，暫不可下載'}
+        </span>
+      </div>
+      <p class="ds-purpose">${p.purpose}</p>
+      ${p.residual ? `<div class="ds-residual"><b>安裝後有殘留</b>：${p.residualText}</div>` : ''}
+      <div class="ds-facts">
+        <div><div class="ds-fact-k">版本</div><div class="ds-fact-v mono">${p.ver}</div></div>
+        <div><div class="ds-fact-k">支援系統</div><div class="ds-fact-v mono">${p.os.join(' · ')}</div></div>
+        <div><div class="ds-fact-k">Client</div><div class="ds-fact-v">${p.clients}</div></div>
+        <div><div class="ds-fact-k">安裝次數</div><div class="ds-fact-v">${p.installs}</div></div>
+        <div><div class="ds-fact-k">成功率</div>
+             <div class="ds-fact-v ${p.rate === null ? 'none' : ''}">${pct(p.rate)}</div></div>
+        <div><div class="ds-fact-k">更新</div><div class="ds-fact-v">${p.updated}</div></div>
+      </div>
+      <div class="ds-acts">
+        ${go ? '<button class="ds-primary">查看安裝說明</button>' : ''}
+        <button class="ds-ghost">套件詳情</button>
+      </div>
+    </article>`;
+  }).join('');
+
+  return `
+  <div class="ds-shell">
+    <div class="ds-head">
+      <h1 class="ds-title">技能池</h1>
+      <p class="ds-sub">每個套件先回答一個問題：在你的環境裡，它能不能安全地裝起來。採用數據排在判斷之後。</p>
+    </div>
+    <div class="ds-bar">
+      <input placeholder="搜尋名稱、用途或所有團隊">
+      <button class="ds-pill" data-on>全部</button>
+      <button class="ds-pill">與我的環境相容</button>
+      <button class="ds-pill">無殘留副作用</button>
+      <button class="ds-pill">最近更新</button>
+    </div>
+    <div class="ds-grid">${cards}</div>
+  </div>`;
+}
+
+/* ---------- Variant 3: Console ---------- */
+function consoleView() {
+  const rows = pkgs.map((p, i) => `
+    <div class="cs-row" ${i === 0 ? 'data-sel' : ''}>
+      <div>
+        <div class="cs-r-name">
+          <b>${p.name}</b>
+          <span class="cs-r-ver">${p.ver}</span>
+          <span class="cs-tag ${p.life === 'published' ? 'pub' : 'rev'}">${lifeLabel[p.life]}</span>
+          ${p.residual ? '<span class="cs-tag rev">有殘留</span>' : ''}
+        </div>
+        <div class="cs-r-purpose">${p.purpose} — ${p.owner}</div>
+      </div>
+      <div class="cs-r-right">
+        <div class="cs-r-stat">
+          <div class="cs-r-stat-v">${p.installs}</div>
+          <div class="cs-r-stat-k">安裝</div>
+        </div>
+        <div class="cs-r-stat">
+          <div class="cs-r-stat-v ${p.rate === null ? 'none' : ''}">${pct(p.rate)}</div>
+          <div class="cs-r-stat-k">成功率</div>
+        </div>
+      </div>
+    </div>`).join('');
+
+  return `
+  <div class="cs-wrap">
+    <aside class="cs-side">
+      <h2>篩選</h2>
+      <p class="cs-side-note">條件即時套用</p>
+      <div class="cs-group">
+        <div class="cs-legend">我的環境</div>
+        <div class="cs-opt" data-on><span class="cs-box">✓</span>只顯示相容<span class="cs-tail">4</span></div>
+        <div class="cs-opt"><span class="cs-box"></span>包含待審核<span class="cs-tail">1</span></div>
+      </div>
+      <div class="cs-group">
+        <div class="cs-legend">類別</div>
+        <div class="cs-opt"><span class="cs-box"></span>通用<span class="cs-tail">1</span></div>
+        <div class="cs-opt"><span class="cs-box"></span>DBA<span class="cs-tail">1</span></div>
+        <div class="cs-opt"><span class="cs-box"></span>產品<span class="cs-tail">1</span></div>
+        <div class="cs-opt"><span class="cs-box"></span>後端<span class="cs-tail">1</span></div>
+        <div class="cs-opt"><span class="cs-box"></span>部署<span class="cs-tail">1</span></div>
+      </div>
+      <div class="cs-group">
+        <div class="cs-legend">系統</div>
+        <div class="cs-opt" data-on><span class="cs-box">✓</span>linux<span class="cs-tail">5</span></div>
+        <div class="cs-opt"><span class="cs-box"></span>macos<span class="cs-tail">4</span></div>
+        <div class="cs-opt"><span class="cs-box"></span>windows<span class="cs-tail">1</span></div>
+        <div class="cs-opt"><span class="cs-box"></span>wsl<span class="cs-tail">2</span></div>
+      </div>
+      <div class="cs-group">
+        <div class="cs-legend">殘留副作用</div>
+        <div class="cs-opt"><span class="cs-box"></span>只看無殘留<span class="cs-tail">3</span></div>
+      </div>
+    </aside>
+    <main class="cs-main">
+      <div class="cs-search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path>
+        </svg>
+        <input placeholder="搜尋技能、用途或所有者">
+        <span class="cs-kbd">/</span>
+      </div>
+      <div class="cs-status"><b>5</b> 個結果 · 依名稱排序 · 已套用 2 個篩選條件</div>
+      <div class="cs-rows">${rows}</div>
+      <p class="cs-hint"><kbd>↑</kbd><kbd>↓</kbd> 移動 · <kbd>Enter</kbd> 開啟詳情 · <kbd>/</kbd> 聚焦搜尋</p>
+    </main>
+  </div>`;
+}
+
+const variants = [ledger, dossier, consoleView];
+
+/* ---- Picker wiring: verbatim from PICKER.md ---- */
+const stage = document.getElementById('stage');
+const picker = document.querySelector('.proto-picker');
+const highlight = picker.querySelector('.proto-picker-highlight');
+const items = [...picker.querySelectorAll('.proto-picker-item:not(.proto-picker-replay)')];
+const replay = picker.querySelector('.proto-picker-replay');
+let current = 0;
+
+function moveHighlight() {
+  const el = items[current];
+  highlight.style.width = el.offsetWidth + 'px';
+  highlight.style.transform = `translateX(${el.offsetLeft}px)`;
+}
+
+function mount(i) {
+  stage.innerHTML = '';
+  requestAnimationFrame(() => { stage.innerHTML = variants[i](); });
+}
+
+function setActive(i) {
+  if (i < 0 || i >= variants.length) return;
+  current = i;
+  items.forEach((el, j) => {
+    el.toggleAttribute('data-active', j === i);
+    if (j === i) el.setAttribute('aria-current', 'true');
+    else el.removeAttribute('aria-current');
+  });
+  moveHighlight();
+  const url = new URL(location);
+  url.searchParams.set('v', i + 1);
+  history.replaceState(null, '', url);
+  mount(i);
+}
+
+items.forEach((el, i) => el.addEventListener('click', () => setActive(i)));
+replay?.addEventListener('click', () => mount(current));
+window.addEventListener('resize', moveHighlight);
+
+document.addEventListener('keydown', (e) => {
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const num = parseInt(e.key, 10);
+  if (num >= 1 && num <= variants.length) setActive(num - 1);
+  else if (e.key === 'ArrowRight') setActive((current + 1) % variants.length);
+  else if (e.key === 'ArrowLeft') setActive((current - 1 + variants.length) % variants.length);
+  else if (e.key === 'r' || e.key === 'R') mount(current);
+});
+
+setActive((parseInt(new URLSearchParams(location.search).get('v'), 10) || 1) - 1);
+requestAnimationFrame(() => requestAnimationFrame(() => picker.setAttribute('data-ready', '')));
+</script>

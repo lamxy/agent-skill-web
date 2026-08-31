@@ -1,0 +1,126 @@
+# Coolify 試用展示部署（模擬 IdP，無需 GitHub OAuth）。
+#
+# ⚠️ 這不是正式部署。任何人開啟網址、點一下就能以下列任一身分登入，沒有密碼：
+#      mock-admin     平台管理員
+#      mock-reviewer  審核者
+#      mock-user      一般使用者
+#    僅供限時試用與演示，展示結束請在 Coolify 按 Stop 關閉訪問。
+#    正式對外請改用 compose.coolify.yaml（真實 IdP + 登入白名單）。
+#
+# 使用方式：
+#   Coolify → New Resource → Public Repository（本檔不需要 GitHub App 授權）
+#   Build Pack: Docker Compose
+#   Docker Compose Location: /compose.coolify-demo.yaml
+#
+# NODE_ENV 固定 development：模擬 IdP 與開發身份提供者在 production／staging
+# 會被程式碼三道防線拒絕（src/mock-idp.ts、config.ts、identity/index.ts）。
+# 這些防線是刻意的，本檔選擇在其允許的環境下運行，而非拆除它們。
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: agent_skill_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-demo-only-not-a-secret}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d agent_skill_platform"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  migrate:
+    build:
+      context: .
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-demo-only-not-a-secret}@postgres:5432/agent_skill_platform
+    command: ["node", "dist/migrate.js"]
+
+  # 示範資料：讓試用者一開啟就有內容可看，而不是空白平台。
+  seed:
+    build:
+      context: .
+    restart: "no"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-demo-only-not-a-secret}@postgres:5432/agent_skill_platform
+    command: ["node", "dist/seed.js"]
+
+  # 模擬 IdP 是獨立的 Fastify server（非掛在 app 之下），因此需要自己的網址：
+  # 授權頁由試用者的瀏覽器直接開啟，只有容器內可達是不夠的。
+  mock-idp:
+    build:
+      context: .
+    restart: unless-stopped
+    environment:
+      SERVICE_FQDN_MOCKIDP_4780: ${SERVICE_FQDN_MOCKIDP_4780}
+      NODE_ENV: development
+      MOCK_IDP_PORT: 4780
+      MOCK_IDP_HOST: 0.0.0.0
+      OIDC_CLIENT_ID: local-dev
+      OIDC_CLIENT_SECRET: local-dev-secret
+    command: ["node", "dist/mock-idp.js"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4780/authorize').then(()=>process.exit(0)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
+      mock-idp:
+        condition: service_healthy
+    environment:
+      SERVICE_FQDN_APP_3000: ${SERVICE_FQDN_APP_3000}
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 3000
+      LOG_LEVEL: info
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-demo-only-not-a-secret}@postgres:5432/agent_skill_platform
+      PLATFORM_BASE_URL: ${SERVICE_FQDN_APP_3000}
+      # 試用者以 mock-admin 登入即獲得管理員權限，可操作全部功能。
+      BOOTSTRAP_ADMIN_UID: mock-admin
+      # 兩種位址不可互換：
+      #   authorize 由試用者的瀏覽器開啟 → 必須是公網網址
+      #   token／userinfo 由 app 在容器網路內呼叫 → 走服務名 mock-idp
+      OIDC_AUTHORIZE_URL: ${SERVICE_FQDN_MOCKIDP_4780}/authorize
+      OIDC_TOKEN_URL: http://mock-idp:4780/token
+      OIDC_USERINFO_URL: http://mock-idp:4780/userinfo
+      OIDC_CLIENT_ID: local-dev
+      OIDC_CLIENT_SECRET: local-dev-secret
+      OIDC_REDIRECT_URI: ${SERVICE_FQDN_APP_3000}/api/auth/callback
+      OIDC_SCOPE: openid profile
+      OIDC_CLAIM_UID: sub
+      OIDC_CLAIM_DISPLAY_NAME: name
+      OIDC_CLAIM_TEAMS: groups
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  postgres-data:

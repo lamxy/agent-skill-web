@@ -1,0 +1,20 @@
+name: agent-skill-platform-dev
+
+# 開發用：只起資料庫，平台由 npm run dev 在宿主機執行。
+# 單機部署請改用 compose.deploy.yaml，見 docs/運維指南.md。
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: agent_skill_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "127.0.0.1:55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d agent_skill_platform"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    tmpfs:
+      - /var/lib/postgresql/data

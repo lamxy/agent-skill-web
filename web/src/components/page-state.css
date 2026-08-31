@@ -1,0 +1,85 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.ps-loading {
+  padding: var(--space-5) 0;
+}
+
+.ps-skeleton {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ps-skeleton span {
+  display: block;
+  height: 44px;
+  border-radius: var(--radius);
+  background: var(--line-soft);
+}
+
+.ps-skeleton span:nth-child(2) {
+  width: 82%;
+}
+
+.ps-skeleton span:nth-child(3) {
+  width: 64%;
+}
+
+.ps-empty,
+.ps-error {
+  padding: var(--space-6) var(--space-5);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  text-align: center;
+}
+
+.ps-empty-msg {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.ps-error {
+  border-style: solid;
+  border-color: var(--stop);
+  background: var(--stop-soft);
+}
+
+.ps-error-msg {
+  margin: 0 0 var(--space-3);
+  color: var(--stop);
+}
+
+.ps-partial {
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius);
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.ps-partial p {
+  margin: var(--space-1) 0 var(--space-3);
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.ps-retry {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 150ms ease-out;
+}
+
+.ps-retry:hover {
+  border-color: var(--ink-faint);
+}

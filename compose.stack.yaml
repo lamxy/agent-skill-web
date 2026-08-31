@@ -1,0 +1,118 @@
+name: agent-skill-platform-stack
+
+# 本地一鍵測試（方案 C）：Postgres + 模擬 IdP + migrate + seed + 平台，全在容器內。
+#
+#   npm run stack:up     啟動並等待全部就緒
+#   npm run stack:logs   追蹤日誌
+#   npm run stack:down   停止並清除資料
+#
+# 與另外兩個 compose 的分工：
+#   compose.yaml         只起資料庫，服務由 npm run dev:all 在宿主機跑（有 HMR，日常開發用）
+#   compose.stack.yaml   本檔。全容器，貼近正式拓撲，用於驗證整合與部署前自測
+#   compose.deploy.yaml  單機正式部署，接真實 IdP，不含 mock
+#
+# 本檔刻意固定 NODE_ENV=development：模擬 IdP 在 production/staging 會拒絕啟動，
+# 且平台對指向 127.0.0.1 的 OIDC_* 也會 fail-closed。這是測試環境，不是部署配置。
+#
+# 對外 port 預設錯開 npm run dev:all（3000／4780），因此兩者可同時執行。
+# 需要改用其他 port 時覆寫環境變數，例如：
+#   STACK_APP_PORT=3100 STACK_IDP_PORT=4880 npm run stack:up
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: agent_skill_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d agent_skill_platform"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    # 測試環境用 tmpfs，stack:down 後不留殘留狀態，每次都是乾淨起點。
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  # 模擬 IdP 必須對宿主機開放 port：授權流程是瀏覽器直接跳轉過去的，
+  # 只有容器網路內可達並不夠。因此 OIDC_AUTHORIZE_URL 使用 127.0.0.1。
+  mock-idp:
+    build:
+      context: .
+    image: agent-skill-platform:local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${STACK_IDP_PORT:-4880}:4780"
+    environment:
+      NODE_ENV: development
+      MOCK_IDP_PORT: 4780
+      MOCK_IDP_HOST: 0.0.0.0
+      OIDC_CLIENT_ID: local-dev
+      OIDC_CLIENT_SECRET: local-dev-secret
+    command: ["node", "dist/mock-idp.js"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4780/authorize').then(()=>process.exit(0)).catch(()=>process.exit(1))"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  migrate:
+    build:
+      context: .
+    image: agent-skill-platform:local
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/agent_skill_platform
+    command: ["node", "dist/migrate.js"]
+
+  # 種子資料獨立成一次性服務，確保在 migrate 之後、平台之前完成，
+  # 讓同事一開啟就有內容可看，而不是空白平台。
+  seed:
+    build:
+      context: .
+    image: agent-skill-platform:local
+    restart: "no"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/agent_skill_platform
+    command: ["node", "dist/seed.js"]
+
+  app:
+    build:
+      context: .
+    image: agent-skill-platform:local
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
+      mock-idp:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${STACK_APP_PORT:-3100}:3000"
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 3000
+      LOG_LEVEL: debug
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/agent_skill_platform
+      BOOTSTRAP_ADMIN_UID: mock-admin
+      # authorize 與 redirect 由瀏覽器存取，必須是宿主機位址；
+      # token 與 userinfo 由平台在容器內呼叫，走 compose 網路的服務名。
+      OIDC_AUTHORIZE_URL: http://127.0.0.1:${STACK_IDP_PORT:-4880}/authorize
+      OIDC_TOKEN_URL: http://mock-idp:4780/token
+      OIDC_USERINFO_URL: http://mock-idp:4780/userinfo
+      OIDC_CLIENT_ID: local-dev
+      OIDC_CLIENT_SECRET: local-dev-secret
+      OIDC_REDIRECT_URI: http://127.0.0.1:${STACK_APP_PORT:-3100}/api/auth/callback

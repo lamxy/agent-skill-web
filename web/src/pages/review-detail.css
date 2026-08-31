@@ -1,0 +1,584 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+/* 標題、提交者、狀態說明由上而下依序排列，全部靠左 */
+.rd-head {
+  display: grid;
+  justify-items: start;
+  gap: 3px;
+  /* 與其他頁的標題區一致，見 admin.css 的 .adm-head 等 */
+  padding-bottom: var(--space-4);
+  border-bottom: 2px solid var(--ink);
+}
+
+/* 字級沿用 base.css 的 .page-h1 全站基準 */
+.rd-head h1 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.rd-head p {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.rd-head-meta {
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* 狀態標籤與用途說明同一行，與提交者之間留一點呼吸 */
+.rd-head-sub {
+  margin-top: var(--space-1) !important;
+}
+
+.rd-context {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 0.8fr 1fr;
+  overflow: hidden;
+  margin: var(--space-4) 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+}
+
+.rd-context > div {
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border-right: 1px solid var(--line-soft);
+}
+
+.rd-context > div:last-child {
+  border-right: 0;
+}
+
+.rd-context span,
+.rd-facts span {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--ink-faint);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.rd-context strong {
+  display: block;
+  overflow: hidden;
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rd-desk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 18px;
+  align-items: start;
+}
+
+.rd-stack {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+/*
+ * 不用 overflow: hidden 裁圓角：分級卡片裡的自繪下拉展開後必須能
+ * 溢出卡片，裁切會讓選項清單在卡片邊界被切掉。改由首尾子元素各自收角。
+ */
+.rd-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+}
+
+.rd-card > *:last-child {
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+.rd-card > *:first-child {
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+}
+
+.rd-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 15px 17px;
+  border-bottom: 1px solid var(--line);
+}
+
+.rd-card-head h2,
+.rd-decision-head h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.rd-card-head p,
+.rd-decision-head p {
+  margin: 2px 0 0;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+}
+
+.rd-card-body {
+  padding: 17px;
+}
+
+.rd-grade-form {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* 下拉撐滿剩餘寬度但不跟著列高拉長——align-items 若為 stretch，
+   flex 子項會在交錯軸被拉滿，下拉就變成一個很深的空盒。
+   不設 max-width：分級名稱不長，但留白的一列看起來像沒填完。 */
+.rd-grade-form .ui-select {
+  flex: 1 1 160px;
+  align-self: center;
+  min-width: 0;
+}
+
+.rd-grade-form label,
+.rd-grade-form .btn {
+  flex-shrink: 0;
+}
+
+/* 窄屏改直向堆疊：一列三段在小螢幕會把下拉壓到只剩幾個字寬 */
+@media (max-width: 560px) {
+  .rd-grade-form {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .rd-grade-form .btn {
+    width: 100%;
+  }
+}
+
+.rd-matrix-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+.rd-matrix-summary strong {
+  color: var(--ok);
+  font-size: 18px;
+}
+
+.rd-matrix-summary span {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.rd-matrix {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: collapse;
+}
+
+.rd-matrix th,
+.rd-matrix td {
+  padding: 10px 11px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.rd-matrix th {
+  color: var(--ink-faint);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rd-matrix tr:last-child td {
+  border-bottom: 0;
+}
+
+.rd-pass,
+.rd-warn,
+.rd-fail,
+.rd-missing {
+  font-weight: 650;
+}
+
+.rd-pass { color: var(--ok); }
+.rd-warn { color: var(--warn); }
+.rd-fail,
+.rd-missing { color: var(--stop); }
+
+.rd-command-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.rd-command .btn {
+  padding: 6px 10px;
+  font-size: 11.5px;
+}
+
+/* 每個「系統 × Client」組合各自一段，標頭標示是哪一組的命令 */
+.rd-command-target + .rd-command-target {
+  border-top: 1px solid var(--line);
+}
+
+.rd-command-target-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 10px 17px;
+  background: var(--ground);
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.rd-command-empty {
+  margin: 0;
+  padding: 17px;
+  color: var(--ink-faint);
+  font-size: 12.5px;
+}
+
+.rd-command pre {
+  overflow: auto;
+  margin: 0;
+  padding: 17px 18px;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  font: 12.5px/1.7 var(--font-mono);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/*
+ * 卡片不再用 overflow: hidden 裁圓角（那會連帶裁掉下拉浮層），
+ * 因此貼齊卡片下緣的程式碼區塊要自己收下方兩角，否則深色底會露出直角。
+ */
+.rd-command .rd-command-target:last-child pre {
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+.rd-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.rd-facts > div {
+  padding: 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  background: var(--ground);
+}
+
+.rd-facts > div[data-warn] {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.rd-facts > div[data-warn] strong,
+[data-warn] {
+  color: var(--warn);
+}
+
+.rd-facts strong {
+  font-size: 12.5px;
+}
+
+.rd-attempts {
+  margin-top: var(--space-2);
+}
+
+.rd-attempt {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding-top: var(--space-3);
+}
+
+.rd-attempt strong,
+.rd-attempt span {
+  display: block;
+}
+
+.rd-attempt span,
+.rd-attempt time {
+  color: var(--ink-faint);
+  font-size: 11px;
+}
+
+/* top 須避開 sticky 頂欄，見 tokens.css 的 --sticky-top */
+.rd-decision {
+  position: sticky;
+  top: var(--sticky-top);
+}
+
+.rd-decision-mark {
+  height: 5px;
+}
+
+.rd-tone-ok { background: var(--ok); }
+.rd-tone-warn { background: var(--warn); }
+.rd-tone-stop { background: var(--stop); }
+.rd-tone-neutral { background: var(--ink-faint); }
+
+.rd-decision-head {
+  padding: 17px;
+  border-bottom: 1px solid var(--line);
+}
+
+.rd-decision-head h2 {
+  margin-bottom: var(--space-1);
+  font-size: 16px;
+}
+
+.rd-readiness {
+  padding: 10px 17px;
+  border-bottom: 1px solid var(--line);
+}
+
+.rd-readiness > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 6px 0;
+  font-size: 12px;
+}
+
+.rd-readiness span {
+  color: var(--ink-soft);
+}
+
+.rd-policy {
+  margin: 14px 17px 0;
+  padding: 11px 12px;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  color: var(--ink-soft);
+  font-size: 11.5px;
+}
+
+.rd-policy b {
+  color: var(--accent);
+}
+
+.rd-decision-form {
+  padding: 15px 17px 17px;
+}
+
+.rd-decision-form label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.rd-decision-form label span {
+  color: var(--ink-faint);
+  font-weight: 400;
+}
+
+/* 外框與聚焦樣式沿用 base.css，此處只加高輸入區並壓小字級 */
+.rd-decision-form textarea {
+  min-height: 108px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.rd-field-help {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  color: var(--ink-faint);
+  font-size: 10.5px;
+}
+
+.rd-form-error {
+  min-height: 18px;
+  margin: 6px 0 0;
+  color: var(--stop);
+  font-size: 11px;
+}
+
+.rd-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: var(--space-2);
+  margin-top: 10px;
+}
+
+.rd-decision-form > .btn {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.rd-readonly {
+  padding: 17px;
+}
+
+.rd-readonly dl {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  font-size: 12px;
+}
+
+.rd-readonly dt {
+  color: var(--ink-faint);
+}
+
+.rd-readonly dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.rd-modal {
+  width: 420px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--shadow-raised);
+}
+
+.rd-modal::backdrop {
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
+}
+
+.rd-modal h2 {
+  margin: 0 0 var(--space-2);
+  font-size: 18px;
+}
+
+.rd-modal p {
+  margin: 0 0 18px;
+  color: var(--ink-soft);
+}
+
+.rd-modal .rd-modal-error,
+.rd-modal .rd-modal-sync {
+  padding: 10px 12px;
+  border-radius: var(--radius);
+}
+
+.rd-modal .rd-modal-error {
+  background: var(--stop-soft);
+  color: var(--stop);
+}
+
+.rd-modal .rd-modal-sync {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.rd-modal > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* H5：主副欄改單欄，多欄資訊條改為兩欄卡片，決議面板取消吸頂 */
+@media (max-width: 860px) {
+  .rd-desk {
+    grid-template-columns: 1fr;
+  }
+
+  .rd-decision {
+    position: static;
+  }
+
+  .rd-context {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rd-context > div:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .rd-context > div {
+    border-bottom: 1px solid var(--line-soft);
+  }
+}
+
+@media (max-width: 640px) {
+  .rd-context {
+    grid-template-columns: 1fr;
+  }
+
+  .rd-context > div {
+    border-right: 0;
+  }
+
+  .rd-card-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .rd-facts,
+  .rd-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .rd-attempt {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  .rd-readonly dl {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  /* 對話框在窄屏改為貼邊全寬，420px 會溢出小螢幕 */
+  .rd-modal {
+    width: calc(100vw - var(--space-5));
+    max-width: 420px;
+    padding: var(--space-4);
+  }
+
+  .rd-modal > div {
+    flex-direction: column-reverse;
+  }
+
+  .rd-modal > div .btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rd * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,505 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.pd {
+  max-width: 900px;
+}
+
+.pd-head {
+  margin-bottom: var(--space-5);
+}
+
+/* 字級沿用 base.css 的 .page-h1 全站基準 */
+.pd-h1 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.pd-meta {
+  margin: 6px 0 0;
+  color: var(--ink-faint);
+  font-size: 13.5px;
+}
+
+.pd-purpose {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-soft);
+  max-width: 64ch;
+}
+
+.pd-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+}
+
+.pd-panel-h {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--line);
+}
+
+.pd-panel-t {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 620;
+}
+
+.pd-panel-s {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.pd-picks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+}
+
+.pd-group {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.pd-legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.pd-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ground);
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: border-color 140ms ease-out;
+}
+
+.pd-opt:hover {
+  border-color: var(--ink-faint);
+}
+
+.pd-opt[data-on] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pd-opt[data-off] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pd-opt small {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+.pd-out {
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--line);
+  background: var(--ground);
+}
+
+.pd-out-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.pd-out-info {
+  min-width: 0;
+}
+
+.pd-fname {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.pd-fname-note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.pd-noscript {
+  margin: 0;
+  padding: var(--space-5);
+  color: var(--ink-faint);
+  font-size: 13.5px;
+}
+
+.pd-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.pd-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.pd-cards .pd-card {
+  margin-bottom: 0;
+}
+
+.pd-card-h {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  font-size: 13.5px;
+  font-weight: 620;
+}
+
+.pd-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pd-list li {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 10px;
+  font-size: 13.5px;
+}
+
+.pd-list p {
+  margin: 3px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.pd-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-top: 7px;
+}
+
+.pd-dot-ok {
+  background: var(--ok);
+}
+
+.pd-dot-warn {
+  background: var(--warn);
+}
+
+.pd-stats {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.pd-stats > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.pd-stats dt {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.pd-stats dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 620;
+}
+
+.pd-funnel {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pd-funnel-rate {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+.pd-funnel-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.pd-funnel-label {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.pd-funnel-label em {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font-size: 10.5px;
+  font-style: normal;
+  color: var(--ink-faint);
+}
+
+.pd-funnel-value {
+  font-size: 15px;
+  font-weight: 620;
+}
+
+.pd-funnel-track {
+  margin-top: 5px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line-soft);
+  overflow: hidden;
+}
+
+.pd-funnel-bar {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+/* 未埋點的段落以斜紋標示，避免示意值被當成實測 */
+.pd-funnel-bar[data-mock] {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--ink-faint) 0 4px,
+    transparent 4px 8px
+  );
+}
+
+.pd-stats-tight {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line-soft);
+}
+
+.pd-stats-note {
+  margin: var(--space-3) 0 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.pd-kv {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 9px var(--space-4);
+  margin: 0;
+}
+
+.pd-kv dt {
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+.pd-kv dd {
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.pd-vers {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pd-vers li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--ground);
+  font-size: 13px;
+}
+
+.pd-soon {
+  opacity: 0.62;
+}
+
+.pd-soon-tag {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--line-soft);
+  color: var(--ink-faint);
+  font-size: 11px;
+  font-weight: 550;
+}
+
+.pd-fb {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.pd-fb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ground);
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+/* 計數以破折號呈現；顯示 0 會被誤讀為「有人看過但沒人點讚」 */
+.pd-fb-cnt {
+  color: var(--ink-faint);
+}
+
+.pd-fb-empty {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-5);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  text-align: center;
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+.pd-tri {
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.pd-tri-row {
+  display: grid;
+  grid-template-columns: 74px 1fr;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--paper);
+  align-items: start;
+}
+
+.pd-tri-mid {
+  background: var(--seal-soft);
+}
+
+.pd-tri-tag {
+  font-size: 11.5px;
+  font-weight: 620;
+}
+
+.pd-tri-mid .pd-tri-tag {
+  color: var(--seal);
+}
+
+.pd-tri-t {
+  font-size: 13px;
+  font-weight: 570;
+}
+
+.pd-tri-d {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.pd-tri-lock {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 800px) {
+  .pd-picks,
+  .pd-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* H5：收窄內距，並把固定欄寬的兩欄版面改為單欄，避免內容被擠成一字寬 */
+@media (max-width: 640px) {
+  .pd-panel-h,
+  .pd-picks,
+  .pd-out,
+  .pd-noscript {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .pd-card {
+    padding: var(--space-4);
+  }
+
+  .pd-out-row {
+    align-items: stretch;
+  }
+
+  .pd-out-row button {
+    width: 100%;
+  }
+
+  .pd-kv {
+    grid-template-columns: 1fr;
+    gap: 2px var(--space-3);
+  }
+
+  .pd-kv dd {
+    margin-bottom: var(--space-2);
+    overflow-wrap: anywhere;
+  }
+
+  .pd-tri-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .pd-fb-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .pd-fb-empty {
+    padding: var(--space-4);
+  }
+}

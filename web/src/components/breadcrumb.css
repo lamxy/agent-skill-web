@@ -1,0 +1,47 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+/*
+ * 麵包屑。視覺沿用「檢視並下載」頁原本的 .ip-crumb：
+ * 弱化的小字，讓它交代層級而不與頁面標題爭視線。
+ */
+.crumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0 0 var(--space-4);
+  color: var(--ink-faint);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.crumb-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.crumb a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.crumb a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.crumb-sep {
+  margin: 0 6px;
+  color: var(--ink-faint);
+}
+
+/* 當前頁不可點，用實色與字重和上層節點拉開層次 */
+.crumb [aria-current='page'] {
+  color: var(--ink);
+  font-weight: 550;
+}

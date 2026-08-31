@@ -1,0 +1,350 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+/* 靠右定位由頂欄的 .shell-actions 負責，此處不再各自 margin-left: auto，
+   否則通知圖標會被擠到身份區塊左側之外的位置。 */
+
+/* 身份解析中的佔位，維持頂欄高度避免載入完成時跳動 */
+.viewer-placeholder {
+  display: block;
+  width: 120px;
+  height: 32px;
+}
+
+.viewer-login {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 13px;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.viewer-login:hover {
+  opacity: 0.9;
+}
+
+.viewer-login:focus-visible,
+.viewer-trigger:focus-visible,
+.viewer-actions button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.viewer-menu {
+  position: relative;
+}
+
+/*
+ * 面板內所有帶圖標的列共用這組尺寸，任何一列改動都不會單獨走位。
+ * 間距取自頭像寬度（26px）加頭像與姓名的間距，減去圖標本身寬度，
+ * 讓文字落在與面板頂部姓名相同的垂直軸線上。
+ */
+.viewer-panel {
+  --viewer-icon-size: 16px;
+  --viewer-icon-gap: calc(26px + var(--space-2) - 16px);
+}
+
+.viewer-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: 2px var(--space-3) 2px 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.viewer-trigger:hover {
+  background: var(--ground);
+}
+
+.viewer-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+/* 取不到姓名首字時的預設人像，尺寸略小於文字版避免撐滿整個圓 */
+.viewer-avatar-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.viewer-name {
+  max-width: 12ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.viewer-panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 20;
+  width: 260px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow-raised);
+  overflow: hidden;
+}
+
+.viewer-panel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.viewer-panel-name {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.viewer-panel-uid {
+  margin: 2px 0 0;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+.viewer-facts {
+  display: grid;
+  /* 欄寬需容納圖標與兩字標籤；auto 讓它跟著實際內容，不會裁字 */
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12.5px;
+}
+
+/*
+ * 分區標題與下方的「我的安裝」「登出」共用同一組尺寸：
+ * 16px 圖標、13px 文字、圖標右緣到文字的間距一致，
+ * 因此圖標與文字各自形成一條貫穿整個面板的垂直軸線。
+ */
+.viewer-facts dt {
+  display: flex;
+  align-items: center;
+  gap: var(--viewer-icon-gap);
+  color: var(--ink-faint);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.viewer-facts dt .icon {
+  width: var(--viewer-icon-size);
+  height: var(--viewer-icon-size);
+}
+
+.viewer-facts dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+/*
+ * 角色可能有多個且各帶範圍說明，並排在標籤右側會被壓成窄長一欄。
+ * 讓它獨佔一整列、縮排排在「角色」標籤下方，每個角色各佔一行。
+ */
+.viewer-facts .viewer-roles-cell {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-left: calc(var(--viewer-icon-size) + var(--viewer-icon-gap));
+}
+
+.viewer-roles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.viewer-roles li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+/*
+ * 角色以灰色小字呈現。原本用強調色膠囊，但角色是身份的補充說明而非
+ * 需要爭取注意的狀態，過強的顏色反而蓋過選單裡真正可操作的項目。
+ */
+.viewer-role {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.viewer-scope {
+  color: var(--ink-faint);
+  font-size: 11.5px;
+}
+
+.viewer-theme {
+  display: grid;
+  gap: 7px;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+/* 與「團隊」「角色」「我的安裝」同一組尺寸，維持同一條文字軸線 */
+.viewer-theme-label {
+  display: flex;
+  align-items: center;
+  gap: var(--viewer-icon-gap);
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+.viewer-theme-label .icon {
+  width: var(--viewer-icon-size);
+  height: var(--viewer-icon-size);
+}
+
+.viewer-theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius);
+  background: var(--ground);
+}
+
+.viewer-theme-options button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background 140ms ease-out,
+    color 140ms ease-out;
+}
+
+.viewer-theme-options button:hover {
+  color: var(--ink);
+}
+
+.viewer-theme-options button[data-active] {
+  background: var(--paper);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: var(--shadow-card);
+}
+
+.viewer-theme-options button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.viewer-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.viewer-actions button {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+/*
+ * 尚未開放的項目。保持可見但不可用，讓使用者知道能力在規劃中；
+ * 不用 hover 效果，避免看起來像能點。
+ */
+.viewer-actions button.viewer-locked {
+  color: var(--ink-faint);
+  cursor: not-allowed;
+}
+
+.viewer-actions button.viewer-locked:hover {
+  background: transparent;
+}
+
+.viewer-actions button.viewer-locked .icon {
+  color: var(--ink-faint);
+}
+
+/* 說明推到右側，與箭頭成組 */
+.viewer-locked-note {
+  margin-left: auto;
+  font-size: 11px;
+}
+
+.viewer-locked-arrow {
+  margin-left: 5px;
+}
+
+/*
+ * 圖標框寬度對齊面板頂部的頭像（26px + 頭像與姓名之間的 8px），
+ * 文字因此與頭像旁的姓名落在同一條左側軸線上。
+ */
+.viewer-actions button .icon {
+  width: 16px;
+  height: 16px;
+  margin-right: calc(26px + var(--space-2) - 16px);
+  color: var(--ink-faint);
+}
+
+.viewer-actions button:hover .icon {
+  color: var(--ink-soft);
+}
+
+.viewer-logout .icon {
+  color: var(--stop);
+}
+
+.viewer-actions button:last-child {
+  border-bottom: 0;
+}
+
+.viewer-actions button:hover {
+  background: var(--ground);
+}
+
+.viewer-logout {
+  color: var(--stop);
+}

@@ -1,0 +1,33 @@
+# Caddy 反向代理：自動申請並續期 Let's Encrypt 憑證，無需手動處理 HTTPS。
+#
+# 由 compose.public.yaml 使用，變數來自 .env.deploy：
+#   PUBLIC_DOMAIN  對外域名，例如 platform.example.com
+#   ACME_EMAIL     憑證到期通知信箱
+#
+# 憑證申請要求 80／443 從公網可達，且 PUBLIC_DOMAIN 的 A 記錄已指向本機。
+# DNS 尚未生效就啟動會導致申請失敗，Caddy 會自動重試，不需要人工介入。
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$PUBLIC_DOMAIN} {
+	# app 不對外開放 port，只有 Caddy 經由 compose 網路連得到。
+	reverse_proxy app:3000
+
+	encode zstd gzip
+
+	header {
+		# 僅允許 HTTPS，並涵蓋子網域；演講途中被降級成 HTTP 會使 Cookie 失效。
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

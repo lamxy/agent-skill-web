@@ -1,0 +1,171 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+/* grid item 預設 min-width: auto，會被 nowrap 的分頁連結撐出容器，
+   在窄屏把整頁推成橫向捲動，因此所有直接子項一律允許收縮。 */
+.adm { display: grid; gap: var(--space-4); }
+.adm > * { min-width: 0; }
+.adm-tabs { display: flex; gap: 2px; overflow-x: auto; border-bottom: 1px solid var(--line); }
+.adm-tabs a { padding: 10px 14px; color: var(--ink-soft); font-size: 13px; text-decoration: none; white-space: nowrap; border-bottom: 2px solid transparent; }
+.adm-tabs a.active { color: var(--accent); border-color: var(--accent); font-weight: 620; }
+.adm-head { display: flex; align-items: end; justify-content: space-between; gap: var(--space-5); padding-bottom: var(--space-4); border-bottom: 2px solid var(--ink); }
+/* 字級沿用 base.css 的 .page-h1 全站基準 */
+.adm-head h1 { margin: 0; font-size: 21px; font-weight: 650; letter-spacing: -.01em; }
+.adm-head p { margin: 5px 0 0; color: var(--ink-soft); font-size: 13px; }
+.adm-panel { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); box-shadow: var(--shadow-card); }
+/*
+ * 篩選表單分成兩條共用列軌道：標籤、輸入框。
+ * 每個 label 以 subgrid 掛到這兩列，因此標籤與輸入框一律落在同一水平線。
+ * 欄位說明改由標籤旁的 FieldHelp 氣泡承載，不再佔用第三列——
+ * 說明文字長度不一曾讓相鄰欄位高度參差，窄屏更會被壓成一字寬。
+ *
+ * 欄數用媒體查詢明確指定，不用 auto-fit：後者會把空軌道塌成 0px，
+ * 讓某一欄被壓扁，且送出鍵也會參與軌道分配而錯開欄位數。
+ */
+.adm-form, .adm-locate {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: auto auto;
+  align-items: start;
+  gap: 5px var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+}
+
+.adm-form > label, .adm-locate > label {
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+}
+
+/* 標籤文字與說明圖標同一行，圖標緊跟在文字後 */
+.adm-form > label > .label-text, .adm-locate > label > .label-text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/*
+ * 送出鍵自成一列並靠右，不與欄位搶欄軌道——否則欄位數加上按鈕
+ * 超過欄數時，最後一個欄位會被擠到下一行，與同列欄位錯開。
+ */
+.adm-form > .btn, .adm-locate > .btn {
+  grid-column: 1 / -1;
+  justify-self: end;
+  min-width: 150px;
+  margin-top: var(--space-2);
+  white-space: nowrap;
+}
+
+/*
+ * 只有一個欄位時讓它佔滿整列。定位表單（角色管理、版本治理、支援與反饋）
+ * 都只有一個「選擇套件／使用者」的下拉，留在三欄軌道的第一格會讓
+ * 右側三分之二空白，下拉本身也被壓得比選項文字還窄。
+ */
+.adm-form > label:only-of-type,
+.adm-locate > label:only-of-type {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+  .adm-form, .adm-locate {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.adm-governance-form > label { display: grid; gap: 5px; color: var(--ink-soft); font-size: 11.5px; }
+/* 輸入框與下拉的外框、圓角、聚焦樣式一律由 base.css 統一，此處不重複宣告 */
+/* 欄寬改由表單的 auto-fit 軌道決定，不再各自宣告 flex 基準 */
+.adm-field-help { color: var(--ink-faint); font-size: 10.5px; line-height: 1.45; }
+.adm-error, .adm-message { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--danger-soft); color: var(--danger); font-size: 13px; }
+.adm-table { width: 100%; border-collapse: collapse; }
+.adm-table th { padding: 11px 12px 8px; border-bottom: 1px solid var(--line); color: var(--ink-faint); font-size: 10.5px; letter-spacing: .05em; text-align: left; text-transform: uppercase; }
+.adm-table td { padding: 12px; border-bottom: 1px solid var(--line-soft); font-size: 12.5px; vertical-align: middle; }
+.adm-table tr:last-child td { border-bottom: 0; }
+.adm-table tbody tr:hover { background: var(--ground); }
+.adm-action { text-align: right; }
+.adm-mobile-list { display: none; }
+.adm-governance-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(310px, .8fr); gap: var(--space-4); align-items: start; }
+.adm-panel-head { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-4); border-bottom: 1px solid var(--line); }
+.adm-panel-head h2, .adm-panel-head p { margin: 0; }
+.adm-panel-head h2, .adm-governance-form h2 { font-size: 16px; }
+.adm-panel-head p, .adm-panel-head span { color: var(--ink-faint); font-size: 11.5px; }
+.adm-version-row { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: var(--space-3); padding: 14px var(--space-4); border: 0; border-bottom: 1px solid var(--line-soft); background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+.adm-version-row[data-active] { background: var(--accent-soft); box-shadow: inset 3px 0 var(--accent); }
+.adm-version-row span:first-child { display: grid; gap: 3px; }
+.adm-version-row small { color: var(--ink-faint); }
+.adm-governance-form { display: grid; gap: var(--space-3); padding: var(--space-4); overflow: visible; }
+.adm-governance-form h2, .adm-governance-form p { margin: 0; }
+.adm-governance-form fieldset { display: grid; gap: var(--space-2); margin: 0; padding: 0; border: 0; }
+.adm-governance-form legend { margin-bottom: 5px; color: var(--ink-soft); font-size: 11.5px; }
+.adm-radio { display: flex; gap: 9px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.adm-radio input { min-height: auto; }
+.adm-radio span { display: grid; gap: 2px; }
+.adm-radio small { color: var(--ink-faint); }
+.adm-radio-danger:has(input:checked) { border-color: var(--danger); background: var(--danger-soft); }
+.adm-role-form { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+.adm-role-summary { display: block; margin-top: 2px; color: var(--ink-faint); font-size: 11.5px; }
+.adm-role-readonly { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; margin: var(--space-4) 0 0; padding: 11px 13px; border-radius: var(--radius-sm); background: var(--ground); color: var(--ink-soft); font-size: 12.5px; line-height: 1.55; }
+.adm-radio[data-off] { opacity: 0.5; }
+.adm-radio[data-off] input { cursor: not-allowed; }
+.adm-governance-warn { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--warn-soft); color: var(--ink-soft); font-size: 12px; line-height: 1.55; }
+.adm-governance-warn strong { color: var(--warn); }
+.adm-start-state, .adm-empty-inline { padding: var(--space-6); border: 1px dashed var(--line); border-radius: var(--radius-lg); color: var(--ink-soft); text-align: center; }
+.adm-start-state p { margin: 5px 0 0; }
+.adm-audit-table td small { display: block; margin-top: 3px; color: var(--ink-faint); }
+.adm-audit-detail summary { color: var(--accent); cursor: pointer; }
+.adm-audit-detail dl { min-width: 280px; }
+.adm-audit-detail pre { max-width: 420px; overflow: auto; padding: 8px; background: var(--ground); font-size: 11px; white-space: pre-wrap; }
+.adm-pagination { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-top: 1px solid var(--line); color: var(--ink-faint); font-size: 12px; }
+.adm-pagination div { display: flex; gap: var(--space-2); }
+
+@media (max-width: 640px) {
+  .adm { gap: var(--space-3); }
+  .adm-head { display: block; }
+  /* 單欄時列軌道由內容決定，欄位依序往下排；
+     送出鍵解除固定列，回到最後一項的自然位置。 */
+  .adm-form, .adm-locate {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    gap: var(--space-3);
+  }
+
+  .adm-form > label, .adm-locate > label {
+    grid-row: auto;
+    grid-template-rows: none;
+    gap: 5px;
+  }
+
+  .adm-form > .btn, .adm-locate > .btn {
+    grid-row: auto;
+  }
+  /* label 內的 input 有內在最小寬度，不解除 min-width 會把單欄軌道撐出容器 */
+  .adm-form label, .adm-locate label { width: 100%; min-width: 0; }
+  .adm-form label input, .adm-form label select,
+  .adm-locate label input, .adm-locate label select { min-width: 0; width: 100%; }
+  .adm-form .btn, .adm-locate .btn, .adm-governance-form > .btn { width: 100%; }
+  .adm-desktop-table { display: none; }
+  .adm-mobile-list { display: grid; gap: var(--space-3); padding: var(--space-3); }
+  .adm-mobile-card { display: grid; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); }
+  .adm-mobile-title { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .adm-mobile-title time { color: var(--ink-faint); font-size: 11px; }
+  .adm-mobile-card dl { display: grid; grid-template-columns: 80px 1fr; gap: 6px 10px; margin: 0; font-size: 12px; }
+  .adm-mobile-card dt { color: var(--ink-faint); }
+  .adm-mobile-card dd { margin: 0; overflow-wrap: anywhere; }
+  .adm-mobile-card > .btn { width: 100%; }
+  .adm-governance-grid { grid-template-columns: 1fr; }
+  .adm-pagination { align-items: stretch; flex-direction: column; }
+  .adm-pagination div .btn { flex: 1; }
+  .adm-audit-detail dl { min-width: 0; }
+}

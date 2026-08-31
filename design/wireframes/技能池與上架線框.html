@@ -1,0 +1,767 @@
+<title>安裝腳本上架與詳情線框</title>
+<style>
+  :root {
+    --ink: #16181d; --ink-soft: #5b616e; --ink-faint: #8b91a0;
+    --line: #dfe2e8; --line-soft: #edeff3;
+    --paper: #ffffff; --ground: #f6f7f9;
+    --accent: #1f4fd8; --accent-soft: #eef2fe;
+    --ok: #1a7f52; --ok-soft: #e8f5ee;
+    --warn: #8a5a00; --warn-soft: #fdf3e0;
+    --stop: #a32020; --stop-soft: #fdeceb;
+    --code-bg: #14161b; --code-ink: #dfe3ec;
+    --seal: #6b5bd2; --seal-soft: #efecfd;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC",
+            "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e8eaf0; --ink-soft: #a2a9b8; --ink-faint: #767d8d;
+      --line: #2f333c; --line-soft: #24272e;
+      --paper: #1a1d23; --ground: #131519;
+      --accent: #7f9fff; --accent-soft: #1c2740;
+      --ok: #5ec98e; --ok-soft: #14301f;
+      --warn: #e0ab4c; --warn-soft: #33260d;
+      --stop: #f08a80; --stop-soft: #3a1917;
+      --code-bg: #0e1014; --code-ink: #d3d8e3;
+      --seal: #a99cf0; --seal-soft: #221d3d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e8eaf0; --ink-soft: #a2a9b8; --ink-faint: #767d8d;
+    --line: #2f333c; --line-soft: #24272e;
+    --paper: #1a1d23; --ground: #131519;
+    --accent: #7f9fff; --accent-soft: #1c2740;
+    --ok: #5ec98e; --ok-soft: #14301f;
+    --warn: #e0ab4c; --warn-soft: #33260d;
+    --stop: #f08a80; --stop-soft: #3a1917;
+    --code-bg: #0e1014; --code-ink: #d3d8e3;
+    --seal: #a99cf0; --seal-soft: #221d3d;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink);
+         font-family: var(--sans); font-size: 14px; line-height: 1.55;
+         -webkit-font-smoothing: antialiased; }
+  #stage { min-height: 100vh; padding-bottom: 92px; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration: .01ms !important; } }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 30px 26px; }
+  .sec-tag { display: inline-block; margin-bottom: 16px; padding: 3px 10px;
+             border-radius: 999px; background: var(--accent-soft); color: var(--accent);
+             font-size: 11.5px; font-weight: 600; letter-spacing: .04em; }
+
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 5px;
+          font-size: 11.5px; font-weight: 550; white-space: nowrap; }
+  .chip.pub { background: var(--ok-soft); color: var(--ok); }
+  .chip.neutral { background: var(--line-soft); color: var(--ink-soft); }
+  .chip.ver { background: var(--seal-soft); color: var(--seal); font-family: var(--mono); }
+  .btn-primary { padding: 10px 18px; border: 0; border-radius: 8px;
+                 background: var(--accent); color: #fff; font-size: 13.5px;
+                 font-weight: 570; cursor: pointer; transition: opacity 150ms ease-out; }
+  .btn-primary:hover { opacity: .88; }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-ghost { padding: 10px 16px; border: 1px solid var(--line); border-radius: 8px;
+               background: var(--paper); font-size: 13.5px; cursor: pointer;
+               transition: border-color 150ms ease-out; }
+  .btn-ghost:hover { border-color: var(--ink-faint); }
+  .btn-sm { padding: 5px 11px; border: 1px solid var(--line); border-radius: 6px;
+            background: var(--paper); font-size: 12px; cursor: pointer;
+            transition: border-color 140ms ease-out; }
+  .btn-sm:hover { border-color: var(--ink-faint); }
+  .btn-sm.danger { color: var(--stop); }
+  .btn-sm.danger:hover { border-color: var(--stop); }
+  .tgt-l { font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+           color: var(--ink-faint); margin-bottom: 7px; }
+
+  /* disabled / not-yet-built surface */
+  .soon { position: relative; opacity: .55; }
+  .soon::after { content: ''; position: absolute; inset: 0; cursor: not-allowed; }
+  .soon-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
+              border-radius: 999px; background: var(--line-soft); color: var(--ink-faint);
+              font-size: 11px; font-weight: 550; }
+
+  .tri { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line);
+         border-radius: 10px; overflow: hidden; }
+  .tri-row { display: grid; grid-template-columns: 74px 1fr; gap: 13px;
+             padding: 12px 14px; background: var(--paper); align-items: start; }
+  .tri-row.mid { background: var(--seal-soft); }
+  .tri-tag { font-size: 11.5px; font-weight: 620; }
+  .tri-row.mid .tri-tag { color: var(--seal); }
+  .tri-t { font-size: 13px; font-weight: 570; }
+  .tri-d { margin-top: 3px; font-size: 12.5px; color: var(--ink-soft); }
+  .tri-lock { font-size: 11.5px; color: var(--ink-faint); margin-top: 4px; }
+
+  /* ===== DETAIL ===== */
+  .d-h1 { margin: 0; font-size: 24px; font-weight: 680; letter-spacing: -.02em; }
+  .d-meta { margin: 6px 0 0; color: var(--ink-faint); font-size: 13.5px; }
+  .d-purpose { margin: 14px 0 0; color: var(--ink-soft); max-width: 64ch; }
+  .d-panel { border: 1px solid var(--line); border-radius: 12px; background: var(--paper);
+             overflow: hidden; margin: 22px 0 16px; }
+  .d-panel-h { padding: 16px 22px; border-bottom: 1px solid var(--line); }
+  .d-panel-t { font-size: 14px; font-weight: 620; }
+  .d-panel-s { margin-top: 3px; font-size: 12.5px; color: var(--ink-faint); }
+  .d-picks { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px 22px; }
+  .d-opts { display: grid; gap: 7px; margin-top: 8px; }
+  .d-opt { display: flex; align-items: center; gap: 10px; padding: 11px 13px;
+           border: 1px solid var(--line); border-radius: 9px; background: var(--ground);
+           font-size: 13.5px; cursor: pointer; transition: border-color 140ms ease-out; }
+  .d-opt:hover { border-color: var(--ink-faint); }
+  .d-opt[data-on] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .d-opt[data-off] { opacity: .42; cursor: not-allowed; }
+  .d-radio { width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid currentColor;
+             display: grid; place-items: center; flex-shrink: 0; }
+  .d-radio::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: transparent; }
+  .d-opt[data-on] .d-radio::after { background: currentColor; }
+  .d-opt small { margin-left: auto; font-size: 11.5px; color: var(--ink-faint); }
+
+  /* option params the publisher declared */
+  .d-opts-box { padding: 18px 22px; border-top: 1px solid var(--line); }
+  .d-optrow { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;
+              padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+  .d-optrow:last-of-type { border-bottom: 0; }
+  .d-opt-nm { font-family: var(--mono); font-size: 12.5px; font-weight: 570; }
+  .d-opt-d { margin-top: 3px; font-size: 12.5px; color: var(--ink-soft); }
+  .d-seg { display: inline-flex; gap: 3px; padding: 3px; border-radius: 7px; background: var(--line-soft); }
+  .d-seg button { padding: 5px 12px; border: 0; border-radius: 5px; background: transparent;
+                  font-size: 12.5px; color: var(--ink-soft); cursor: pointer; }
+  .d-seg button[data-on] { background: var(--paper); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.07); }
+  .d-out { padding: 18px 22px; border-top: 1px solid var(--line); background: var(--ground); }
+  .d-out-row { display: flex; justify-content: space-between; align-items: center;
+               gap: 16px; flex-wrap: wrap; }
+  .d-fname { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); }
+  .d-cmd { margin-top: 9px; padding: 10px 12px; border-radius: 7px; background: var(--code-bg);
+           color: var(--code-ink); font-family: var(--mono); font-size: 11.5px;
+           overflow-x: auto; white-space: pre; }
+  .d-side { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .d-card { border: 1px solid var(--line); border-radius: 11px; background: var(--paper);
+            padding: 20px 22px; }
+  .d-card h3 { margin: 0 0 14px; font-size: 13.5px; font-weight: 620;
+               display: flex; align-items: center; gap: 9px; }
+  .d-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 11px; }
+  .d-list li { display: grid; grid-template-columns: 16px 1fr; gap: 10px;
+               font-size: 13.5px; color: var(--ink-soft); }
+  .d-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 7px; }
+  .d-dot.ok { background: var(--ok); }
+  .d-dot.warn { background: var(--warn); }
+  .d-help { font-size: 13.5px; color: var(--ink-soft); white-space: pre-wrap; }
+
+  /* script version history */
+  .hist { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line);
+          border-radius: 9px; overflow: hidden; margin-top: 11px; }
+  .hist-row { display: grid; grid-template-columns: 46px 1fr auto; gap: 13px;
+              padding: 11px 13px; background: var(--paper); align-items: baseline; }
+  .hist-v { font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: var(--seal); }
+  .hist-d { font-size: 13px; }
+  .hist-d.none { color: var(--ink-faint); font-style: italic; }
+  .hist-t { font-size: 12px; color: var(--ink-faint); white-space: nowrap; }
+
+  /* feedback (phase 2) */
+  .fb { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .fb-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px;
+            border: 1px solid var(--line); border-radius: 8px; background: var(--ground);
+            font-size: 13px; }
+  .fb-cnt { font-variant-numeric: tabular-nums; color: var(--ink-faint); }
+  .fb-empty { margin-top: 15px; padding: 22px; border: 1px dashed var(--line);
+              border-radius: 9px; text-align: center; color: var(--ink-faint); font-size: 13px; }
+
+  /* ===== PUBLISH ===== */
+  .p-h1 { margin: 0 0 5px; font-size: 22px; font-weight: 670; letter-spacing: -.018em; }
+  .p-note { margin: 0 0 20px; color: var(--ink-soft); font-size: 13.5px; max-width: 66ch; }
+  .p-sec { border: 1px solid var(--line); border-radius: 11px; background: var(--paper);
+           padding: 20px 22px; margin-bottom: 15px; }
+  .p-sec-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 15px;
+             padding-bottom: 11px; border-bottom: 1px solid var(--line-soft); flex-wrap: wrap; }
+  .p-sec-h h3 { margin: 0; font-size: 14px; font-weight: 620; }
+  .p-sec-h span { font-size: 12px; color: var(--ink-faint); }
+  .p-sec-h .grow { margin-left: auto; }
+
+  .sl { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line);
+        border-radius: 10px; overflow: hidden; }
+  .sl-row { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;
+            padding: 14px 16px; background: var(--paper); }
+  .sl-row[data-empty] { background: var(--ground); }
+  .sl-tg { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+  .sl-os { font-size: 13.5px; font-weight: 600; }
+  .sl-cl { font-size: 13px; color: var(--ink-soft); }
+  .sl-sub { margin-top: 4px; font-size: 12px; color: var(--ink-faint); }
+  .sl-sub code { font-family: var(--mono); font-size: 11.5px; }
+  .sl-acts { display: flex; gap: 7px; flex-wrap: wrap; }
+  .sl-badge { padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: 550; }
+  .sl-badge.done { background: var(--ok-soft); color: var(--ok); }
+  .sl-badge.todo { background: var(--warn-soft); color: var(--warn); }
+  .sl-badge.shared { background: var(--seal-soft); color: var(--seal); }
+
+  .p-add { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;
+           padding: 15px 16px; border: 1px dashed var(--line); border-radius: 10px;
+           background: var(--ground); margin-top: 13px; }
+  .p-add .fld { margin: 0; min-width: 160px; }
+  .p-add select { min-width: 160px; }
+
+  .ed { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .ed-bar { display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 12px; background: var(--ground); border-bottom: 1px solid var(--line);
+            font-size: 12px; color: var(--ink-soft); gap: 12px; flex-wrap: wrap; }
+  .ed-bar b { color: var(--ink); }
+  .ed-bar-r { display: flex; gap: 8px; align-items: center; }
+  .ed-count { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 11.5px; }
+  .ed textarea { width: 100%; border: 0; border-radius: 0; background: var(--code-bg);
+                 color: var(--code-ink); padding: 13px 15px; font-family: var(--mono);
+                 font-size: 12.5px; line-height: 1.7; resize: vertical; display: block; }
+  .ed textarea:focus { outline: none; }
+  .ed-note { padding: 9px 12px; border-top: 1px solid var(--line); background: var(--seal-soft);
+             color: var(--seal); font-size: 12px; }
+  .ed-reuse { padding: 10px 12px; border-top: 1px solid var(--line); background: var(--ground);
+              display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+              font-size: 12.5px; color: var(--ink-soft); }
+
+  /* option params editor */
+  .op { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line);
+        border-radius: 9px; overflow: hidden; }
+  .op-head, .op-row { display: grid; grid-template-columns: 128px 96px 1fr 116px 34px;
+                      gap: 11px; padding: 11px 13px; background: var(--paper); align-items: center; }
+  .op-head { background: var(--ground); font-size: 11px; letter-spacing: .05em;
+             text-transform: uppercase; color: var(--ink-faint); font-weight: 600; }
+  .op-row input, .op-row select { width: 100%; padding: 7px 9px; border: 1px solid var(--line);
+                                  border-radius: 6px; background: var(--ground); font-size: 12.5px; }
+  .op-row input { font-family: var(--mono); }
+  .op-row input:focus, .op-row select:focus { outline: none; border-color: var(--accent);
+                                              background: var(--paper); }
+  .op-del { width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 6px;
+            background: var(--paper); color: var(--stop); cursor: pointer; font-size: 13px;
+            display: grid; place-items: center; }
+  .op-del:hover { border-color: var(--stop); }
+  .op-preview { margin-top: 12px; padding: 12px 14px; border-radius: 8px; background: var(--code-bg);
+                color: var(--code-ink); font-family: var(--mono); font-size: 11.5px;
+                overflow-x: auto; white-space: pre; }
+  .op-hint { margin: 10px 0 0; font-size: 12.5px; color: var(--ink-faint); }
+
+  .fld { margin-bottom: 18px; }
+  .fld:last-child { margin-bottom: 0; }
+  .fld-l { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 570; }
+  .fld-l .req { color: var(--stop); margin-left: 2px; }
+  .fld-h { margin: 5px 0 0; font-size: 12.5px; color: var(--ink-faint); }
+  .fld input[type=text], .fld select, .fld textarea {
+    width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--ground); transition: border-color 150ms ease-out, background 150ms ease-out; }
+  .fld input:focus, .fld select:focus, .fld textarea:focus {
+    outline: none; border-color: var(--accent); background: var(--paper); }
+  .fld textarea { resize: vertical; }
+  .p-two { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+  .sw { display: flex; align-items: flex-start; gap: 12px; padding: 15px 17px;
+        border: 1px solid var(--line); border-radius: 10px; background: var(--ground); }
+  .sw-t { width: 38px; height: 22px; border-radius: 999px; background: var(--line);
+          position: relative; flex-shrink: 0; cursor: pointer; }
+  .sw-t::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+                 border-radius: 50%; background: var(--paper); transition: transform 160ms ease-out; }
+  .sw[data-on] .sw-t { background: var(--warn); }
+  .sw[data-on] .sw-t::after { transform: translateX(16px); }
+  .sw-l { font-size: 13.5px; font-weight: 550; }
+  .sw-d { margin-top: 3px; font-size: 12.5px; color: var(--ink-faint); }
+  .tele { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tele span { padding: 3px 8px; border-radius: 5px; background: var(--line-soft);
+               font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+  .tele span.added { background: var(--accent-soft); color: var(--accent); }
+  .p-bar { display: flex; justify-content: space-between; align-items: center;
+           padding: 16px 20px; border: 1px solid var(--line); border-radius: 11px;
+           background: var(--paper); gap: 16px; flex-wrap: wrap; }
+  .reuse { border: 1px solid var(--line); border-radius: 10px; background: var(--paper);
+           overflow: hidden; margin-top: 12px; }
+  .reuse-h { padding: 11px 14px; background: var(--ground); border-bottom: 1px solid var(--line);
+             font-size: 12.5px; font-weight: 570; }
+  .reuse-item { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;
+                padding: 12px 14px; border-bottom: 1px solid var(--line-soft); }
+  .reuse-item:last-child { border-bottom: 0; }
+  .reuse-t { font-size: 13px; font-weight: 570; }
+  .reuse-p { margin-top: 4px; font-family: var(--mono); font-size: 11.5px;
+             color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis;
+             white-space: nowrap; max-width: 52ch; }
+
+  @media (max-width: 940px) {
+    .d-picks, .d-side, .p-two { grid-template-columns: 1fr; }
+    .op-head { display: none; }
+    .op-row { grid-template-columns: 1fr; gap: 8px; }
+  }
+
+  /* ===== PICKER — verbatim from PICKER.md ===== */
+  .proto-picker { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    z-index: 2147483647; display: flex; align-items: center; gap: 2px; padding: 4px;
+    border-radius: 999px; background: rgba(10,10,10,.82);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4); backdrop-filter: blur(12px) saturate(1.4);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset, 0 8px 24px rgba(0,0,0,.24),
+                0 2px 6px rgba(0,0,0,.12);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13px; line-height: 1; -webkit-font-smoothing: antialiased;
+    user-select: none; -webkit-user-select: none; }
+  .proto-picker-highlight { position: absolute; top: 4px; left: 0; height: 28px;
+    border-radius: 999px; background: rgba(255,255,255,.12); will-change: transform; }
+  .proto-picker[data-ready] .proto-picker-highlight {
+    transition: transform 250ms cubic-bezier(.23,1,.32,1), width 250ms cubic-bezier(.23,1,.32,1); }
+  @media (prefers-reduced-motion: reduce) {
+    .proto-picker[data-ready] .proto-picker-highlight { transition: none; } }
+  .proto-picker-item { position: relative; display: flex; align-items: center; height: 28px;
+    padding: 0 12px; border: 0; border-radius: 999px; background: transparent;
+    color: rgba(255,255,255,.55); font: inherit; cursor: pointer;
+    transition: color 150ms ease-out; }
+  .proto-picker-item:hover { color: rgba(255,255,255,.85); }
+  .proto-picker-item:active { transform: scale(.97); }
+  .proto-picker-item:focus-visible { outline: 2px solid rgba(255,255,255,.4); outline-offset: 2px; }
+  .proto-picker-item[data-active] { color: #fff; }
+  .proto-picker-divider { width: 1px; height: 16px; margin: 0 4px; background: rgba(255,255,255,.12); }
+  .proto-picker-replay { padding: 0 10px; font-size: 14px; }
+  .proto-picker[data-position="top"] { bottom: auto; top: 24px; }
+</style>
+
+<div id="stage"></div>
+
+<nav class="proto-picker" aria-label="線框頁面">
+  <span class="proto-picker-highlight" aria-hidden="true"></span>
+  <button class="proto-picker-item" data-active aria-current="true">詳情頁</button>
+  <button class="proto-picker-item">上架頁</button>
+</nav>
+
+<script>
+const MIDDLE = `set -euo pipefail
+
+# 平台以環境變數傳入選項參數，原樣不改寫
+SCOPE="\${ASP_OPT_SCOPE:-user}"
+WITH_HOOKS="\${ASP_OPT_WITH_HOOKS:-false}"
+
+if [[ "\${SCOPE}" == "global" ]]; then
+  SKILL_HOME="/usr/local/share/superpowers"
+else
+  SKILL_HOME="\${HOME}/.superpowers"
+fi
+
+mkdir -p "\${SKILL_HOME}/worktrees"
+curl -fsSL "\${SOURCE_URI}" -o "\${SKILL_HOME}/bundle.tar.gz"
+tar -xzf "\${SKILL_HOME}/bundle.tar.gz" -C "\${SKILL_HOME}"
+
+echo "superpowers 3.2.1 已安裝至 \${SKILL_HOME}"`;
+
+const TELE_BASE = ['idempotency_key','package_id','version','user_ref','user_ref_type',
+                   'os_type','client_runtime','status','error_code','start_time','end_time'];
+const TELE_ADD = ['script_version','options'];
+
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function triExplain() { return `
+<div class="tri">
+  <div class="tri-row">
+    <div class="tri-tag">上部</div>
+    <div>
+      <div class="tri-t">初始化與身分識別</div>
+      <div class="tri-d">取得員工識別；未登入時在本機產生並保存 UUID。解析選項參數，建立冪等鍵與環境資訊。</div>
+      <div class="tri-lock">平台生成</div>
+    </div>
+  </div>
+  <div class="tri-row mid">
+    <div class="tri-tag">中部</div>
+    <div>
+      <div class="tri-t">發布者的安裝命令</div>
+      <div class="tri-d">在隔離的子命令下執行，選項參數以環境變數原樣傳入。</div>
+    </div>
+  </div>
+  <div class="tri-row">
+    <div class="tri-tag">尾部</div>
+    <div>
+      <div class="tri-t">結果識別與回報</div>
+      <div class="tri-d">記錄時間、環境、腳本版本、選項與成功失敗；失敗時收集錯誤碼後回報。離線時排入本機佇列補交。</div>
+      <div class="tri-lock">平台生成</div>
+    </div>
+  </div>
+</div>`; }
+
+/* ---------- DETAIL ---------- */
+function detail() { return `
+<div class="wrap">
+  <span class="sec-tag">詳情頁</span>
+  <h1 class="d-h1">superpowers</h1>
+  <p class="d-meta">公共架構技術賦能 · Skill · 通用 · MIT · <span class="chip pub">已發布</span> · 版本 3.2.1 · 2 天前更新</p>
+  <p class="d-purpose">提供工作樹隔離、規格驅動開發與測試驅動開發的完整工作流，讓多個任務能在互不干擾的分支上並行推進。</p>
+
+  <div class="d-panel">
+    <div class="d-panel-h">
+      <div class="d-panel-t">取得一鍵安裝腳本</div>
+      <div class="d-panel-s">選擇環境與安裝選項。平台為每個組合生成專屬腳本，未聲明支援的組合不提供下載。</div>
+    </div>
+    <div class="d-picks">
+      <div>
+        <div class="tgt-l">作業系統</div>
+        <div class="d-opts">
+          <div class="d-opt" data-on><span class="d-radio"></span>Linux / macOS</div>
+          <div class="d-opt"><span class="d-radio"></span>Windows</div>
+          <div class="d-opt" data-off><span class="d-radio"></span>WSL<small>此版本未聲明支援</small></div>
+        </div>
+      </div>
+      <div>
+        <div class="tgt-l">Client</div>
+        <div class="d-opts">
+          <div class="d-opt" data-on><span class="d-radio"></span>Claude Code</div>
+          <div class="d-opt"><span class="d-radio"></span>Codex</div>
+          <div class="d-opt" data-off><span class="d-radio"></span>Cursor<small>此版本未聲明支援</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-opts-box">
+      <div class="tgt-l" style="margin-bottom:11px">安裝選項</div>
+      <div class="d-optrow">
+        <div>
+          <div class="d-opt-nm">--scope</div>
+          <div class="d-opt-d">安裝層級。全域需要 sudo；使用者層級只影響目前帳號。</div>
+        </div>
+        <div class="d-seg">
+          <button data-on>user</button>
+          <button>global</button>
+        </div>
+      </div>
+      <div class="d-optrow">
+        <div>
+          <div class="d-opt-nm">--with-hooks</div>
+          <div class="d-opt-d">是否一併安裝 Git hooks。</div>
+        </div>
+        <div class="d-seg">
+          <button data-on>false</button>
+          <button>true</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-out">
+      <div class="d-out-row">
+        <div style="min-width:0">
+          <div class="d-fname">install-superpowers-3.2.1-linux-claude-code-u1042-v3.sh</div>
+          <div style="font-size:12px;color:var(--ink-faint);margin-top:4px">
+            檔名含安裝目標、你的員工識別與腳本版本
+          </div>
+          <div class="d-cmd">./install-superpowers-3.2.1-linux-claude-code-u1042-v3.sh --scope user --with-hooks false</div>
+        </div>
+        <button class="btn-primary">下載</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-side">
+    <div class="d-card">
+      <h3>安裝前請注意</h3>
+      <ul class="d-list">
+        <li><span class="d-dot warn"></span><div><b>解除安裝後保留設定檔</b>　保留於 ~/.superpowers/config。完全移除需執行 rm -rf ~/.superpowers。</div></li>
+        <li><span class="d-dot ok"></span><div><b>不需要外部網路憑證</b>　不讀取公司秘密，不寫入系統目錄。</div></li>
+        <li><span class="d-dot ok"></span><div><b>會回報安裝結果</b>　回報時間、環境、腳本版本與所選選項，不收集命令輸出或檔案內容。</div></li>
+      </ul>
+    </div>
+    <div class="d-card">
+      <h3>使用說明</h3>
+      <p class="d-help">下載後加上執行權限即可執行：
+
+chmod +x install-superpowers-*.sh
+./install-superpowers-*.sh --scope user
+
+加上 --help 可查看所有選項與目前的技能版本資訊。若在 CI 環境安裝，建議使用 --scope global 並事先確認 sudo 權限。</p>
+    </div>
+  </div>
+
+  <div class="d-card" style="margin-top:16px">
+    <h3>腳本版本紀錄 <span class="chip ver">v3</span></h3>
+    <div class="hist">
+      <div class="hist-row">
+        <span class="hist-v">v3</span>
+        <span class="hist-d">修正 macOS 上 tar 解壓路徑問題</span>
+        <span class="hist-t">2 天前</span>
+      </div>
+      <div class="hist-row">
+        <span class="hist-v">v2</span>
+        <span class="hist-d">加入 --with-hooks 選項</span>
+        <span class="hist-t">9 天前</span>
+      </div>
+      <div class="hist-row">
+        <span class="hist-v">v1</span>
+        <span class="hist-d none">無描述資訊</span>
+        <span class="hist-t">23 天前</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-card soon" style="margin-top:16px">
+    <h3>使用者回饋 <span class="soon-tag">第二期功能，尚未實作</span></h3>
+    <div class="fb">
+      <span class="fb-btn">👍 有幫助 <span class="fb-cnt">—</span></span>
+      <span class="fb-btn">👎 沒幫助 <span class="fb-cnt">—</span></span>
+      <span style="font-size:12.5px;color:var(--ink-faint)">評分與評論預計於第二期開放</span>
+    </div>
+    <div class="fb-empty">評論功能尚未實作。此區塊保留版面位置，第二期開放後在此顯示評論列表。</div>
+  </div>
+
+  <div class="d-card" style="margin-top:16px">
+    <h3>腳本的組成</h3>
+    ${triExplain()}
+  </div>
+</div>`; }
+
+/* ---------- PUBLISH ---------- */
+function publish() { return `
+<div class="wrap">
+  <span class="sec-tag">上架頁</span>
+  <h1 class="p-h1">上架新版本</h1>
+  <p class="p-note">為每個要支援的「系統 × Client」組合各填一份中部命令。Linux 與 macOS 已合併為單一目標；命令可在組合間複製後調整。</p>
+
+  <section class="p-sec">
+    <div class="p-sec-h"><h3>基本資料</h3><span>員工搜尋時看到的內容</span></div>
+    <div class="p-two">
+      <div class="fld"><label class="fld-l">套件名稱<span class="req">*</span></label>
+        <input type="text" value="superpowers"></div>
+      <div class="fld"><label class="fld-l">技能版本<span class="req">*</span></label>
+        <input type="text" value="3.2.1">
+        <p class="fld-h">此版本會寫入腳本，並在 --help 與安裝時顯示。</p></div>
+    </div>
+    <div class="fld" style="margin-bottom:0"><label class="fld-l">用途<span class="req">*</span></label>
+      <textarea rows="2">提供工作樹隔離、規格驅動開發與測試驅動開發的完整工作流。</textarea></div>
+  </section>
+
+  <section class="p-sec">
+    <div class="p-sec-h">
+      <h3>一鍵安裝腳本</h3>
+      <span>每個組合一份中部命令</span>
+      <span class="grow" style="font-size:12.5px;color:var(--ink-soft)">3 個已建立 · 1 個待填寫</span>
+    </div>
+
+    <div class="sl">
+      <div class="sl-row">
+        <div>
+          <div class="sl-tg">
+            <span class="sl-os">Linux / macOS</span>
+            <span class="sl-cl">· Claude Code</span>
+            <span class="sl-badge done">已填寫</span>
+            <span class="chip ver">v3</span>
+          </div>
+          <div class="sl-sub">bash · 486 字元 · 2 個選項 · <code>install-superpowers-3.2.1-linux-claude-code-{uid}-v3.sh</code></div>
+        </div>
+        <div class="sl-acts">
+          <button class="btn-sm">編輯</button>
+          <button class="btn-sm">複製命令</button>
+          <button class="btn-sm">版本紀錄</button>
+          <button class="btn-sm danger">刪除</button>
+        </div>
+      </div>
+
+      <div class="sl-row">
+        <div>
+          <div class="sl-tg">
+            <span class="sl-os">Linux / macOS</span>
+            <span class="sl-cl">· Codex</span>
+            <span class="sl-badge shared">複製自 Claude Code</span>
+            <span class="chip ver">v2</span>
+          </div>
+          <div class="sl-sub">bash · 502 字元 · 2 個選項 · 已在複製後調整</div>
+        </div>
+        <div class="sl-acts">
+          <button class="btn-sm">編輯</button>
+          <button class="btn-sm">複製命令</button>
+          <button class="btn-sm">版本紀錄</button>
+          <button class="btn-sm danger">刪除</button>
+        </div>
+      </div>
+
+      <div class="sl-row">
+        <div>
+          <div class="sl-tg">
+            <span class="sl-os">WSL</span>
+            <span class="sl-cl">· Claude Code</span>
+            <span class="sl-badge shared">複製自 Linux / macOS</span>
+            <span class="chip ver">v1</span>
+          </div>
+          <div class="sl-sub">bash · 486 字元 · 2 個選項 · 與來源內容相同</div>
+        </div>
+        <div class="sl-acts">
+          <button class="btn-sm">編輯</button>
+          <button class="btn-sm">複製命令</button>
+          <button class="btn-sm">版本紀錄</button>
+          <button class="btn-sm danger">刪除</button>
+        </div>
+      </div>
+
+      <div class="sl-row" data-empty>
+        <div>
+          <div class="sl-tg">
+            <span class="sl-os">Windows</span>
+            <span class="sl-cl">· Claude Code</span>
+            <span class="sl-badge todo">待填寫</span>
+          </div>
+          <div class="sl-sub">PowerShell · 尚未填寫命令，無法送出審核</div>
+        </div>
+        <div class="sl-acts">
+          <button class="btn-sm">填寫</button>
+          <button class="btn-sm danger">移除</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-add">
+      <div class="fld">
+        <label class="fld-l" style="font-size:12px">作業系統</label>
+        <select><option>Linux / macOS</option><option>Windows</option><option>WSL</option></select>
+      </div>
+      <div class="fld">
+        <label class="fld-l" style="font-size:12px">Client</label>
+        <select><option>Claude Code</option><option>Codex</option><option disabled>Cursor　尚未開放</option></select>
+      </div>
+      <button class="btn-ghost">加入組合</button>
+    </div>
+    <p class="op-hint">刪除的腳本改為不可見，不會從紀錄中移除，仍可在版本紀錄中追溯。</p>
+  </section>
+
+  <section class="p-sec">
+    <div class="p-sec-h">
+      <h3>編輯中部命令</h3>
+      <span>Linux / macOS · Claude Code · <span class="chip ver">v3</span></span>
+    </div>
+
+    <div class="ed">
+      <div class="ed-bar">
+        <span><b>Linux / macOS</b> · Claude Code · 安裝</span>
+        <span class="ed-bar-r"><span class="ed-count">486 / 100,000</span></span>
+      </div>
+      <textarea rows="14">${esc(MIDDLE)}</textarea>
+      <div class="ed-reuse">
+        <span>可從已建立的腳本複製：</span>
+        <button class="btn-sm">Linux / macOS · Codex</button>
+        <button class="btn-sm">WSL · Claude Code</button>
+      </div>
+      <div class="ed-note">不要寫 shebang、不要自行回報結果、不要讀取使用者識別，這三件事平台已在上部與尾部處理。選項參數以 ASP_OPT_ 前綴的環境變數傳入。</div>
+    </div>
+
+    <div class="fld" style="margin-top:16px">
+      <label class="fld-l">本次變更描述</label>
+      <input type="text" placeholder="例如：修正 macOS 上 tar 解壓路徑問題">
+      <p class="fld-h">儲存後腳本版本自動遞增為 v4。未填寫時版本紀錄顯示「無描述資訊」。</p>
+    </div>
+  </section>
+
+  <section class="p-sec">
+    <div class="p-sec-h">
+      <h3>選項參數</h3>
+      <span>原樣傳給中部命令，並隨遙測上報</span>
+    </div>
+    <div class="op">
+      <div class="op-head">
+        <span>參數名</span><span>類型</span><span>說明</span><span>預設值</span><span></span>
+      </div>
+      <div class="op-row">
+        <input type="text" value="--scope">
+        <select><option>單選</option><option>開關</option><option>文字</option></select>
+        <input type="text" value="安裝層級" style="font-family:var(--sans)">
+        <input type="text" value="user">
+        <button class="op-del">×</button>
+      </div>
+      <div class="op-row">
+        <input type="text" value="--with-hooks">
+        <select><option>開關</option><option>單選</option><option>文字</option></select>
+        <input type="text" value="是否安裝 Git hooks" style="font-family:var(--sans)">
+        <input type="text" value="false">
+        <button class="op-del">×</button>
+      </div>
+    </div>
+    <div style="margin-top:11px"><button class="btn-sm">＋ 新增參數</button></div>
+    <p class="op-hint">中部命令以環境變數讀取，參數名轉為大寫並加上 ASP_OPT_ 前綴：</p>
+    <div class="op-preview">--scope        →  \${ASP_OPT_SCOPE}
+--with-hooks   →  \${ASP_OPT_WITH_HOOKS}</div>
+    <p class="op-hint">員工在詳情頁選擇這些選項後，平台把選定值寫入下載的腳本；尾部會將所選選項一併上報。</p>
+  </section>
+
+  <section class="p-sec">
+    <div class="p-sec-h"><h3>使用說明</h3><span>員工在詳情頁與 --help 看到的內容</span></div>
+    <div class="fld" style="margin-bottom:0">
+      <label class="fld-l">腳本使用說明<span class="req">*</span></label>
+      <textarea rows="6">下載後加上執行權限即可執行：
+
+chmod +x install-superpowers-*.sh
+./install-superpowers-*.sh --scope user
+
+加上 --help 可查看所有選項與目前的技能版本資訊。</textarea>
+      <p class="fld-h">說明會顯示在詳情頁，並寫入腳本的 --help 輸出。</p>
+    </div>
+  </section>
+
+  <section class="p-sec">
+    <div class="p-sec-h"><h3>殘留聲明</h3><span>審核的重點項目</span></div>
+    <div class="sw" data-on>
+      <span class="sw-t"></span>
+      <div>
+        <div class="sw-l">解除安裝後會留下內容</div>
+        <div class="sw-d">員工會在詳情頁看到這項警示。低報殘留是駁回的常見原因。</div>
+      </div>
+    </div>
+    <div class="fld" style="margin-top:15px"><label class="fld-l">殘留內容說明<span class="req">*</span></label>
+      <textarea rows="2">設定檔保留於 ~/.superpowers/config，供重新安裝時沿用。</textarea></div>
+    <div class="fld" style="margin-bottom:0"><label class="fld-l">手動清理步驟<span class="req">*</span></label>
+      <textarea rows="2">rm -rf ~/.superpowers</textarea></div>
+  </section>
+
+  <section class="p-sec">
+    <div class="p-sec-h"><h3>尾部將回報的欄位</h3><span>基礎十一欄固定，選項與腳本版本為新增</span></div>
+    <div class="tele">
+      ${TELE_BASE.map(f=>`<span>${f}</span>`).join('')}
+      ${TELE_ADD.map(f=>`<span class="added">${f}</span>`).join('')}
+    </div>
+    <p class="op-hint">不收集命令輸出、檔案內容或環境變數。員工在詳情頁可看到同一份清單。</p>
+  </section>
+
+  <div class="p-bar">
+    <span style="font-size:13px;color:var(--ink-soft)">尚有 1 個組合未填寫命令</span>
+    <div style="display:flex;gap:9px">
+      <button class="btn-ghost">存為草稿</button>
+      <button class="btn-primary" disabled>送出審核</button>
+    </div>
+  </div>
+</div>`; }
+
+const variants = [detail, publish];
+
+const stage = document.getElementById('stage');
+const picker = document.querySelector('.proto-picker');
+const highlight = picker.querySelector('.proto-picker-highlight');
+const items = [...picker.querySelectorAll('.proto-picker-item:not(.proto-picker-replay)')];
+const replay = picker.querySelector('.proto-picker-replay');
+let current = 0;
+
+function moveHighlight() {
+  const el = items[current];
+  highlight.style.width = el.offsetWidth + 'px';
+  highlight.style.transform = `translateX(${el.offsetLeft}px)`;
+}
+function mount(i) {
+  stage.innerHTML = '';
+  requestAnimationFrame(() => { stage.innerHTML = variants[i](); });
+}
+function setActive(i) {
+  if (i < 0 || i >= variants.length) return;
+  current = i;
+  items.forEach((el, j) => {
+    el.toggleAttribute('data-active', j === i);
+    if (j === i) el.setAttribute('aria-current', 'true');
+    else el.removeAttribute('aria-current');
+  });
+  moveHighlight();
+  const url = new URL(location);
+  url.searchParams.set('v', i + 1);
+  history.replaceState(null, '', url);
+  mount(i);
+}
+items.forEach((el, i) => el.addEventListener('click', () => setActive(i)));
+replay?.addEventListener('click', () => mount(current));
+window.addEventListener('resize', moveHighlight);
+document.addEventListener('keydown', (e) => {
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const num = parseInt(e.key, 10);
+  if (num >= 1 && num <= variants.length) setActive(num - 1);
+  else if (e.key === 'ArrowRight') setActive((current + 1) % variants.length);
+  else if (e.key === 'ArrowLeft') setActive((current - 1 + variants.length) % variants.length);
+  else if (e.key === 'r' || e.key === 'R') mount(current);
+});
+setActive((parseInt(new URLSearchParams(location.search).get('v'), 10) || 1) - 1);
+requestAnimationFrame(() => requestAnimationFrame(() => picker.setAttribute('data-ready', '')));
+</script>

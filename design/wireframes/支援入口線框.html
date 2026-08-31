@@ -1,0 +1,68 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>支援入口線框 · Support Desk</title><style>
+:root{--ink:#16181d;--soft:#5b616e;--faint:#8b91a0;--line:#dfe2e8;--line2:#edeff3;--paper:#fff;--ground:#f6f7f9;--accent:#1f4fd8;--accent2:#eef2fe;--ok:#1a7f52;--ok2:#e8f5ee;--warn:#8a5a00;--warn2:#fdf3e0;--stop:#a32020;--stop2:#fdeceb;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC",sans-serif;--mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,monospace;--r:8px;--rl:11px;color-scheme:light dark}@media(prefers-color-scheme:dark){:root{--ink:#e8eaf0;--soft:#a2a9b8;--faint:#767d8d;--line:#2f333c;--line2:#24272e;--paper:#1a1d23;--ground:#131519;--accent:#7f9fff;--accent2:#1c2740;--ok:#5ec98e;--ok2:#14301f;--warn:#e0ab4c;--warn2:#33260d;--stop:#f08a80;--stop2:#3a1917}}*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:14px/1.5 var(--sans)}button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.mono{font-family:var(--mono)}#stage{min-height:100vh;padding-bottom:92px}.shell{min-height:100vh;display:flex;flex-direction:column}.top{min-height:58px;padding:0 max(24px,calc((100vw - 1120px)/2));display:flex;align-items:center;gap:42px;background:var(--paper);border-bottom:1px solid var(--line)}.brand{font-size:16px;font-weight:750;white-space:nowrap}.nav{display:flex;gap:28px;color:var(--soft);white-space:nowrap}.nav span{padding:18px 0 16px;border-bottom:2px solid transparent}.nav .active{color:var(--accent);border-color:var(--accent);font-weight:650}.main{width:min(1120px,calc(100% - 48px));margin:auto;padding:32px 0 70px;flex:1}.foot{padding:20px max(24px,calc((100vw - 1120px)/2));display:flex;justify-content:space-between;background:var(--paper);border-top:1px solid var(--line);color:var(--faint);font-size:12px}
+.crumb{margin-bottom:14px;color:var(--faint);font-size:12px}.crumb b{color:var(--soft);font-weight:500}
+.head{display:flex;justify-content:space-between;align-items:start;gap:24px;margin-bottom:18px}.head h1{margin:0;font-size:27px;letter-spacing:-.03em}.head p{margin:7px 0 0;color:var(--soft)}
+.modes{display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--paper)}.modes button{border:0;border-radius:999px;background:transparent;padding:7px 14px;color:var(--soft);font-size:13px}.modes [data-active]{background:var(--accent2);color:var(--accent);font-weight:650}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--rl);box-shadow:0 1px 3px rgba(22,24,29,.06);overflow:hidden;margin-bottom:16px}.card-h{margin:0;padding:14px 16px;border-bottom:1px solid var(--line2);font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px}.card-h small{color:var(--faint);font-weight:400;font-size:11.5px}
+.chan{display:flex;gap:13px;padding:15px 16px;border-bottom:1px solid var(--line2);align-items:start}.chan:last-child{border:0}.chan-i{flex:none;width:34px;height:34px;display:grid;place-items:center;border-radius:var(--r);background:var(--accent2);color:var(--accent);font-size:15px}.chan-b{flex:1;display:grid;gap:3px;min-width:0}.chan-b b{font-size:13.5px}.chan-b a{color:var(--accent);font-family:var(--mono);font-size:12.5px;overflow-wrap:anywhere;text-decoration:none}.chan-b small{color:var(--faint);font-size:12px}.type{display:inline-flex;padding:3px 8px;border-radius:999px;background:var(--ground);color:var(--faint);font-size:11px}
+.empty{padding:38px 20px;text-align:center;color:var(--soft)}.empty b{display:block;margin-bottom:5px;color:var(--ink)}
+.rule{padding:11px 12px;margin:0 16px 15px;border-radius:var(--r);background:var(--accent2);color:var(--soft);font-size:11.5px}.rule b{color:var(--accent)}
+.rows{padding:6px 0}.row{display:grid;grid-template-columns:150px 1fr 1fr 34px;gap:9px;padding:11px 16px;border-bottom:1px solid var(--line2);align-items:start}.row:last-child{border:0}
+label.f{display:grid;gap:4px}label.f span{color:var(--faint);font-size:10.5px;text-transform:uppercase}
+input,select,textarea{width:100%;min-height:38px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--ground)}textarea{min-height:64px;resize:vertical;font-family:inherit}
+.del{width:34px;height:38px;align-self:end;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);color:var(--stop)}
+.bar{display:flex;justify-content:space-between;gap:10px;padding:14px 16px;border-top:1px solid var(--line2);background:var(--ground)}
+.btn{min-height:38px;padding:8px 13px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);font-weight:620;white-space:nowrap}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn:disabled{opacity:.55;cursor:not-allowed}
+.warn{display:flex;gap:11px;padding:13px 16px;margin:0 16px 15px;border:1px solid var(--warn);border-radius:var(--r);background:var(--warn2);font-size:12.5px;color:var(--soft)}.warn b{color:var(--warn)}
+.err{margin:0 16px 14px;padding:10px 12px;border:1px solid var(--stop);border-radius:var(--r);background:var(--stop2);color:var(--stop);font-size:12.5px}
+.enter{animation:rise .22s ease-out both}@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.proto-picker{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:2147483647;display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;background:rgba(10,10,10,.82);-webkit-backdrop-filter:blur(12px) saturate(1.4);backdrop-filter:blur(12px) saturate(1.4);box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 8px 24px rgba(0,0,0,.24),0 2px 6px rgba(0,0,0,.12);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;line-height:1;user-select:none}.proto-picker-highlight{position:absolute;top:4px;left:0;height:28px;border-radius:999px;background:rgba(255,255,255,.12)}.proto-picker-item{position:relative;display:flex;align-items:center;height:28px;padding:0 12px;border:0;border-radius:999px;background:transparent;color:rgba(255,255,255,.55);font:inherit}.proto-picker-item[data-active]{color:#fff}.proto-picker-divider{width:1px;height:16px;margin:0 4px;background:rgba(255,255,255,.12)}.proto-picker-replay{padding:0 10px;font-size:14px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+@media(max-width:760px){.row{grid-template-columns:1fr 1fr;gap:10px}.del{grid-column:2;justify-self:end}}
+@media(max-width:640px){.top{padding:10px 16px;align-items:start;gap:10px;flex-direction:column}.nav{width:100%;overflow:auto}.nav span{padding:6px 0 8px}.main{width:calc(100% - 32px);padding-top:22px}.foot{padding:17px 16px 96px;flex-direction:column}.head{flex-direction:column}.row{grid-template-columns:1fr}.del{grid-column:1;justify-self:start;width:100%}.bar{flex-direction:column}.bar .btn{width:100%}}
+</style></head><body><div id="stage"></div><nav class="proto-picker"><span class="proto-picker-highlight"></span><button class="proto-picker-item" data-active aria-current="true">Support Desk</button><span class="proto-picker-divider"></span><button class="proto-picker-item proto-picker-replay" aria-label="Replay animation (R)">↻</button></nav><script>
+// GET / PUT /api/packages/:packageId/support-channels 的真實 SupportChannel 形狀。
+// channelType 只有四個後端接受的值；PUT 是整組覆寫。
+const TYPES=[['im_group','IM 群組','💬'],['email','電子郵件','✉'],['ticket_system','工單系統','🎫'],['doc','說明文件','📄']];
+const TL=Object.fromEntries(TYPES.map(([k,l])=>[k,l])),TI=Object.fromEntries(TYPES.map(([k,,i])=>[k,i]));
+let channels=[
+{id:'c1',channelType:'im_group',label:'技能支援群',address:'https://im.example.internal/g/skill-support',instructions:'上班時間內通常一小時內回覆。請附上安裝失敗的錯誤碼。',displayOrder:0},
+{id:'c2',channelType:'ticket_system',label:'平台工單',address:'https://tickets.example.internal/new?queue=agent-platform',instructions:'需要保留紀錄或跨團隊協調時使用。',displayOrder:1},
+{id:'c3',channelType:'email',label:'維護者信箱',address:'agent-platform@example.internal',displayOrder:2}];
+let mode='view',draft=[],error='';
+const esc=s=>{const n=document.createElement('span');n.textContent=s;return n.innerHTML};
+const view=()=>channels.length?`<section class="card"><h2 class="card-h">遇到問題找誰<small>由維護者設定</small></h2>${channels.map(c=>`<div class="chan"><span class="chan-i">${TI[c.channelType]}</span><span class="chan-b"><b>${esc(c.label)} <span class="type">${TL[c.channelType]}</span></b><a href="#" onclick="return false">${esc(c.address)}</a>${c.instructions?`<small>${esc(c.instructions)}</small>`:''}</span></div>`).join('')}<div class="rule"><b>支援入口對所有能看到此套件的人開放</b><br>包含尚未登入的訪客。遇到問題的人需要能直接找到人，不該要求先登入才看得到求助管道。</div></section>`
+:`<section class="card"><h2 class="card-h">遇到問題找誰</h2><div class="empty"><b>維護者尚未設定支援渠道</b>此套件目前沒有可用的求助入口。<br>空狀態本身有作用：推動維護者補齊，也讓審核者看得出誰沒填。</div></section>`;
+const rowF=(c,i)=>`<div class="row" data-row="${i}"><label class="f"><span>渠道類型</span><select data-k="channelType">${TYPES.map(([v,l])=>`<option value="${v}"${c.channelType===v?' selected':''}>${l}</option>`).join('')}</select></label><label class="f"><span>顯示名稱 · 必填</span><input data-k="label" value="${esc(c.label)}" placeholder="例如：技能支援群"></label><label class="f"><span>位址 · 必填</span><input data-k="address" value="${esc(c.address)}" placeholder="網址或信箱"></label><button class="del" data-del="${i}" aria-label="移除這列">✕</button><label class="f" style="grid-column:1/-1"><span>補充說明 · 選填</span><textarea data-k="instructions" placeholder="例如回覆時間、需要附上哪些資訊">${esc(c.instructions||'')}</textarea></label></div>`;
+const edit=()=>`<section class="card"><h2 class="card-h">設定支援渠道<small>${draft.length} / 10</small></h2>
+<div class="warn"><b>整組覆寫</b><div>送出的清單即為完整結果。你在這裡移除的渠道會被刪除，不是保留原狀——後端不做增量合併。</div></div>
+${error?`<div class="err">${esc(error)}</div>`:''}
+<div class="rows">${draft.length?draft.map(rowF).join(''):'<div class="empty">目前沒有任何渠道。送出空清單會清除全部支援入口。</div>'}</div>
+<div class="bar"><button class="btn" data-add ${draft.length>=10?'disabled':''}>新增一列</button><span style="display:flex;gap:8px"><button class="btn" data-cancel>取消</button><button class="btn primary" data-save>儲存支援渠道</button></span></div></section>`;
+const page=()=>`<div class="shell enter"><header class="top"><b class="brand">Agent 技能平台</b><nav class="nav"><span class="active">技能池</span><span>我的安裝</span><span>上架技能</span><span>審核</span></nav></header><main class="main">
+<div class="crumb">技能池 · <b>分析工具</b> · 支援入口</div>
+<header class="head"><div><h1>支援入口</h1><p>維護者設定的求助管道，顯示於套件詳情頁。</p></div><div class="modes"><button data-mode="view"${mode==='view'?' data-active':''}>使用者檢視</button><button data-mode="edit"${mode==='edit'?' data-active':''}>維護者設定</button></div></header>
+${mode==='view'?view():edit()}
+</main><footer class="foot"><span>Agent 技能平台 · 企業內部使用</span><span>SupportChannel[] · PC-first wireframe</span></footer></div>`;
+const stage=document.querySelector('#stage');
+function mount(){stage.innerHTML='';requestAnimationFrame(()=>{stage.innerHTML=page();wire()})}
+function render(){stage.innerHTML=page();wire()}
+function wire(){
+stage.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;error='';if(mode==='edit')draft=channels.map(c=>({...c}));render()});
+if(mode!=='edit')return;
+stage.querySelectorAll('[data-row]').forEach(row=>{const i=+row.dataset.row;row.querySelectorAll('[data-k]').forEach(f=>f.oninput=f.onchange=()=>{draft[i][f.dataset.k]=f.value})});
+stage.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{draft.splice(+b.dataset.del,1);render()});
+stage.querySelector('[data-add]').onclick=()=>{if(draft.length>=10)return;draft.push({channelType:'im_group',label:'',address:'',instructions:'',displayOrder:draft.length});render()};
+stage.querySelector('[data-cancel]').onclick=()=>{mode='view';error='';render()};
+stage.querySelector('[data-save]').onclick=()=>{
+ // 前端先擋掉必然失敗的送出，避免無意義的網路請求。
+ const blank=draft.find(c=>!c.label.trim()||!c.address.trim());
+ if(blank){error='每一列的顯示名稱與位址都必填。';return render()}
+ const seen=new Set();const dup=draft.find(c=>{const k=c.channelType+'::'+c.address.trim();if(seen.has(k))return true;seen.add(k);return false});
+ if(dup){error='同一渠道類型下的位址不能重複。';return render()}
+ channels=draft.map((c,i)=>({...c,id:c.id||'new-'+i,label:c.label.trim(),address:c.address.trim(),displayOrder:i}));
+ mode='view';error='';render()}}
+mount();
+const picker=document.querySelector('.proto-picker'),item=picker.querySelector('.proto-picker-item:not(.proto-picker-replay)'),hi=picker.querySelector('.proto-picker-highlight');requestAnimationFrame(()=>requestAnimationFrame(()=>{hi.style.width=item.offsetWidth+'px';hi.style.transform=`translateX(${item.offsetLeft}px)`}));picker.querySelector('.proto-picker-replay').onclick=mount;
+addEventListener('keydown',e=>{if(e.key==='r'||e.key==='R')mount()});
+</script></body></html>

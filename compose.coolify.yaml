@@ -1,0 +1,128 @@
+# Coolify 部署（Docker Compose build pack）。
+#
+# 與 compose.public.yaml 的差別：不含 Caddy，也不開任何 ports。
+# Coolify 內建 Traefik 負責反向代理、憑證簽發與續期，
+# 路由由下方 SERVICE_FQDN_APP_3000 這個 magic 變數宣告。
+#
+# 使用方式：
+#   Coolify → New Resource → Private/Public Repository
+#   Build Pack: Docker Compose
+#   Docker Compose Location: /compose.coolify.yaml
+#
+# 環境變數在 Coolify 的 Environment Variables 分頁填寫，不使用 .env 檔。
+# 必填清單見本檔末尾註解，值的說明見 .env.deploy.example。
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-agent_skill_platform}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必須設定}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-agent_skill_platform}"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    # 不開 ports：資料庫只服務同一 compose 網路內的平台。
+
+  # migration 與平台分離，沿用 compose.deploy.yaml 的理由：
+  # 平台啟動時不自動 migrate，避免多次重啟或未來多副本時併發套用同一批 migration。
+  # Coolify 會等這個服務 exit 0 之後才啟動 app。
+  migrate:
+    build:
+      context: .
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL 必須設定}
+    command: ["node", "dist/migrate.js"]
+
+  app:
+    build:
+      context: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      # Coolify magic 變數：宣告 app 的 3000 埠對外的網址。
+      # 留空時 Coolify 自動產生子域（platform.你的-coolify-域名），
+      # 也可在 Coolify 介面的 Domains 欄自行指定完整網址。
+      # Traefik 依此建立路由並簽發憑證，因此本檔不需要也不應該開 ports。
+      SERVICE_FQDN_APP_3000: ${SERVICE_FQDN_APP_3000}
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: ${DATABASE_URL}
+      TELEMETRY_ENDPOINT: ${TELEMETRY_ENDPOINT}
+      # 通知內的連結需絕對位址，與對外網址一致。
+      PLATFORM_BASE_URL: ${SERVICE_FQDN_APP_3000}
+      BOOTSTRAP_ADMIN_UID: ${BOOTSTRAP_ADMIN_UID:?BOOTSTRAP_ADMIN_UID 必須設定}
+      # 登入白名單：公網部署建議設定，未設定時任何 GitHub 帳號都能建立 identity。
+      # 必須包含 BOOTSTRAP_ADMIN_UID，否則啟動時直接拋錯。
+      LOGIN_ALLOWED_UIDS: ${LOGIN_ALLOWED_UIDS}
+      # SSO：六個變數全有或全無，未配置時登入 fail-closed。
+      OIDC_AUTHORIZE_URL: ${OIDC_AUTHORIZE_URL:?OIDC_AUTHORIZE_URL 必須設定}
+      OIDC_TOKEN_URL: ${OIDC_TOKEN_URL:?OIDC_TOKEN_URL 必須設定}
+      OIDC_USERINFO_URL: ${OIDC_USERINFO_URL:?OIDC_USERINFO_URL 必須設定}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:?OIDC_CLIENT_ID 必須設定}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?OIDC_CLIENT_SECRET 必須設定}
+      # 必須與 GitHub OAuth App 登記的 callback 完全一致，多一個斜線都會失敗。
+      # 不像 compose.public.yaml 能從 PUBLIC_DOMAIN 組出，這裡需在 Coolify 手動填。
+      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:?OIDC_REDIRECT_URI 必須設定}
+      OIDC_SCOPE: ${OIDC_SCOPE}
+      OIDC_CLAIM_UID: ${OIDC_CLAIM_UID}
+      OIDC_CLAIM_DISPLAY_NAME: ${OIDC_CLAIM_DISPLAY_NAME}
+      OIDC_CLAIM_TEAMS: ${OIDC_CLAIM_TEAMS}
+      NOTIFY_SLACK_WEBHOOK_URL: ${NOTIFY_SLACK_WEBHOOK_URL}
+      NOTIFY_TEAMS_WEBHOOK_URL: ${NOTIFY_TEAMS_WEBHOOK_URL}
+      NOTIFY_LARK_WEBHOOK_URL: ${NOTIFY_LARK_WEBHOOK_URL}
+    healthcheck:
+      # Coolify 依此判斷部署是否成功；資料庫不可用時 /health 回 503。
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  postgres-data:
+
+# ── 在 Coolify 的 Environment Variables 填入 ──
+#
+# 必填：
+#   POSTGRES_PASSWORD      隨機值，openssl rand -base64 24
+#   DATABASE_URL           postgresql://postgres:<同上密碼>@postgres:5432/agent_skill_platform
+#                          主機名是服務名 postgres，不是 127.0.0.1
+#   BOOTSTRAP_ADMIN_UID    你的 GitHub 數字 ID：
+#                          curl -s https://api.github.com/users/你的帳號 | grep '"id"'
+#   OIDC_CLIENT_ID         GitHub OAuth App
+#   OIDC_CLIENT_SECRET     GitHub OAuth App
+#   OIDC_REDIRECT_URI      https://<你的網址>/api/auth/callback
+#   OIDC_AUTHORIZE_URL     https://github.com/login/oauth/authorize
+#   OIDC_TOKEN_URL         https://github.com/login/oauth/access_token
+#   OIDC_USERINFO_URL      https://api.github.com/user
+#
+# 建議填：
+#   LOGIN_ALLOWED_UIDS     你的ID,同事A的ID,同事B的ID
+#   OIDC_SCOPE             read:user
+#   OIDC_CLAIM_UID         id      GitHub 用 id 而非 OIDC 標準的 sub
+#   OIDC_CLAIM_DISPLAY_NAME  name
+#
+# 由 Coolify 自動注入，不需手動填：
+#   SERVICE_FQDN_APP_3000  留空即自動產生子域；要指定網址請用 Coolify 的 Domains 欄
+#
+# 本檔不含 seed 服務：示範資料在 NODE_ENV=production 會被 src/seed.ts 拒絕寫入。
+# 需要示範資料時，在 Coolify 的 Terminal 對 app 容器執行 node dist/seed.js，
+# 並先確認該環境確實可以放測試資料。

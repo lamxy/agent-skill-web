@@ -1,0 +1,354 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/*
+ * 頂欄與頁腳皆為 sticky，錨點捲動時目標會被兩者遮住，
+ * 因此預留上下安全距離。數值取頂欄與頁腳的概略高度。
+ */
+:root {
+  scroll-padding-top: var(--sticky-top);
+  scroll-padding-bottom: 60px;
+}
+
+.skip-link {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 100;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+  transform: translateY(calc(-100% - var(--space-3)));
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/*
+ * 頂欄固定在視窗頂端。用 sticky 而非 fixed：不脫離文檔流，
+ * 主內容不必補償頁首高度，頂欄高度隨換行變化時也不會錯位。
+ *
+ * z-index 高於頁面內的浮層（欄位說明 30、下拉清單 40），因為捲動時
+ * 浮層不該蓋過導覽；低於 skip-link 的 100。
+ *
+ * 頁腳則相反——見 .shell-foot 的說明。
+ */
+.shell-top {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  flex-wrap: wrap;
+}
+
+.shell-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 640;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+/* 名稱與 MVP 標記成組，標記靠右上角 */
+.shell-brand-name {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+/*
+ * MVP 標記。用警示色點出目前仍是驗證階段，
+ * 字級壓到最小並上標對齊，不與平台名稱爭主次。
+ */
+.shell-mvp {
+  align-self: flex-start;
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.shell-logo {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.shell-nav {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.shell-nav a {
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  text-decoration: none;
+  transition:
+    background 140ms ease-out,
+    color 140ms ease-out;
+}
+
+.shell-nav a:hover {
+  background: var(--ground);
+  color: var(--ink);
+}
+
+.shell-nav a.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 550;
+}
+
+/* 頂欄右側動作區：通知圖標與身份選單成組靠右 */
+.shell-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.shell-icon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition:
+    background 140ms ease-out,
+    color 140ms ease-out;
+}
+
+.shell-icon-link .icon {
+  width: 19px;
+  height: 19px;
+}
+
+.shell-icon-link:hover {
+  background: var(--ground);
+  color: var(--ink);
+}
+
+.shell-icon-link.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.shell-icon-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.shell-main {
+  flex: 1;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-6) 60px;
+}
+
+/*
+ * 頁腳固定在視窗底端，與頂欄同為 sticky。
+ * 內容不足一屏時由 .shell 的 flex 撐到底部，內容超長時則黏在視窗底端持續可見。
+ *
+ * z-index 刻意低於頁面內的浮層（欄位說明 30、下拉清單 40）：下拉一律向下
+ * 展開，若頁腳壓在它們之上，靠近頁面底部的選項就會被頁腳蓋掉一截。
+ * 頁腳只需高於一般內容，不需要高於浮層。
+ */
+.shell-foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-faint);
+  font-size: 12.5px;
+  flex-wrap: wrap;
+}
+
+/* 隱私聲明與前面的文字同屬一行，用 inline 讓它跟著文字流排版 */
+.shell-foot a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.shell-foot a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/*
+ * 頁面投遞過來的主要動作（例如腳本下載頁的下載鍵）。
+ * 這些頁面過去自帶一條 fixed 動作列，與 sticky 頁腳疊在一起會顯示
+ * 兩條分隔線；改為交給頁腳渲染後，底部永遠只有這一條固定欄。
+ */
+.shell-foot-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
+.shell-foot-hint {
+  min-width: 0;
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+/*
+ * 頁面投遞的說明常是「條件說明 + 狀態訊息」兩段，
+ * 需要各佔一行才讀得出主從，否則會擠成一長串。
+ */
+.shell-foot-hint > span {
+  display: block;
+}
+
+/* 狀態訊息比條件說明重要，用實色與行首間距拉開層次 */
+.shell-foot-hint .pub-message {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+}
+
+/*
+ * 返回詳情是導覽而非動作，語意上必須是連結，但視覺需與 Button 一致。
+ * .btn 依賴 button 元素的預設值，連結需補回字體、顏色與行高。
+ */
+.shell-foot-action .btn {
+  display: inline-flex;
+  align-items: center;
+  font-family: inherit;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.shell-foot-action a.btn-ghost {
+  color: var(--ink);
+}
+
+.shell-foot-action a:hover {
+  text-decoration: none;
+}
+
+.placeholder {
+  padding: var(--space-6);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+}
+
+.placeholder h1 {
+  margin: 0 0 var(--space-2);
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.placeholder p {
+  margin: 0;
+  color: var(--ink-faint);
+}
+
+.shell-error {
+  max-width: 640px;
+  padding: var(--space-6);
+  border: 1px solid var(--stop);
+  border-radius: var(--radius-lg);
+  background: var(--stop-soft);
+}
+
+.shell-error h1 {
+  margin: 0 0 var(--space-2);
+  font-size: 20px;
+}
+
+.shell-error p {
+  color: var(--ink-soft);
+}
+
+.shell-error button {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .shell-top,
+  .shell-main,
+  .shell-foot {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  /* 窄屏改為兩行：第一行品牌與右側動作區，第二行可橫向捲動的導覽 */
+  .shell-top {
+    gap: var(--space-3);
+  }
+
+  .shell-actions {
+    order: 1;
+  }
+
+  .shell-nav {
+    order: 2;
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .shell-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .shell-nav a {
+    white-space: nowrap;
+  }
+
+  .shell-main {
+    padding-top: var(--space-4);
+    padding-bottom: 40px;
+  }
+
+  /* 窄屏頁腳空間有限，說明文字讓位給按鈕本身 */
+  .shell-foot-hint {
+    display: none;
+  }
+}

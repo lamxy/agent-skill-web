@@ -1,0 +1,110 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>發布與更新技能線框 · Publish Console</title>
+<style>
+:root{--ink:#16181d;--soft:#5b616e;--faint:#8b91a0;--line:#dfe2e8;--line2:#edeff3;--paper:#fff;--ground:#f6f7f9;--accent:#1f4fd8;--accent2:#eef2fe;--ok:#1a7f52;--ok2:#e8f5ee;--warn:#8a5a00;--warn2:#fdf3e0;--stop:#a32020;--stop2:#fdeceb;--seal:#6656cb;--seal2:#efecfd;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC",sans-serif;--mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,monospace;--r:8px;--rl:11px;color-scheme:light dark}
+@media(prefers-color-scheme:dark){:root{--ink:#e8eaf0;--soft:#a2a9b8;--faint:#767d8d;--line:#2f333c;--line2:#24272e;--paper:#1a1d23;--ground:#131519;--accent:#7f9fff;--accent2:#1c2740;--ok:#5ec98e;--ok2:#14301f;--warn:#e0ab4c;--warn2:#33260d;--stop:#f08a80;--stop2:#3a1917;--seal:#a99bf0;--seal2:#221d3d}}
+*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:14px/1.5 var(--sans)}button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.mono{font-family:var(--mono)}#stage{min-height:100vh;padding-bottom:92px}.shell{min-height:100vh;display:flex;flex-direction:column}
+.top{min-height:58px;padding:0 max(24px,calc((100vw - 1180px)/2));display:flex;align-items:center;gap:42px;background:var(--paper);border-bottom:1px solid var(--line)}.brand{font-size:16px;font-weight:750;white-space:nowrap}.nav{display:flex;gap:28px;color:var(--soft);white-space:nowrap}.nav span{padding:18px 0 16px;border-bottom:2px solid transparent}.nav .active{color:var(--accent);border-color:var(--accent);font-weight:650}
+.main{width:min(1180px,calc(100% - 48px));margin:auto;padding:28px 0 70px;flex:1}.foot{padding:20px max(24px,calc((100vw - 1180px)/2));display:flex;justify-content:space-between;background:var(--paper);border-top:1px solid var(--line);color:var(--faint);font-size:12px}
+.crumb{color:var(--faint);font-size:12px;margin-bottom:12px}.head{display:flex;justify-content:space-between;gap:24px;align-items:start;margin-bottom:18px}.head h1{margin:0;font-size:26px;letter-spacing:-.03em}.head p{margin:7px 0 0;color:var(--soft);max-width:64ch}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--rl);overflow:hidden;box-shadow:0 1px 3px rgba(22,24,29,.06);margin-bottom:16px}.card-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:14px;align-items:center}.card-head h2{font-size:14px;margin:0}.card-head p{font-size:11.5px;color:var(--faint);margin:3px 0 0}
+input,select,textarea{width:100%;min-height:38px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--ground)}textarea{min-height:80px;resize:vertical}
+.btn{min-height:38px;padding:7px 13px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);font-weight:620;white-space:nowrap}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.sm{min-height:32px;padding:5px 10px;font-size:12.5px}.btn:disabled{opacity:.45;cursor:not-allowed}
+.tag{display:inline-flex;padding:3px 8px;border-radius:999px;background:var(--accent2);color:var(--accent);font-size:11.5px;white-space:nowrap}.tag.ok{background:var(--ok2);color:var(--ok)}.tag.warn{background:var(--warn2);color:var(--warn)}.tag.seal{background:var(--seal2);color:var(--seal)}.tag.mute{background:var(--line2);color:var(--faint)}
+.form{display:grid;gap:13px;padding:16px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:13px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}.field{display:grid;gap:5px}.field label{font-size:11.5px;color:var(--soft);font-weight:600}.field small{color:var(--faint);font-size:11px}
+.note{padding:10px 12px;border-radius:var(--r);background:var(--accent2);color:var(--soft);font-size:11.5px;line-height:1.55}.note b{color:var(--accent)}.note.warn{background:var(--warn2)}.note.warn b{color:var(--warn)}.note.seal{background:var(--seal2)}.note.seal b{color:var(--seal)}
+.stepline{display:flex;align-items:center;gap:0;margin-bottom:18px;padding:4px;border:1px solid var(--line);border-radius:var(--rl);background:var(--paper);overflow:auto}.step{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:7px;color:var(--faint);font-size:12.5px;white-space:nowrap}.step[data-active]{background:var(--accent2);color:var(--accent);font-weight:650}.step[data-done]{color:var(--ok)}.step i{width:18px;height:18px;display:grid;place-items:center;border-radius:999px;border:1px solid currentColor;font-size:10px;font-style:normal}.step-sep{flex:1;min-width:14px;height:1px;background:var(--line)}
+.mylist{width:100%;border-collapse:collapse}.mylist th,.mylist td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line2)}.mylist th{color:var(--faint);font-size:10px;text-transform:uppercase;letter-spacing:.06em}.mylist tbody tr:hover{background:var(--ground)}.mylist .nm{font-weight:640}.mylist .sub{color:var(--faint);font-size:11.5px;margin-top:2px}.mylist td:last-child{text-align:right}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px;border-bottom:1px solid var(--line)}.mode{display:grid;gap:5px;padding:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);text-align:left}.mode[data-active]{border-color:var(--accent);background:var(--accent2)}.mode strong{font-size:13.5px}.mode[data-active] strong{color:var(--accent)}.mode span{color:var(--soft);font-size:11.5px;line-height:1.5}
+.shared{border:1px dashed var(--seal);border-radius:var(--rl);padding:3px;background:var(--seal2)}.shared-tag{display:flex;align-items:center;gap:8px;padding:8px 13px;color:var(--seal);font-size:11.5px;font-weight:640}.shared-tag em{font-style:normal;color:var(--soft);font-weight:400}.shared .card{margin:0 0 3px;border-radius:9px}.shared .card:last-child{margin-bottom:0}
+.matrix{display:grid;gap:8px;padding:16px}.mrow{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--ground)}.mrow[data-on]{border-color:var(--accent);background:var(--accent2)}.mrow strong{font-size:13px;display:block}.mrow span{color:var(--faint);font-size:11.5px}.mrow code{font-family:var(--mono);font-size:10.5px;color:var(--faint);display:block;margin-top:3px}.mact{display:flex;gap:6px;flex-wrap:wrap}
+.addbar{display:grid;grid-template-columns:auto 1fr auto 1fr auto;gap:8px;align-items:center;padding:0 16px 16px}.addbar label{font-size:11.5px;color:var(--soft);font-weight:600;white-space:nowrap}
+.cmdgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:16px}.cmdgrid textarea{min-height:150px;font-family:var(--mono);font-size:12px}
+.actions{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:16px;flex-wrap:wrap}.actions p{margin:0;color:var(--soft);font-size:12px}.abtns{display:flex;gap:8px}
+.diff{display:grid;gap:8px;padding:16px}.drow{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid var(--line2);font-size:12.5px}.drow:last-child{border:0}.drow b{color:var(--faint);font-weight:600;font-size:11.5px}.ins{color:var(--ok)}.del{color:var(--stop);text-decoration:line-through}
+.proto-picker{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:2147483647;display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;background:rgba(10,10,10,.82);-webkit-backdrop-filter:blur(12px) saturate(1.4);backdrop-filter:blur(12px) saturate(1.4);box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 8px 24px rgba(0,0,0,.24),0 2px 6px rgba(0,0,0,.12);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;line-height:1;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none}.proto-picker-highlight{position:absolute;top:4px;left:0;height:28px;border-radius:999px;background:rgba(255,255,255,.12);will-change:transform}.proto-picker[data-ready] .proto-picker-highlight{transition:transform 250ms cubic-bezier(.23,1,.32,1),width 250ms cubic-bezier(.23,1,.32,1)}.proto-picker-item{position:relative;display:flex;align-items:center;height:28px;padding:0 12px;border:0;border-radius:999px;background:transparent;color:rgba(255,255,255,.55);font:inherit;cursor:pointer;transition:color 150ms ease-out}.proto-picker-item:hover{color:rgba(255,255,255,.85)}.proto-picker-item:active{transform:scale(.97)}.proto-picker-item:focus-visible{outline:2px solid rgba(255,255,255,.4);outline-offset:2px}.proto-picker-item[data-active]{color:#fff}.proto-picker-divider{width:1px;height:16px;margin:0 4px;background:rgba(255,255,255,.12)}.proto-picker-replay{padding:0 10px;font-size:14px}
+.enter{animation:rise .22s ease-out both}@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+@media(max-width:820px){.top{padding:10px 20px;align-items:start;gap:10px;flex-direction:column}.nav{width:100%;overflow:auto}.nav span{padding:6px 0 8px}.head{flex-direction:column}.grid2,.grid3,.cmdgrid,.modes{grid-template-columns:1fr}.addbar{grid-template-columns:1fr}.mrow{flex-direction:column;align-items:start}.mylist{display:block;overflow:auto}.mylist td:last-child{text-align:left}}
+@media(max-width:640px){.top{padding-left:16px;padding-right:16px}.main{width:calc(100% - 32px);padding-top:20px}.foot{padding:17px 16px 96px;flex-direction:column;gap:6px}.stepline{margin-left:-16px;margin-right:-16px;border-radius:0;border-left:0;border-right:0}.drow{grid-template-columns:1fr}}
+</style></head><body><div id="stage"></div>
+<nav class="proto-picker" aria-label="Prototype variants"><span class="proto-picker-highlight" aria-hidden="true"></span><button class="proto-picker-item" data-view="hub" data-active aria-current="true">我維護的技能</button><button class="proto-picker-item" data-view="create">發布新技能</button><button class="proto-picker-item" data-view="update">更新技能</button><span class="proto-picker-divider" aria-hidden="true"></span><button class="proto-picker-item proto-picker-replay" aria-label="Replay animation (R)">↻</button></nav>
+<script>
+const shell=(nav,body)=>`<div class="shell enter"><header class="top"><b class="brand">Agent 技能平台</b><nav class="nav"><span>技能池</span><span>我的安裝</span><span class="active">${nav}</span><span>審核</span><span>管理</span></nav></header><main class="main">${body}</main><footer class="foot"><span>Agent 技能平台 · 企業內部使用</span><span>PackageRecord + PackageVersionRecord · PC / Mobile adaptive wireframe</span></footer></div>`;
+
+// 共用區塊：發布與更新完全一致，抽成同一段以示意實作上不該複製兩份
+const sharedBody=(ver)=>`
+<div class="shared">
+  <div class="shared-tag">共用區塊 <em>— 發布與更新在此以下完全相同，實作為同一組元件</em></div>
+  <section class="card"><div class="card-head"><div><h2>一鍵安裝腳本 Matrix</h2><p>2 個已加入 · 4 個待填寫</p></div><span class="tag warn">尚未完整</span></div>
+    <div class="matrix">
+      <div class="mrow" data-on><div><strong>Linux / macOS · Claude Code</strong><span>bash · script v1 · 0 個選項</span><code>install-{id}-${ver}-linux-macos-claude-code-{userRef}-v1.sh</code></div><div class="mact"><button class="btn sm">編輯</button><button class="btn sm">複製命令</button><button class="btn sm">版本紀錄</button><button class="btn sm">刪除</button></div></div>
+      <div class="mrow"><div><strong>Windows · Codex</strong><span>尚未加入或待填寫命令</span></div><div class="mact"><button class="btn sm" disabled>編輯</button><button class="btn sm" disabled>複製命令</button><button class="btn sm" disabled>版本紀錄</button><button class="btn sm" disabled>刪除</button></div></div>
+    </div>
+    <div class="addbar"><label>作業系統</label><select><option>Linux / macOS</option><option>Windows</option><option>WSL</option></select><label>Client</label><select><option>Claude Code</option><option>Codex</option></select><button class="btn">加入組合</button></div>
+  </section>
+  <section class="card"><div class="card-head"><div><h2>編輯中部命令</h2><p>Linux / macOS · Claude Code · bash · 下一版 v2</p></div></div>
+    <div class="cmdgrid"><div class="field"><label>安裝命令 *</label><textarea>npm install -g @team/skill</textarea></div><div class="field"><label>解除安裝命令 *</label><textarea>npm uninstall -g @team/skill</textarea></div></div>
+    <div class="form" style="padding-top:0"><div class="note"><b>三段式腳本</b>　不要寫 shebang、不要自行回報結果、不要讀取使用者識別；平台會處理這三件事。</div></div>
+  </section>
+  <section class="card"><div class="card-head"><div><h2>選項、使用說明與殘留聲明</h2><p>逐 target 保存；殘留為真時兩項說明都必填</p></div></div>
+    <div class="form"><div class="field"><label>腳本使用說明 *</label><textarea>安裝後執行 skill --help 檢視可用指令。</textarea></div><div class="note warn"><b>殘留聲明</b>　勾選「解除安裝後會留下內容」時，員工會在詳情頁看到警示。</div></div>
+  </section>
+</div>`;
+
+const actions=(label)=>`<section class="card"><div class="actions"><p>6 個組合中 2 個已填寫，送審需至少 1 個完整組合。</p><div class="abtns"><button class="btn">保存當前 target</button><button class="btn primary">${label}</button></div></div></section>`;
+
+const views={
+hub:()=>shell('發布技能',`<div class="crumb">發布技能</div>
+<header class="head"><div><h1>我維護的技能</h1><p>這裡列出你有維護權限的全部技能，包含還沒有任何已發布版本的草稿。技能池只顯示已發布的技能，因此新建立的技能只能從這裡找到。</p></div><button class="btn primary" data-go="create">發布新技能</button></header>
+<div class="note seal" style="margin-bottom:16px"><b>為什麼不放在技能池列表</b>　技能池是面向全體員工的瀏覽頁，且只顯示已發布的技能。若把「更新」入口放在那裡，所有版本仍在草稿或審核中的技能將沒有任何入口可回去繼續編輯。</div>
+<section class="card"><div class="card-head"><div><h2>維護清單</h2><p>GET /api/packages/mine — 依 maintainer 角色與 team 範圍過濾，含無已發布版本者</p></div><span class="tag mute">3 個技能</span></div>
+<table class="mylist"><thead><tr><th>技能</th><th>最新版本</th><th>狀態</th><th>可見性</th><th></th></tr></thead><tbody>
+<tr><td><div class="nm">MySQL MCP 連接器</div><div class="sub mono">mysql-mcp · 公共架構</div></td><td class="mono">1.4.1</td><td><span class="tag ok">已發布</span></td><td>internal</td><td><button class="btn sm" data-go="update">更新版本</button></td></tr>
+<tr><td><div class="nm">專案管理技能</div><div class="sub mono">pm-skill · 張三</div></td><td class="mono">1.1.0</td><td><span class="tag warn">待審核</span></td><td>public</td><td><button class="btn sm" data-go="update">繼續編輯</button></td></tr>
+<tr><td><div class="nm">程式碼審查助手</div><div class="sub mono">code-review · 公共架構</div></td><td class="mono">—</td><td><span class="tag mute">草稿</span></td><td>internal</td><td><button class="btn sm" data-go="update">繼續編輯</button></td></tr>
+</tbody></table></section>
+<div class="note"><b>草稿列的意義</b>　「程式碼審查助手」從未發布過任何版本，在技能池中完全不可見。這正是目前無法建立新技能的死結所在：建立後找不到入口回來為它填寫第一個版本。</div>`),
+
+create:()=>shell('發布技能',`<div class="crumb">發布技能 / 發布新技能</div>
+<header class="head"><div><h1>發布新技能</h1><p>建立一個平台上尚不存在的技能，並為它填寫第一個版本。送審通過後技能會自動上架，對員工可見。</p></div><span class="tag seal">首次發布</span></header>
+<nav class="stepline"><span class="step" data-done><i>✓</i>技能基本資料</span><span class="step-sep"></span><span class="step" data-active><i>2</i>版本與腳本</span><span class="step-sep"></span><span class="step"><i>3</i>送出審核</span></nav>
+<div class="note seal" style="margin-bottom:16px"><b>與更新的唯一差異</b>　只有下面這張「技能基本資料」表單是發布獨有的，它只在建立技能時填寫一次。再往下的所有區塊與「更新技能」完全相同。</div>
+<section class="card"><div class="card-head"><div><h2>技能基本資料</h2><p>POST /api/packages — 建立後 packageId 不可修改</p></div><span class="tag seal">僅首次發布</span></div>
+<div class="form">
+  <div class="grid2"><div class="field"><label>技能識別碼 *</label><input value="code-review" class="mono"><small>建立後不可修改，會出現在腳本檔名與安裝路徑中</small></div><div class="field"><label>技能名稱 *</label><input value="程式碼審查助手"></div></div>
+  <div class="field"><label>用途說明 *</label><textarea>在本地對變更集執行結構化程式碼審查，輸出可直接貼入 PR 的意見。</textarea></div>
+  <div class="grid3"><div class="field"><label>所有團隊 *</label><select><option>公共架構</option><option>團隊 A</option></select><small>需與你的維護權限範圍一致</small></div><div class="field"><label>類型 *</label><select><option>Skill</option><option>Tool</option></select></div><div class="field"><label>分類 *</label><select><option>後端</option><option>前端</option></select></div></div>
+  <div class="grid3"><div class="field"><label>可見性 *</label><select><option>internal</option><option>public</option></select></div><div class="field"><label>授權條款 *</label><input value="MIT"></div><div class="field"><label>來源位址 *</label><input value="https://git.example/code-review" class="mono"></div></div>
+  <div class="note warn"><b>識別碼已存在時</b>　伺服器回 409，表示平台上已有同名技能。此時應改為前往「我維護的技能」為既有技能更新版本，而非另建一個。</div>
+</div></section>
+<section class="card"><div class="card-head"><div><h2>第一個版本</h2><p>POST /api/packages/:packageId/versions</p></div></div>
+<div class="form"><div class="grid2"><div class="field"><label>版本號 *</label><input value="1.0.0" class="mono"></div><div class="field"><label>版本說明</label><input value="首次發布"></div></div></div></section>
+${sharedBody('1.0.0')}
+${actions('送出審核')}`),
+
+update:()=>shell('發布技能',`<div class="crumb">發布技能 / 我維護的技能 / mysql-mcp</div>
+<header class="head"><div><h1>更新技能版本</h1><p>為既有技能新增一個版本。技能的基本資料不在此修改；送審通過後新版本自動上架，取代原版本成為預設下載。</p></div><span class="tag ok">已發布 · 1.4.1</span></header>
+<nav class="stepline"><span class="step" data-active><i>1</i>版本與腳本</span><span class="step-sep"></span><span class="step"><i>2</i>送出審核</span></nav>
+<section class="card"><div class="card-head"><div><h2>技能基本資料</h2><p>已於首次發布時建立，此處唯讀</p></div><button class="btn sm">前往編輯基本資料</button></div>
+<div class="form"><div class="note"><b>MySQL MCP 連接器</b>　<span class="mono">mysql-mcp</span> · 公共架構 · Skill / 後端 · internal · MIT<br>修改名稱、用途或可見性請走 PATCH /api/packages/:packageId，不影響進行中的版本草稿。</div></div></section>
+<section class="card"><div class="card-head"><div><h2>新版本</h2><p>目前最新為 1.4.1；新版本號不可與既有版本重複</p></div></div>
+<div class="form"><div class="grid2"><div class="field"><label>版本號 *</label><input value="1.5.0" class="mono"><small>與 1.4.1 重複時伺服器回 409</small></div><div class="field"><label>版本說明</label><input value="支援連線池設定"></div></div>
+<div class="field"><label>沿用上一版腳本</label><div class="diff">
+  <div class="drow"><b>Linux / macOS</b><span>Claude Code · <span class="ins">將複製 v3 的命令與 4 個選項</span></span></div>
+  <div class="drow"><b>Windows</b><span>Codex · <span class="ins">將複製 v2 的命令</span></span></div>
+  <div class="drow"><b>WSL</b><span class="mono" style="color:var(--faint)">1.4.1 未支援，不複製</span></div>
+</div><small>複製後仍可逐一調整；不勾選則六個組合全部從空白開始。</small></div></div></section>
+${sharedBody('1.5.0')}
+${actions('送出審核')}`)
+};
+
+let view='hub';
+const stage=document.querySelector('#stage'),picker=document.querySelector('.proto-picker'),highlight=picker.querySelector('.proto-picker-highlight');
+function moveHighlight(){const el=picker.querySelector(`[data-view="${view}"]`);highlight.style.width=el.offsetWidth+'px';highlight.style.transform=`translateX(${el.offsetLeft}px)`}
+function mount(){stage.innerHTML='';requestAnimationFrame(()=>{stage.innerHTML=views[view]();stage.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{view=b.dataset.go;sync()})})}
+function sync(){picker.querySelectorAll('[data-view]').forEach(b=>{const on=b.dataset.view===view;b.toggleAttribute('data-active',on);b.setAttribute('aria-current',on?'true':'false')});moveHighlight();mount()}
+picker.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;sync()});
+mount();requestAnimationFrame(()=>requestAnimationFrame(()=>{moveHighlight();picker.setAttribute('data-ready','')}));
+picker.querySelector('.proto-picker-replay').onclick=mount;
+document.addEventListener('keydown',e=>{if(!/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)&&(e.key==='r'||e.key==='R'))mount()});
+</script></body></html>

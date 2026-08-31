@@ -1,0 +1,98 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>使用反饋線框 · Feedback Desk</title><style>
+:root{--ink:#16181d;--soft:#5b616e;--faint:#8b91a0;--line:#dfe2e8;--line2:#edeff3;--paper:#fff;--ground:#f6f7f9;--accent:#1f4fd8;--accent2:#eef2fe;--ok:#1a7f52;--ok2:#e8f5ee;--warn:#8a5a00;--warn2:#fdf3e0;--stop:#a32020;--stop2:#fdeceb;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC",sans-serif;--mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,monospace;--r:8px;--rl:11px;color-scheme:light dark}@media(prefers-color-scheme:dark){:root{--ink:#e8eaf0;--soft:#a2a9b8;--faint:#767d8d;--line:#2f333c;--line2:#24272e;--paper:#1a1d23;--ground:#131519;--accent:#7f9fff;--accent2:#1c2740;--ok:#5ec98e;--ok2:#14301f;--warn:#e0ab4c;--warn2:#33260d;--stop:#f08a80;--stop2:#3a1917}}*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:14px/1.5 var(--sans)}button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.mono{font-family:var(--mono)}#stage{min-height:100vh;padding-bottom:92px}.shell{min-height:100vh;display:flex;flex-direction:column}.top{min-height:58px;padding:0 max(24px,calc((100vw - 1120px)/2));display:flex;align-items:center;gap:42px;background:var(--paper);border-bottom:1px solid var(--line)}.brand{font-size:16px;font-weight:750;white-space:nowrap}.nav{display:flex;gap:28px;color:var(--soft);white-space:nowrap}.nav span{padding:18px 0 16px;border-bottom:2px solid transparent}.nav .active{color:var(--accent);border-color:var(--accent);font-weight:650}.main{width:min(1120px,calc(100% - 48px));margin:auto;padding:32px 0 70px;flex:1}.foot{padding:20px max(24px,calc((100vw - 1120px)/2));display:flex;justify-content:space-between;background:var(--paper);border-top:1px solid var(--line);color:var(--faint);font-size:12px}
+.crumb{margin-bottom:14px;color:var(--faint);font-size:12px}.crumb b{color:var(--soft);font-weight:500}
+.head{display:flex;justify-content:space-between;align-items:start;gap:24px;margin-bottom:18px}.head h1{margin:0;font-size:27px;letter-spacing:-.03em}.head p{margin:7px 0 0;color:var(--soft)}
+.modes{display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--paper)}.modes button{border:0;border-radius:999px;background:transparent;padding:7px 14px;color:var(--soft);font-size:13px}.modes [data-active]{background:var(--accent2);color:var(--accent);font-weight:650}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--rl);box-shadow:0 1px 3px rgba(22,24,29,.06);overflow:hidden;margin-bottom:16px}.card-h{margin:0;padding:14px 16px;border-bottom:1px solid var(--line2);font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px}.card-h small{color:var(--faint);font-weight:400;font-size:11.5px}
+.form{padding:16px;display:grid;gap:15px}label.f{display:grid;gap:5px}label.f>span{color:var(--faint);font-size:10.5px;text-transform:uppercase}
+input,select,textarea{width:100%;min-height:38px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--ground)}textarea{min-height:94px;resize:vertical;font-family:inherit}
+.sat{display:flex;gap:6px}.sat button{flex:1;min-height:52px;display:grid;gap:2px;place-items:center;border:1px solid var(--line);border-radius:var(--r);background:var(--ground);color:var(--soft)}.sat button b{font-size:17px}.sat button small{font-size:10.5px}.sat [data-on]{border-color:var(--accent);background:var(--accent2);color:var(--accent);font-weight:650}
+.check{display:flex;gap:9px;padding:12px 13px;border:1px solid var(--line);border-radius:var(--r);background:var(--ground);font-size:13px}.check input{width:auto;min-height:0;margin:2px 0 0}.check small{display:block;color:var(--faint);font-size:12px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-top:1px solid var(--line2);background:var(--ground)}.bar small{color:var(--faint);font-size:11.5px}
+.btn{min-height:38px;padding:8px 13px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);font-weight:620;white-space:nowrap}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn:disabled{opacity:.55;cursor:not-allowed}.btn.sm{min-height:31px;padding:5px 10px;font-size:12px;font-weight:560}
+.err{margin:0 16px 15px;padding:10px 12px;border:1px solid var(--stop);border-radius:var(--r);background:var(--stop2);color:var(--stop);font-size:12.5px}
+.done{padding:38px 20px;text-align:center}.done b{display:block;margin-bottom:6px;font-size:15px}.done p{margin:0 0 15px;color:var(--soft)}
+.rule{padding:11px 12px;margin:0 16px 15px;border-radius:var(--r);background:var(--accent2);color:var(--soft);font-size:11.5px}.rule b{color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}.metric{padding:13px 15px;border:1px solid var(--line);border-radius:var(--rl);background:var(--paper)}.metric b{display:block;font-size:22px;font-variant-numeric:tabular-nums}.metric span{color:var(--faint);font-size:10.5px}.metric small{color:var(--faint);font-size:11px}
+.bars{padding:15px 16px;display:grid;gap:9px}.brow{display:grid;grid-template-columns:96px 1fr 34px;gap:10px;align-items:center;font-size:12.5px}.brow span{color:var(--soft)}.track{height:8px;border-radius:999px;background:var(--line2);overflow:hidden}.fill{height:100%;border-radius:999px;background:var(--accent)}.brow b{text-align:right;font-variant-numeric:tabular-nums;color:var(--soft);font-weight:560}.zero .fill{background:var(--line)}.zero b{color:var(--faint)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;padding:13px 16px;border-bottom:1px solid var(--line2)}.filters select{width:auto;min-width:150px}
+.fb{padding:15px 16px;border-bottom:1px solid var(--line2)}.fb:last-child{border:0}.fb-h{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:7px}.fb-h b{font-size:13.5px}.tag{display:inline-flex;padding:3px 8px;border-radius:999px;background:var(--ground);color:var(--faint);font-size:11px}.tag.human{background:var(--warn2);color:var(--warn);font-weight:620}.tag.open{background:var(--accent2);color:var(--accent)}.tag.ack{background:var(--warn2);color:var(--warn)}.tag.res{background:var(--ok2);color:var(--ok)}.fb p{margin:0 0 9px;color:var(--soft);font-size:13px}.fb-f{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.fb-f small{color:var(--faint);font-size:11.5px}.fb-a{display:flex;gap:6px}
+.empty{padding:38px 20px;text-align:center;color:var(--soft)}
+.enter{animation:rise .22s ease-out both}@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.proto-picker{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:2147483647;display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;background:rgba(10,10,10,.82);-webkit-backdrop-filter:blur(12px) saturate(1.4);backdrop-filter:blur(12px) saturate(1.4);box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 8px 24px rgba(0,0,0,.24),0 2px 6px rgba(0,0,0,.12);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;line-height:1;user-select:none}.proto-picker-highlight{position:absolute;top:4px;left:0;height:28px;border-radius:999px;background:rgba(255,255,255,.12)}.proto-picker-item{position:relative;display:flex;align-items:center;height:28px;padding:0 12px;border:0;border-radius:999px;background:transparent;color:rgba(255,255,255,.55);font:inherit}.proto-picker-item[data-active]{color:#fff}.proto-picker-divider{width:1px;height:16px;margin:0 4px;background:rgba(255,255,255,.12)}.proto-picker-replay{padding:0 10px;font-size:14px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+@media(max-width:860px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.top{padding:10px 16px;align-items:start;gap:10px;flex-direction:column}.nav{width:100%;overflow:auto}.nav span{padding:6px 0 8px}.main{width:calc(100% - 32px);padding-top:22px}.foot{padding:17px 16px 96px;flex-direction:column}.head{flex-direction:column}.sat{flex-wrap:wrap}.sat button{min-width:56px}.brow{grid-template-columns:78px 1fr 30px}.filters select{width:100%}.bar{flex-direction:column;align-items:stretch}.bar .btn{width:100%}}
+</style></head><body><div id="stage"></div><nav class="proto-picker"><span class="proto-picker-highlight"></span><button class="proto-picker-item" data-active aria-current="true">Feedback Desk</button><span class="proto-picker-divider"></span><button class="proto-picker-item proto-picker-replay" aria-label="Replay animation (R)">↻</button></nav><script>
+// POST/GET /api/packages/:packageId/feedback 與 /feedback/summary 的真實形狀。
+const CATS=[['install_failure','安裝失敗'],['uninstall_failure','解除安裝失敗'],['documentation','說明文件'],['performance','效能'],['compatibility','相容性'],['feature_request','功能建議'],['other','其他']];
+const CL=Object.fromEntries(CATS);
+const SAT=[[1,'很差'],[2,'不佳'],[3,'普通'],[4,'良好'],[5,'很好']];
+const ST={open:['open','待處理'],acknowledged:['ack','已受理'],resolved:['res','已解決']};
+let records=[
+{id:'f1',version:'1.10.0',authorRefType:'uid',authorRef:'employee-118',satisfaction:2,issueCategory:'install_failure',detail:'在 WSL 上執行安裝腳本時卡在相依套件下載，錯誤碼 E_DEP_TIMEOUT。重試三次都一樣。',needsHumanSupport:true,status:'open',createdAt:'2026-08-29 09:12'},
+{id:'f2',version:'1.10.0',authorRefType:'uuid',authorRef:'123e4567-e89b-42d3-a456-426614174000',satisfaction:3,issueCategory:'documentation',detail:'使用說明沒有寫 --scope 選項的預設值是什麼，只能自己試出來是 user。',needsHumanSupport:false,status:'acknowledged',createdAt:'2026-08-28 16:40'},
+{id:'f3',version:'1.9.0',authorRefType:'uid',authorRef:'employee-204',satisfaction:5,issueCategory:'other',detail:'安裝很順，一次就成功。希望之後能支援 macOS 原生。',needsHumanSupport:false,status:'resolved',createdAt:'2026-08-27 11:05'}];
+let mode='submit',sat=0,cat='',detail='',human=false,submitted=false,error='',fCat='',fHuman='',fStatus='';
+const esc=s=>{const n=document.createElement('span');n.textContent=s;return n.innerHTML};
+function summary(){const c=Object.fromEntries(CATS.map(([k])=>[k,0]));let tot=0,hs=0,oh=0;const sd=[1,2,3,4,5].map(s=>({satisfaction:s,count:0}));
+records.forEach(r=>{c[r.issueCategory]++;tot+=r.satisfaction;sd[r.satisfaction-1].count++;if(r.needsHumanSupport){hs++;if(r.status!=='resolved')oh++}});
+return{total:records.length,averageSatisfaction:records.length?tot/records.length:null,satisfactionDistribution:sd,byCategory:CATS.map(([k])=>({issueCategory:k,count:c[k]})),needsHumanSupport:hs,openNeedsHumanSupport:oh}}
+const submitView=()=>submitted?`<section class="card"><h2 class="card-h">回報使用問題</h2><div class="done"><b>已收到你的反饋</b><p>維護者會在支援渠道回覆。此反饋不會公開顯示給其他使用者。</p><button class="btn" data-again>再回報一則</button></div></section>`
+:`<section class="card"><h2 class="card-h">回報使用問題<small>套件版本 1.10.0</small></h2>${error?`<div class="err">${esc(error)}</div>`:''}<div class="form">
+<label class="f"><span>整體滿意度 · 必填</span><div class="sat">${SAT.map(([v,l])=>`<button type="button" data-sat="${v}"${sat===v?' data-on':''}><b>${v}</b><small>${l}</small></button>`).join('')}</div></label>
+<label class="f"><span>問題分類 · 必填</span><select data-cat><option value="">請選擇</option>${CATS.map(([v,l])=>`<option value="${v}"${cat===v?' selected':''}>${l}</option>`).join('')}</select></label>
+<label class="f"><span>詳細描述 · 必填</span><textarea data-detail placeholder="請描述遇到的情況。附上錯誤碼與作業系統會讓維護者更快定位。">${esc(detail)}</textarea></label>
+<label class="check"><input type="checkbox" data-human${human?' checked':''}><span>我需要人工協助<small>勾選後這則反饋會進入維護者的待處理清單，並顯示在支援看板最前面。</small></span></label>
+</div><div class="bar"><small>已登入時記錄你的 UID；未登入時記錄匿名 UUID。</small><button class="btn primary" data-send>送出反饋</button></div>
+<div class="rule"><b>未登入也可以回報</b><br>安裝腳本的使用者不一定登入。要求先登入會讓最需要協助的失敗案例回報不上來，因此匿名 UUID 也能提交。</div></section>`;
+const bars=(rows,max,label)=>rows.map(r=>`<div class="brow${r.count?'':' zero'}"><span>${label(r)}</span><div class="track"><div class="fill" style="width:${max?Math.round(r.count/max*100):0}%"></div></div><b>${r.count}</b></div>`).join('');
+function ownerView(){const s=summary();const shown=records.filter(r=>(!fCat||r.issueCategory===fCat)&&(!fHuman||String(r.needsHumanSupport)===fHuman)&&(!fStatus||r.status===fStatus));
+const maxC=Math.max(...s.byCategory.map(x=>x.count),1),maxS=Math.max(...s.satisfactionDistribution.map(x=>x.count),1);
+return `<div class="stats"><div class="metric"><b>${s.total}</b><span>反饋總數</span></div>
+<div class="metric"><b>${s.averageSatisfaction===null?'—':s.averageSatisfaction.toFixed(2)}</b><span>平均滿意度</span></div>
+<div class="metric"><b>${s.openNeedsHumanSupport}</b><span>待處理的人工協助</span></div>
+<div class="metric"><b>${s.needsHumanSupport}</b><span>累計人工協助請求</span></div></div>
+<section class="card"><h2 class="card-h">滿意度分布<small>自願填寫，非全體樣本</small></h2><div class="bars">${bars(s.satisfactionDistribution,maxS,r=>SAT[r.satisfaction-1][1]+' ('+r.satisfaction+')')}</div>
+<div class="rule"><b>數據僅供參考</b><br>滿意度是使用者自願填寫的自我聲明，與遙測同屬 best-effort，不能當作全體使用者的代表值。</div></section>
+<section class="card"><h2 class="card-h">問題分類分布<small>固定顯示全部 7 類</small></h2><div class="bars">${bars(s.byCategory,maxC,r=>CL[r.issueCategory])}</div>
+<div class="rule"><b>計數 0 的分類不隱藏</b><br>「沒有這個分類」與「這個分類無人回報」是兩件事，隱藏會讓人誤判分佈。</div></section>
+<section class="card"><h2 class="card-h">反饋明細<small>${shown.length} / ${records.length} 筆</small></h2>
+<div class="filters"><select data-f="cat"><option value="">全部分類</option>${CATS.map(([v,l])=>`<option value="${v}"${fCat===v?' selected':''}>${l}</option>`).join('')}</select>
+<select data-f="human"><option value="">不分是否需人工</option><option value="true"${fHuman==='true'?' selected':''}>需要人工協助</option><option value="false"${fHuman==='false'?' selected':''}>不需人工協助</option></select>
+<select data-f="status"><option value="">全部狀態</option><option value="open"${fStatus==='open'?' selected':''}>待處理</option><option value="acknowledged"${fStatus==='acknowledged'?' selected':''}>已受理</option><option value="resolved"${fStatus==='resolved'?' selected':''}>已解決</option></select></div>
+${shown.length?shown.map(r=>`<div class="fb"><div class="fb-h"><b class="mono">${esc(r.version)}</b><span class="tag">${CL[r.issueCategory]}</span><span class="tag">滿意度 ${r.satisfaction}</span>${r.needsHumanSupport?'<span class="tag human">需要人工協助</span>':''}<span class="tag ${ST[r.status][0]}">${ST[r.status][1]}</span></div>
+<p>${esc(r.detail)}</p><div class="fb-f"><small class="mono">${r.authorRefType}:${esc(r.authorRef.slice(0,20))}${r.authorRef.length>20?'…':''} · ${r.createdAt}</small>
+<span class="fb-a">${r.status!=='acknowledged'&&r.status!=='resolved'?`<button class="btn sm" data-st="${r.id}:acknowledged">標記已受理</button>`:''}${r.status!=='resolved'?`<button class="btn sm" data-st="${r.id}:resolved">標記已解決</button>`:`<button class="btn sm" data-st="${r.id}:open">重新開啟</button>`}</span></div></div>`).join('')
+:'<div class="empty">沒有符合條件的反饋。</div>'}
+<div class="rule"><b>明細只有維護者看得到</b><br>自由文字可能含內部資訊或個人情境，一般員工讀取回 403、未登入回 401。</div></section>`}
+const page=()=>`<div class="shell enter"><header class="top"><b class="brand">Agent 技能平台</b><nav class="nav"><span class="active">技能池</span><span>我的安裝</span><span>上架技能</span><span>審核</span></nav></header><main class="main">
+<div class="crumb">技能池 · <b>分析工具</b> · 使用反饋</div>
+<header class="head"><div><h1>使用反饋</h1><p>結構化回報安裝與使用問題；維護者據此排優先序並主動聯繫。</p></div><div class="modes"><button data-mode="submit"${mode==='submit'?' data-active':''}>使用者提交</button><button data-mode="owner"${mode==='owner'?' data-active':''}>維護者檢視</button></div></header>
+${mode==='submit'?submitView():ownerView()}
+</main><footer class="foot"><span>Agent 技能平台 · 企業內部使用</span><span>FeedbackRecord[] · FeedbackSummary · PC-first wireframe</span></footer></div>`;
+const stage=document.querySelector('#stage');
+function mount(){stage.innerHTML='';requestAnimationFrame(()=>{stage.innerHTML=page();wire()})}
+function render(){stage.innerHTML=page();wire()}
+function wire(){
+stage.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;render()});
+if(mode==='submit'){
+ if(submitted){stage.querySelector('[data-again]').onclick=()=>{submitted=false;sat=0;cat='';detail='';human=false;render()};return}
+ stage.querySelectorAll('[data-sat]').forEach(b=>b.onclick=()=>{sat=+b.dataset.sat;render()});
+ stage.querySelector('[data-cat]').onchange=e=>{cat=e.target.value};
+ stage.querySelector('[data-detail]').oninput=e=>{detail=e.target.value};
+ stage.querySelector('[data-human]').onchange=e=>{human=e.target.checked};
+ stage.querySelector('[data-send]').onclick=()=>{
+  // 前端先擋掉必然被後端拒絕的送出，不發無意義請求。
+  if(!sat){error='請選擇整體滿意度。';return render()}
+  if(!cat){error='請選擇問題分類。';return render()}
+  if(!detail.trim()){error='詳細描述不能為空白。';return render()}
+  records=[{id:'new',version:'1.10.0',authorRefType:'uid',authorRef:'employee-501',satisfaction:sat,issueCategory:cat,detail:detail.trim(),needsHumanSupport:human,status:'open',createdAt:'2026-08-29 10:30'},...records];
+  submitted=true;error='';render()};
+ return}
+stage.querySelectorAll('[data-f]').forEach(s=>s.onchange=()=>{const v=s.value,k=s.dataset.f;if(k==='cat')fCat=v;if(k==='human')fHuman=v;if(k==='status')fStatus=v;render()});
+stage.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{const[id,st]=b.dataset.st.split(':');const r=records.find(x=>x.id===id);if(r)r.status=st;render()})}
+mount();
+const picker=document.querySelector('.proto-picker'),item=picker.querySelector('.proto-picker-item:not(.proto-picker-replay)'),hi=picker.querySelector('.proto-picker-highlight');requestAnimationFrame(()=>requestAnimationFrame(()=>{hi.style.width=item.offsetWidth+'px';hi.style.transform=`translateX(${item.offsetLeft}px)`}));picker.querySelector('.proto-picker-replay').onclick=mount;
+addEventListener('keydown',e=>{if(e.key==='r'||e.key==='R')mount()});
+</script></body></html>

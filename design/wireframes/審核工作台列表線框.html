@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>審核工作台列表線框</title>
+  <style>
+    :root {
+      --ink:#16181d;--ink-soft:#5b616e;--ink-faint:#8b91a0;
+      --line:#dfe2e8;--line-soft:#edeff3;--paper:#fff;--ground:#f6f7f9;
+      --accent:#1f4fd8;--accent-soft:#eef2fe;--accent-ink:#fff;
+      --ok:#1a7f52;--ok-soft:#e8f5ee;--warn:#8a5a00;--warn-soft:#fdf3e0;
+      --stop:#a32020;--stop-soft:#fdeceb;--seal:#6b5bd2;--seal-soft:#efecfd;
+      --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;
+      --font-mono:ui-monospace,'SF Mono','Cascadia Mono',Menlo,monospace;
+      --radius-sm:5px;--radius:8px;--radius-lg:11px;
+      --shadow-card:0 1px 3px rgba(22,24,29,.06);
+      color-scheme:light dark;
+    }
+    @media(prefers-color-scheme:dark){
+      :root:not([data-theme="light"]){
+        --ink:#e8eaf0;--ink-soft:#a2a9b8;--ink-faint:#767d8d;
+        --line:#2f333c;--line-soft:#24272e;--paper:#1a1d23;--ground:#131519;
+        --accent:#7f9fff;--accent-soft:#1c2740;--accent-ink:#0e1014;
+        --ok:#5ec98e;--ok-soft:#14301f;--warn:#e0ab4c;--warn-soft:#33260d;
+        --stop:#f08a80;--stop-soft:#3a1917;--seal:#a99cf0;--seal-soft:#221d3d;
+        --shadow-card:0 1px 3px rgba(0,0,0,.3);
+      }
+    }
+    :root[data-theme="dark"]{
+      --ink:#e8eaf0;--ink-soft:#a2a9b8;--ink-faint:#767d8d;
+      --line:#2f333c;--line-soft:#24272e;--paper:#1a1d23;--ground:#131519;
+      --accent:#7f9fff;--accent-soft:#1c2740;--accent-ink:#0e1014;
+      --ok:#5ec98e;--ok-soft:#14301f;--warn:#e0ab4c;--warn-soft:#33260d;
+      --stop:#f08a80;--stop-soft:#3a1917;--seal:#a99cf0;--seal-soft:#221d3d;
+      --shadow-card:0 1px 3px rgba(0,0,0,.3);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-sans);font-size:14px}
+    button,select{font:inherit}
+    button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+    .tabular{font-variant-numeric:tabular-nums}
+    .shell{min-height:100vh;display:flex;flex-direction:column}
+    .shell-top{min-height:58px;padding:0 max(24px,calc((100vw - 1180px)/2));background:var(--paper);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:42px}
+    .brand{font-weight:750;font-size:16px}
+    .nav{display:flex;gap:28px;color:var(--ink-soft)}
+    .nav .active{color:var(--accent);font-weight:650}
+    .main{width:min(1180px,calc(100% - 40px));margin:0 auto;padding:34px 0 96px;flex:1}
+    .foot{padding:22px max(24px,calc((100vw - 1180px)/2));border-top:1px solid var(--line);background:var(--paper);display:flex;justify-content:space-between;color:var(--ink-soft);font-size:12px}
+    .crumb{color:var(--ink-faint);font-size:13px;margin-bottom:14px}.crumb b{color:var(--accent)}
+    .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:24px}
+    h1{font-size:29px;letter-spacing:-.035em;margin:0 0 6px}h2,h3,p{margin-top:0}
+    .subtitle{color:var(--ink-soft);margin:0}
+    .page-meta{color:var(--ink-soft);font-size:12px}
+    .toolbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;padding:14px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);margin-bottom:16px}
+    .toolbar label{display:grid;gap:5px;color:var(--ink-soft);font-size:12px}
+    select{min-width:132px;height:36px;padding:0 32px 0 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);color:var(--ink)}
+    .btn{height:36px;border:1px solid var(--line);border-radius:var(--radius);padding:0 14px;background:var(--paper);color:var(--ink);cursor:pointer}
+    .btn:hover{border-color:var(--accent);color:var(--accent)}
+    .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:650}
+    .btn.ghost{border-color:transparent;background:transparent;color:var(--accent)}
+    .tag{display:inline-flex;align-items:center;min-height:24px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:12px;white-space:nowrap}
+    .tag.pending{background:var(--warn-soft);color:var(--warn)}.tag.ok{background:var(--ok-soft);color:var(--ok)}
+    .tag.seal{background:var(--seal-soft);color:var(--seal)}.tag.stop{background:var(--stop-soft);color:var(--stop)}
+    .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-card)}
+    .empty-note{padding:30px;color:var(--ink-soft);text-align:center}
+    .enter{animation:enter 180ms ease-out both}
+    @keyframes enter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+    @media(prefers-reduced-motion:reduce){.enter{animation:none}}
+
+    /* Queue Ledger */
+    .queue-summary{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px;color:var(--ink-soft);font-size:12px}
+    .table-wrap{overflow-x:auto}
+    .ledger{width:100%;border-collapse:collapse;min-width:950px}
+    .ledger th,.ledger td{padding:13px 14px;border-bottom:1px solid var(--line-soft);text-align:left;vertical-align:middle}
+    .ledger thead th{color:var(--ink-faint);font-size:11px;text-transform:uppercase;letter-spacing:.04em;background:var(--ground)}
+    .ledger tbody tr:last-child>*{border-bottom:0}.ledger tbody tr:hover{background:var(--accent-soft)}
+    .package-cell strong{display:block;margin-bottom:4px}.package-cell small{color:var(--ink-soft)}
+    .target-list{display:flex;gap:5px;flex-wrap:wrap}
+    .matrix-mini{display:grid;grid-template-columns:repeat(2,22px);gap:4px}.matrix-mini i{width:22px;height:18px;border-radius:4px;background:var(--ok-soft);color:var(--ok);font-style:normal;font-size:10px;text-align:center;line-height:18px}
+    .pagination{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-top:1px solid var(--line);color:var(--ink-soft);font-size:12px}
+
+    /* Decision Inbox */
+    .inbox-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px}
+    .inbox-nav{padding:10px}.inbox-nav button{width:100%;border:0;background:transparent;color:var(--ink-soft);padding:11px 12px;border-radius:var(--radius);text-align:left;display:flex;justify-content:space-between;cursor:pointer}
+    .inbox-nav button[data-active]{background:var(--accent-soft);color:var(--accent);font-weight:650}
+    .inbox-list{display:grid;gap:12px}
+    .inbox-card{position:relative;padding:18px 18px 16px 22px;overflow:hidden}
+    .inbox-card::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--warn)}
+    .inbox-top{display:flex;justify-content:space-between;gap:20px}.inbox-title h2{font-size:18px;margin:0 0 5px}.inbox-title p{color:var(--ink-soft);margin:0}
+    .inbox-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0;padding:13px 0;border-block:1px solid var(--line-soft)}
+    .fact span{display:block;color:var(--ink-faint);font-size:11px;margin-bottom:5px}.fact strong{font-size:13px}
+    .inbox-bottom{display:flex;justify-content:space-between;align-items:center;gap:14px}.evidence-line{display:flex;gap:8px;flex-wrap:wrap}
+
+    /* Evidence Split */
+    .split{display:grid;grid-template-columns:minmax(330px,.9fr) minmax(430px,1.2fr);min-height:610px;overflow:hidden}
+    .split-list{border-right:1px solid var(--line);background:var(--paper)}
+    .split-list-head{padding:15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+    .review-item{width:100%;display:grid;grid-template-columns:1fr auto;gap:10px;padding:16px;border:0;border-bottom:1px solid var(--line-soft);background:transparent;color:var(--ink);text-align:left;cursor:pointer}
+    .review-item:hover{background:var(--ground)}.review-item[data-selected]{background:var(--accent-soft);box-shadow:inset 3px 0 var(--accent)}
+    .review-item strong{display:block;margin-bottom:5px}.review-item small{color:var(--ink-soft)}
+    .split-evidence{padding:22px;background:var(--paper)}
+    .evidence-head{display:flex;justify-content:space-between;gap:20px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+    .evidence-head h2{margin:0 0 6px}.evidence-head p{color:var(--ink-soft);margin:0}
+    .evidence-section{padding:18px 0;border-bottom:1px solid var(--line-soft)}.evidence-section h3{font-size:13px;margin-bottom:12px}
+    .coverage{display:grid;grid-template-columns:110px repeat(2,1fr);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+    .coverage>*{padding:9px;border-right:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}.coverage>*:nth-child(3n){border-right:0}
+    .coverage .pass{background:var(--ok-soft);color:var(--ok);text-align:center}
+    .digest{padding:10px;background:var(--ground);border-radius:var(--radius);color:var(--ink-soft);overflow-wrap:anywhere;font-size:12px}
+    .evidence-actions{display:flex;justify-content:flex-end;gap:8px;padding-top:18px}
+    .mobile-back{display:none}
+
+    .proto-picker {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 4px;
+      border-radius: 999px;
+      background: rgba(10, 10, 10, 0.82);
+      -webkit-backdrop-filter: blur(12px) saturate(1.4);
+      backdrop-filter: blur(12px) saturate(1.4);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+        0 8px 24px rgba(0, 0, 0, 0.24),
+        0 2px 6px rgba(0, 0, 0, 0.12);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      line-height: 1;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .proto-picker-highlight {
+      position: absolute;
+      top: 4px;
+      left: 0;
+      height: 28px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      will-change: transform;
+    }
+    .proto-picker[data-ready] .proto-picker-highlight {
+      transition:
+        transform 250ms cubic-bezier(0.23, 1, 0.32, 1),
+        width 250ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .proto-picker[data-ready] .proto-picker-highlight { transition: none; }
+    }
+    .proto-picker-item {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: 28px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.55);
+      font: inherit;
+      cursor: pointer;
+      transition: color 150ms ease-out;
+    }
+    .proto-picker-item:hover { color: rgba(255, 255, 255, 0.85); }
+    .proto-picker-item:active { transform: scale(0.97); }
+    .proto-picker-item:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.4); outline-offset: 2px; }
+    .proto-picker-item[data-active] { color: #fff; }
+    .proto-picker-divider { width: 1px; height: 16px; margin: 0 4px; background: rgba(255, 255, 255, 0.12); }
+    .proto-picker-replay { padding: 0 10px; font-size: 14px; }
+    .proto-picker[data-position="top"] { bottom: auto; top: 24px; }
+
+    @media(max-width:820px){
+      .shell-top{padding:12px 16px;align-items:flex-start;gap:14px;flex-direction:column}.nav{width:100%;overflow-x:auto;padding-bottom:4px}
+      .main{width:calc(100% - 32px);padding-top:24px}.page-head{align-items:flex-start;flex-direction:column}
+      .inbox-layout{grid-template-columns:1fr}.inbox-nav{display:flex;overflow-x:auto}.inbox-nav button{min-width:130px}
+      .inbox-facts{grid-template-columns:repeat(2,1fr)}
+      .split{grid-template-columns:1fr}.split-list{border-right:0}.split-evidence{display:none}.split[data-mobile-detail] .split-list{display:none}.split[data-mobile-detail] .split-evidence{display:block}.mobile-back{display:inline-flex;margin:0 0 14px;padding:0}
+    }
+    @media(max-width:540px){.toolbar{display:grid;grid-template-columns:1fr 1fr}.toolbar>*{min-width:0;width:100%}.toolbar label:nth-of-type(3),.toolbar .btn.primary{grid-column:1/-1}.toolbar select{width:100%;min-width:0}.inbox-top,.inbox-bottom{align-items:flex-start;flex-direction:column}.foot{padding-inline:16px}}
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <nav class="proto-picker" aria-label="Prototype variants">
+    <span class="proto-picker-highlight" aria-hidden="true"></span>
+    <button class="proto-picker-item" data-active aria-current="true">Ledger</button>
+    <button class="proto-picker-item">Inbox</button>
+    <button class="proto-picker-item">Split</button>
+    <span class="proto-picker-divider" aria-hidden="true"></span>
+    <button class="proto-picker-item proto-picker-replay" aria-label="Replay animation (R)">↻</button>
+  </nav>
+  <script>
+    const DATA=[
+      {id:'62eb13a1-3cab-4c7d-9615-b8bc22510a41',packageId:'review-api-skill',name:'治理 API 技能',purpose:'統一發布審核與生命週期決議',version:'1.0.0',type:'skill',category:'frontend',owner:'team-a',author:'author-1',created:'2026-08-27 09:40',os:['linux','windows'],clients:['codex'],residual:true,cleanup:'刪除快取目錄',digest:'sha256:review-api',matrix:[['linux','codex'],['windows','codex']]},
+      {id:'791fc47d-f713-468f-92a1-3909011aa40a',packageId:'mysql-mcp',name:'MySQL MCP 工具',purpose:'以受控方式連接內部 MySQL',version:'1.4.1',type:'tool',category:'database',owner:'data-platform',author:'db-maintainer',created:'2026-08-27 08:15',os:['linux'],clients:['claude-code','codex'],residual:false,cleanup:'',digest:'sha256:mysql-mcp-141',matrix:[['linux','claude-code'],['linux','codex']]},
+      {id:'a9a0d728-8467-43ae-9e3a-bda20992cdaa',packageId:'superpowers',name:'Superpowers 工作流',purpose:'提供結構化代理工作流程',version:'3.2.2',type:'skill',category:'workflow',owner:'developer-experience',author:'dx-author',created:'2026-08-26 17:50',os:['linux','macos'],clients:['codex'],residual:true,cleanup:'移除專案技能目錄',digest:'sha256:superpowers-322',matrix:[['linux','codex'],['macos','codex']]}
+    ];
+    const tags=(xs,tone='')=>xs.map(x=>`<span class="tag ${tone}">${x}</span>`).join('');
+    const matrixMini=x=>`<div class="matrix-mini" title="${x.matrix.map(m=>m.join(' × ')).join(', ')}">${x.matrix.map(()=>'<i>✓</i>').join('')}</div>`;
+    const shell=content=>`<div class="shell enter"><header class="shell-top"><span class="brand">Agent 技能平台</span><nav class="nav"><span>技能池</span><span>我的安裝</span><span>上架技能</span><span class="active">審核</span></nav></header><main class="main">${content}</main><footer class="foot"><span>Agent 技能平台 · 企業內部使用</span><span>隱私聲明</span></footer></div>`;
+    const header=(title,copy)=>`<div class="crumb"><b>審核</b> / 待審列表</div><div class="page-head"><div><h1>${title}</h1><p class="subtitle">${copy}</p></div><span class="page-meta">資料來源：ReviewWorkbench · 本頁 <b data-count>3</b> 筆</span></div>`;
+    const toolbar=()=>`<form class="toolbar" data-filter-form><label>狀態<select name="status"><option value="pending">待審</option><option value="approved">已核准</option><option value="rejected">已駁回</option><option value="superseded">已取代</option></select></label><label>作業系統<select name="os"><option value="">全部</option><option>linux</option><option>windows</option><option>macos</option></select></label><label>Client<select name="client"><option value="">全部</option><option value="codex">Codex</option><option value="claude-code">Claude Code</option></select></label><button class="btn primary" type="submit">套用篩選</button><button class="btn ghost" type="reset">清除</button></form>`;
+
+    function ledger(){
+      return shell(`${header('待審佇列 · Queue Ledger','高密度掃描版本、支援範圍與驗證證據。')}${toolbar()}<div class="queue-summary"><span>依提交時間排序</span><span>每頁 20 筆 · cursor 分頁</span></div><section class="card table-wrap"><table class="ledger"><thead><tr><th>套件</th><th>版本</th><th>類型／分類</th><th>支援系統</th><th>Client</th><th>驗證矩陣</th><th>殘留</th><th>提交者／時間</th><th></th></tr></thead><tbody data-items>${DATA.map(x=>`<tr data-os="${x.os.join(' ')}" data-client="${x.clients.join(' ')}"><td class="package-cell"><strong>${x.name}</strong><small class="mono">${x.packageId}</small></td><td class="mono">${x.version}</td><td>${tags([x.type,x.category])}</td><td><div class="target-list">${tags(x.os)}</div></td><td><div class="target-list">${tags(x.clients,'seal')}</div></td><td>${matrixMini(x)}</td><td>${x.residual?'<span class="tag pending">有殘留</span>':'<span class="tag ok">無殘留</span>'}</td><td><span class="mono">${x.author}</span><br><small>${x.created}</small></td><td><button class="btn" data-open="${x.id}">查看審核</button></td></tr>`).join('')}</tbody></table><div class="pagination"><span>本頁顯示篩選結果</span><div><button class="btn" disabled>上一頁</button> <button class="btn">下一頁</button></div></div></section>`);
+    }
+
+    function inbox(){
+      return shell(`${header('待審收件匣 · Decision Inbox','把每次提交整理成可逐件閱讀的決策摘要。')}${toolbar()}<div class="inbox-layout"><aside class="card inbox-nav" data-inbox-nav><button data-active data-nav="all">全部待審 <b>3</b></button><button data-nav="residual">有殘留影響 <b>2</b></button><button data-nav="broad">多目標矩陣 <b>3</b></button></aside><div class="inbox-list" data-items>${DATA.map(x=>`<article class="card inbox-card" data-os="${x.os.join(' ')}" data-client="${x.clients.join(' ')}" data-residual="${x.residual}" data-broad="${x.matrix.length>1}"><div class="inbox-top"><div class="inbox-title"><h2>${x.name} <span class="mono">${x.version}</span></h2><p>${x.purpose}</p></div><span class="tag pending">待審</span></div><div class="inbox-facts"><div class="fact"><span>所有團隊</span><strong>${x.owner}</strong></div><div class="fact"><span>提交者</span><strong class="mono">${x.author}</strong></div><div class="fact"><span>驗證覆蓋</span><strong>${x.matrix.length} 組通過</strong></div><div class="fact"><span>提交時間</span><strong>${x.created}</strong></div></div><div class="inbox-bottom"><div class="evidence-line">${tags(x.os)}${tags(x.clients,'seal')}${x.residual?'<span class="tag pending">有殘留</span>':'<span class="tag ok">無殘留</span>'}</div><button class="btn primary" data-open="${x.id}">閱讀證據</button></div></article>`).join('')}</div></div>`);
+    }
+
+    function evidencePanel(x){return `<button class="btn ghost mobile-back" type="button" data-mobile-back>← 返回待審列表</button><div class="evidence-head"><div><h2>${x.name} <span class="mono">${x.version}</span></h2><p class="mono">${x.packageId} · ${x.owner}</p></div><span class="tag pending">待審</span></div><section class="evidence-section"><h3>提交資訊</h3><p>${x.purpose}</p><div class="evidence-line"><span class="tag">${x.type}</span><span class="tag">${x.category}</span><span class="tag mono">${x.author}</span><span class="tag">${x.created}</span></div></section><section class="evidence-section"><h3>驗證覆蓋</h3><div class="coverage"><b>OS × Client</b><b>安裝</b><b>遙測</b>${x.matrix.map(m=>`<span class="mono">${m[0]} × ${m[1]}</span><span class="pass">通過</span><span class="pass">已觀測</span>`).join('')}</div></section><section class="evidence-section"><h3>殘留聲明</h3><p>${x.residual?`有殘留影響；手動清理：${x.cleanup}`:'發布者聲明沒有殘留影響。'}</p></section><section class="evidence-section"><h3>腳本摘要</h3><div class="digest mono">${x.digest}</div></section><div class="evidence-actions"><button class="btn">開啟完整審核</button></div>`}
+
+    function split(){
+      return shell(`${header('證據分欄 · Evidence Split','不離開佇列即可比較每一筆提交的核心證據。')}${toolbar()}<section class="card split" data-split><div class="split-list"><div class="split-list-head"><strong>待審項目</strong><span class="page-meta">依提交時間</span></div><div data-items>${DATA.map((x,i)=>`<button class="review-item" data-review-index="${i}" data-os="${x.os.join(' ')}" data-client="${x.clients.join(' ')}" ${i===0?'data-selected':''}><span><strong>${x.name} · <span class="mono">${x.version}</span></strong><small>${x.owner} · ${x.created}</small></span><span>${x.residual?'<span class="tag pending">殘留</span>':'<span class="tag ok">無殘留</span>'}</span></button>`).join('')}</div></div><aside class="split-evidence" data-evidence>${evidencePanel(DATA[0])}</aside></section>`);
+    }
+
+    const variants=[ledger,inbox,split];
+    const stage=document.getElementById('stage');
+    const picker=document.querySelector('.proto-picker');
+    const highlight=picker.querySelector('.proto-picker-highlight');
+    const items=[...picker.querySelectorAll('.proto-picker-item:not(.proto-picker-replay)')];
+    const replay=picker.querySelector('.proto-picker-replay');
+    let current=0;
+    function moveHighlight(){const el=items[current];highlight.style.width=el.offsetWidth+'px';highlight.style.transform=`translateX(${el.offsetLeft}px)`;}
+    function wire(){
+      const form=stage.querySelector('[data-filter-form]');
+      const splitView=stage.querySelector('[data-split]');
+      splitView?.addEventListener('click',event=>{
+        if(event.target.closest('[data-mobile-back]'))splitView.removeAttribute('data-mobile-detail');
+      });
+      form?.addEventListener('submit',e=>{e.preventDefault();applyFilters(form)});
+      form?.addEventListener('reset',()=>requestAnimationFrame(()=>applyFilters(form)));
+      stage.querySelectorAll('[data-inbox-nav] button').forEach(btn=>btn.addEventListener('click',()=>{
+        stage.querySelectorAll('[data-inbox-nav] button').forEach(x=>x.toggleAttribute('data-active',x===btn));
+        stage.querySelectorAll('.inbox-card').forEach(card=>card.hidden=btn.dataset.nav!=='all'&&card.dataset[btn.dataset.nav]!=='true');
+        updateCount();
+      }));
+      stage.querySelectorAll('[data-review-index]').forEach(btn=>btn.addEventListener('click',()=>{
+        stage.querySelectorAll('[data-review-index]').forEach(x=>x.toggleAttribute('data-selected',x===btn));
+        stage.querySelector('[data-evidence]').innerHTML=evidencePanel(DATA[Number(btn.dataset.reviewIndex)]);
+        stage.querySelector('[data-split]').toggleAttribute('data-mobile-detail',matchMedia('(max-width:820px)').matches);
+      }));
+      stage.querySelectorAll('[data-open]').forEach(btn=>btn.addEventListener('click',()=>btn.textContent='已選取 · 開啟詳情'));
+    }
+    function applyFilters(form){
+      const fd=new FormData(form),os=fd.get('os'),client=fd.get('client');
+      stage.querySelectorAll('[data-items] [data-os]').forEach(x=>x.hidden=(os&&!x.dataset.os.split(' ').includes(os))||(client&&!x.dataset.client.split(' ').includes(client)));
+      updateCount();
+    }
+    function updateCount(){const count=[...stage.querySelectorAll('[data-items] [data-os]')].filter(x=>!x.hidden).length;stage.querySelectorAll('[data-count]').forEach(x=>x.textContent=count)}
+    function mount(i){stage.innerHTML='';requestAnimationFrame(()=>{stage.innerHTML=variants[i]();wire();});}
+    function setActive(i){
+      if(i<0||i>=variants.length)return;current=i;
+      items.forEach((el,j)=>{el.toggleAttribute('data-active',j===i);if(j===i)el.setAttribute('aria-current','true');else el.removeAttribute('aria-current')});
+      moveHighlight();const url=new URL(location);url.searchParams.set('v',i+1);history.replaceState(null,'',url);mount(i);
+    }
+    items.forEach((el,i)=>el.addEventListener('click',()=>setActive(i)));
+    replay?.addEventListener('click',()=>mount(current));
+    window.addEventListener('resize',moveHighlight);
+    document.addEventListener('keydown',e=>{
+      if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)||e.target.isContentEditable)return;
+      if(e.metaKey||e.ctrlKey||e.altKey)return;const num=parseInt(e.key,10);
+      if(num>=1&&num<=variants.length)setActive(num-1);
+      else if(e.key==='ArrowRight')setActive((current+1)%variants.length);
+      else if(e.key==='ArrowLeft')setActive((current-1+variants.length)%variants.length);
+      else if(e.key==='r'||e.key==='R')mount(current);
+    });
+    setActive((parseInt(new URLSearchParams(location.search).get('v'),10)||1)-1);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>picker.setAttribute('data-ready','')));
+  </script>
+</body>
+</html>

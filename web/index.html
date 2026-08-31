@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <title>Agent 技能平台</title>
+    <script>
+      // 在 React 掛載前套用主題偏好，否則選了深色的人每次載入都會先閃一下白底。
+      try {
+        var saved = localStorage.getItem('skill-platform-theme');
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      } catch (error) {
+        // 停用網站資料時忽略，交給 prefers-color-scheme 決定。
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

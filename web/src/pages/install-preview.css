@@ -1,0 +1,268 @@
+/*
+ * Copyright (c) 2026 lamxy and Contributors
+ * SPDX-License-Identifier: LicenseRef-PolyForm-Internal-Use-1.0.0
+ *
+ * Author: lamxy <pytho5170@hotmail.com>
+ * GitHub: https://github.com/lamxy
+ */
+
+.ip {
+  max-width: 900px;
+}
+
+/* 字級沿用 base.css 的 .page-h1 全站基準 */
+.ip-h1 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.ip-sub {
+  margin: 6px 0 0;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  max-width: 64ch;
+}
+
+.ip-target {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin: var(--space-4) 0 var(--space-5);
+}
+
+.ip-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+}
+
+.ip-card-h {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--line);
+  background: var(--ground);
+}
+
+.ip-card-t {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 620;
+}
+
+.ip-card-s {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.ip-card-act {
+  margin-left: auto;
+}
+
+.ip-card-b {
+  padding: var(--space-5);
+}
+
+.ip-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ip-rows li {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 10px;
+  font-size: 13.5px;
+}
+
+.ip-rows p {
+  margin: 3px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.ip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-top: 7px;
+}
+
+.ip-dot-info {
+  background: var(--accent);
+}
+
+.ip-dot-ok {
+  background: var(--ok);
+}
+
+.ip-dot-warn {
+  background: var(--warn);
+}
+
+.ip-note {
+  margin: var(--space-4) 0 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+  line-height: 1.7;
+}
+
+.ip-note .mono {
+  word-break: break-all;
+}
+
+.ip-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius);
+  background: var(--line-soft);
+}
+
+.ip-seg button {
+  padding: 5px 13px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: not-allowed;
+}
+
+.ip-seg button[data-on] {
+  background: var(--paper);
+  color: var(--ink-soft);
+}
+
+.ip-seg-note {
+  margin: var(--space-2) 0 var(--space-4);
+}
+
+.ip-todo {
+  display: inline-block;
+  margin-right: 7px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--line-soft);
+  color: var(--ink-faint);
+  font-size: 11px;
+  font-weight: 550;
+}
+
+.ip-code {
+  max-height: 460px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--code-bg);
+}
+
+.ip-code:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ip-code table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+.ip-code td {
+  padding: 0 var(--space-3);
+  color: var(--code-ink);
+  white-space: pre;
+  vertical-align: top;
+}
+
+.ip-ln {
+  width: 1%;
+  padding-right: var(--space-4);
+  text-align: right;
+  color: var(--ink-faint);
+  user-select: none;
+}
+
+/* 中部為發布者的命令，以 seal 色底與平台生成的上部尾部區分 */
+.ip-code .ip-mid td {
+  background: color-mix(in srgb, var(--seal) 22%, transparent);
+}
+
+.ip-legend {
+  display: flex;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.ip-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ip-swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+}
+
+.ip-swatch-plat {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+}
+
+.ip-swatch-mid {
+  background: var(--seal);
+}
+
+.ip-empty {
+  padding: var(--space-5);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--ground);
+}
+
+.ip-empty-t {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 570;
+}
+
+.ip-empty-d {
+  margin: var(--space-2) 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+  max-width: 68ch;
+}
+
+.ip-tele {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.ip-tele span {
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--ground);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* 本頁的主要動作改由全站頁腳渲染，樣式見 app.css 的 .shell-foot-action */

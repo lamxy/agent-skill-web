@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 同一分支上只保留最新一次執行，避免連續推送互相排隊。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: agent_skill_platform
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        # 對齊 compose.yaml 與測試預設值的 55432，避免測試需要另一組連線字串。
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d agent_skill_platform"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/agent_skill_platform
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:55432/agent_skill_platform
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: 安裝依賴
+        run: npm ci
+
+      - name: 型別檢查
+        run: npm run typecheck
+
+      - name: 建置
+        run: npm run build
+
+      - name: 套用 migration
+        run: npm run db:migrate
+
+      - name: 驗證 migration 冪等
+        run: npm run db:migrate
+
+      - name: 資料庫健康檢查
+        run: npm run db:check
+
+      - name: 驗證零外鍵
+        # 專案強制反範式且禁止外鍵；此處以系統目錄查詢作為硬性閘門。
+        run: |
+          count=$(PGPASSWORD=postgres psql -h 127.0.0.1 -p 55432 -U postgres \
+            -d agent_skill_platform -tAc \
+            "select count(*) from pg_constraint c
+             join pg_namespace n on n.oid = c.connamespace
+             where c.contype = 'f' and n.nspname = 'public'")
+          echo "public schema 外鍵數量：$count"
+          if [ "$count" != "0" ]; then
+            echo "偵測到外鍵約束，違反專案反範式規則" >&2
+            exit 1
+          fi
+
+      - name: 預拉驗證用 Docker image
+        # docker-linux-validation-runner 固定使用此 image 且刻意不隱式拉取，
+        # 以免驗證期間的網路狀況影響結果。CI 是全新環境，需顯式準備，
+        # 否則 docker run 回 125（容器無法啟動），且錯誤看起來像腳本問題。
+        # image 名稱須與 docker-linux-validation-runner.ts 的 DOCKER_IMAGE 一致。
+        run: docker pull node:22-bookworm-slim
+
+      - name: 測試
+        run: npm test
+
+  container:
+    runs-on: ubuntu-latest
+    needs: verify
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 建置容器映像
+        # 只驗證映像可建置；推送 registry 需要憑證，屬待提供的外部依賴。
+        run: docker build -t agent-skill-platform:ci .
