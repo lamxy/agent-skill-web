@@ -33,7 +33,15 @@ import {
 
 const databaseUrl = process.env.TEST_DATABASE_URL ??
   'postgresql://postgres:postgres@127.0.0.1:55432/agent_skill_platform';
-const adminPool = new Pool({ connectionString: databaseUrl, max: 1 });
+// DROP DATABASE WITH (FORCE) 會踢掉目標庫上的所有連線，被踢的 idle client
+// 會在 pool 上發出 'error'；沒有 listener 時 Node 會升級成 uncaughtException，
+// 讓 vitest 在測試全數通過的情況下仍以 1 收場。
+function guardPool(pool: Pool): Pool {
+  pool.on('error', () => {});
+  return pool;
+}
+
+const adminPool = guardPool(new Pool({ connectionString: databaseUrl, max: 1 }));
 const suiteDatabaseName = `governance_repository_${randomUUID().replaceAll('-', '')}`;
 const suiteDatabaseUrl = new URL(databaseUrl);
 suiteDatabaseUrl.pathname = `/${suiteDatabaseName}`;
@@ -216,7 +224,7 @@ async function rejectOutboxFor(aggregateId: string): Promise<() => Promise<void>
 
 beforeAll(async () => {
   await adminPool.query(`CREATE DATABASE "${suiteDatabaseName}"`);
-  migrationPool = new Pool({ connectionString: suiteDatabaseUrl.toString(), max: 1 });
+  migrationPool = guardPool(new Pool({ connectionString: suiteDatabaseUrl.toString(), max: 1 }));
   database = createPostgresDatabase(suiteDatabaseUrl.toString());
   repository = new PostgresGovernanceRepository(database.client);
   await runMigrations(migrationPool);
@@ -844,7 +852,7 @@ describe('PostgresGovernanceRepository', () => {
 
     await adminPool.query(`CREATE DATABASE "${temporaryDatabaseName}"`);
     try {
-      temporaryPool = new Pool({ connectionString: temporaryUrl.toString(), max: 1 });
+      temporaryPool = guardPool(new Pool({ connectionString: temporaryUrl.toString(), max: 1 }));
       for (const migrationName of [
         '0000_initial.sql',
         '0001_identity_access.sql',
@@ -1027,7 +1035,7 @@ describe('PostgresGovernanceRepository', () => {
     let temporaryPool: Pool | undefined;
     await adminPool.query(`CREATE DATABASE "${temporaryDatabaseName}"`);
     try {
-      temporaryPool = new Pool({ connectionString: temporaryUrl.toString(), max: 1 });
+      temporaryPool = guardPool(new Pool({ connectionString: temporaryUrl.toString(), max: 1 }));
       for (const migrationName of [
         '0000_initial.sql',
         '0001_identity_access.sql',

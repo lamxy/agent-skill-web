@@ -28,7 +28,15 @@ adminUrl.pathname = '/postgres';
 const isolatedUrl = new URL(baseDatabaseUrl);
 isolatedUrl.pathname = `/${databaseName}`;
 
-const adminPool = new Pool({ connectionString: adminUrl.toString(), max: 1 });
+// DROP DATABASE WITH (FORCE) 會踢掉目標庫上的所有連線，被踢的 idle client
+// 會在 pool 上發出 'error'；沒有 listener 時 Node 會升級成 uncaughtException，
+// 讓 vitest 在測試全數通過的情況下仍以 1 收場。
+function guardPool(pool: Pool): Pool {
+  pool.on('error', () => {});
+  return pool;
+}
+
+const adminPool = guardPool(new Pool({ connectionString: adminUrl.toString(), max: 1 }));
 let migrationPool: Pool;
 let database: PostgresDatabase;
 let repository: PostgresTelemetryRepository;
@@ -58,7 +66,7 @@ function event(overrides: Partial<CanonicalTelemetryEvent> = {}): CanonicalTelem
 
 beforeAll(async () => {
   await adminPool.query(`CREATE DATABASE ${databaseName}`);
-  migrationPool = new Pool({ connectionString: isolatedUrl.toString(), max: 4 });
+  migrationPool = guardPool(new Pool({ connectionString: isolatedUrl.toString(), max: 4 }));
 
   const migrations = await discoverMigrations(new URL('../../drizzle/', import.meta.url));
   for (const migration of migrations.filter(({ name }) => name < '0009_telemetry.sql')) {
